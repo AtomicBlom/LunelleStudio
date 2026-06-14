@@ -43,6 +43,9 @@
     SDK puts TRACE/DEBUG there). Done in props (evaluation-time) so IntelliSense / source generators see it.
   -->
   <PropertyGroup Label="Feature constants">
+    <!-- Lets the host opt a DX12 code path in/out at compile time (the Sandbox's Dx12Smoke harness), matching
+         the SDK's UseDX12 backend reference so the constant is present exactly when Loom.DX12 is referenced. -->
+    <DefineConstants Condition="'$(UseDX12)' == 'true'">$(DefineConstants);LOOM_DX12</DefineConstants>
     <DefineConstants Condition="'$(UseImGui)' == 'true'">$(DefineConstants);LOOM_IMGUI</DefineConstants>
     <DefineConstants Condition="'$(UseNamedGPUObjects)' == 'true'">$(DefineConstants);LOOM_NAMED_GPU_OBJECTS</DefineConstants>
     <DefineConstants Condition="'$(UseDebugVisualization)' == 'true'">$(DefineConstants);LOOM_DEBUG_VIZ</DefineConstants>

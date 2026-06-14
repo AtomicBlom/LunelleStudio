@@ -1,0 +1,51 @@
+<Project>
+
+  <!--
+    Loom repo-wide build configuration (Milestone 8). This is the ONLY auto-applied MSBuild file
+    (MSBuild imports the nearest Directory.Build.props walking up from each project).
+
+    It does two things and nothing else:
+      1. Sets the engine feature-flag defaults (Use*).
+      2. Translates those flags into compile constants (DefineConstants).
+
+    Crucially it does NOT inject project references or shader-compile targets — those live in the Loom
+    SDK files under build/Loom.Sdk/ and are imported *explicitly* by the projects that need them. Keeping
+    the constant translation here (auto-applied to every project) is deliberate: the flags gate code inside
+    the engine assembly (Loom.Vulkan), so the constant must be present when the engine itself compiles.
+    This is the engine-as-source-in-the-game-repo model — flipping a flag here recompiles the engine.
+  -->
+
+  <PropertyGroup Label="Backend selection (read by the app-facing Loom SDK: build/Loom.Sdk/Sdk/Sdk.targets)">
+    <UseVulkan Condition="'$(UseVulkan)' == ''">true</UseVulkan>
+    <UseDX12   Condition="'$(UseDX12)'   == ''">false</UseDX12>
+  </PropertyGroup>
+
+  <PropertyGroup Label="Engine feature flags (gate code inside the engine assembly: repo-wide, not per-app)">
+    <UseImGui           Condition="'$(UseImGui)'           == ''">true</UseImGui>
+    <UseNamedGPUObjects Condition="'$(UseNamedGPUObjects)' == ''">false</UseNamedGPUObjects>
+  </PropertyGroup>
+
+  <!--
+    Per-resource debug-visualization windows are x64-only: the win-arm64 ImGui ImVec2-by-value HFA
+    marshaling defect breaks the igImage calls they rely on, so default the feature off on arm64. (The
+    build-host arch is the run target for engine-as-source local builds; the C# entry point also guards
+    at runtime, so a cross-built binary degrades to a label rather than crashing.)
+  -->
+  <PropertyGroup Label="Debug visualization (x64-only)">
+    <_LoomIsArm64>false</_LoomIsArm64>
+    <_LoomIsArm64 Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString())' == 'Arm64'">true</_LoomIsArm64>
+    <UseDebugVisualization Condition="'$(UseDebugVisualization)' == '' And '$(_LoomIsArm64)' == 'true'">false</UseDebugVisualization>
+    <UseDebugVisualization Condition="'$(UseDebugVisualization)' == ''">true</UseDebugVisualization>
+  </PropertyGroup>
+
+  <!--
+    Flag -> compile constant. Append with a leading ';' and never overwrite $(DefineConstants) (the .NET
+    SDK puts TRACE/DEBUG there). Done in props (evaluation-time) so IntelliSense / source generators see it.
+  -->
+  <PropertyGroup Label="Feature constants">
+    <DefineConstants Condition="'$(UseImGui)' == 'true'">$(DefineConstants);LOOM_IMGUI</DefineConstants>
+    <DefineConstants Condition="'$(UseNamedGPUObjects)' == 'true'">$(DefineConstants);LOOM_NAMED_GPU_OBJECTS</DefineConstants>
+    <DefineConstants Condition="'$(UseDebugVisualization)' == 'true'">$(DefineConstants);LOOM_DEBUG_VIZ</DefineConstants>
+  </PropertyGroup>
+
+</Project>

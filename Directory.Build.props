@@ -22,7 +22,7 @@
 
   <PropertyGroup Label="Engine feature flags (gate code inside the engine assembly: repo-wide, not per-app)">
     <UseImGui           Condition="'$(UseImGui)'           == ''">true</UseImGui>
-    <UseNamedGPUObjects Condition="'$(UseNamedGPUObjects)' == ''">false</UseNamedGPUObjects>
+    <UseNamedGPUObjects Condition="'$(UseNamedGPUObjects)' == ''">true</UseNamedGPUObjects>
   </PropertyGroup>
 
   <!--

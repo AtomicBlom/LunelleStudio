@@ -17,7 +17,7 @@
 
   <PropertyGroup Label="Backend selection (read by the app-facing Loom SDK: build/Loom.Sdk/Sdk/Sdk.targets)">
     <UseVulkan Condition="'$(UseVulkan)' == ''">true</UseVulkan>
-    <UseDX12   Condition="'$(UseDX12)'   == ''">false</UseDX12>
+    <UseDX12   Condition="'$(UseDX12)'   == ''">true</UseDX12>
   </PropertyGroup>
 
   <PropertyGroup Label="Engine feature flags (gate code inside the engine assembly: repo-wide, not per-app)">

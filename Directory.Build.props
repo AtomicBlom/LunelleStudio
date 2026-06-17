@@ -26,15 +26,15 @@
   </PropertyGroup>
 
   <!--
-    Per-resource debug-visualization windows are x64-only: the win-arm64 ImGui ImVec2-by-value HFA
-    marshaling defect breaks the igImage calls they rely on, so default the feature off on arm64. (The
-    build-host arch is the run target for engine-as-source local builds; the C# entry point also guards
-    at runtime, so a cross-built binary degrades to a label rather than crashing.)
+    Per-resource debug-visualization (the M13 resource viewer + frustum-freeze wireframe). These hit the
+    win-arm64 ImGui ImVec2-by-value HFA marshaling defect that no-ops igImage/igDummy — so M13 does NOT use
+    ImGui's image/line helpers: the engine draws the thumbnails + wireframe itself as raw-float quads
+    (ImGuiRenderer.DrawThumbnails / DrawLines), which marshals correctly on every architecture. The feature
+    is therefore on by default everywhere now. (The flag is kept as a production knob: set it false to compile
+    the debug viz out while keeping ImGui for game UI. No code reads LOOM_DEBUG_VIZ yet — the M13 viz is gated
+    on LOOM_IMGUI, since it needs ImGui windows; wire host debug UI to this flag if finer gating is wanted.)
   -->
-  <PropertyGroup Label="Debug visualization (x64-only)">
-    <_LoomIsArm64>false</_LoomIsArm64>
-    <_LoomIsArm64 Condition="'$([System.Runtime.InteropServices.RuntimeInformation]::OSArchitecture.ToString())' == 'Arm64'">true</_LoomIsArm64>
-    <UseDebugVisualization Condition="'$(UseDebugVisualization)' == '' And '$(_LoomIsArm64)' == 'true'">false</UseDebugVisualization>
+  <PropertyGroup Label="Debug visualization">
     <UseDebugVisualization Condition="'$(UseDebugVisualization)' == ''">true</UseDebugVisualization>
   </PropertyGroup>
 

@@ -12,8 +12,8 @@ tab_width = 4
 
 # Markup / config files: 2-space indent
 [*.{json,xml,yml,yaml,csproj,slnx,props,targets,config}]
-indent_style = space
-indent_size = 2
+indent_style = tab
+indent_size = 4
 
 [*.md]
 trim_trailing_whitespace = false

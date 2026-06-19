@@ -26,6 +26,8 @@
   <ItemGroup Label="Shader toolchain + UI">
     <PackageVersion Include="Slang.Sdk" Version="0.5.1" />
     <PackageVersion Include="ImGui.NET" Version="1.91.6.1" />
+    <!-- Roslyn for the Loom.UI.SourceGen XAML incremental generator (build-time analyzer, PrivateAssets=all). -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
   </ItemGroup>
 
   <ItemGroup Label="Assets (Loom.Assets image + glTF loaders)">

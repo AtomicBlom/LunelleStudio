@@ -1,0 +1,43 @@
+<Project>
+
+  <!--
+    Central Package Management for the Loom solution. Package versions live here as <PackageVersion>; the
+    individual projects carry version-less <PackageReference> items. MSBuild imports the nearest
+    Directory.Packages.props walking up from each project — the vendored submodule under external/ opts out via
+    its own external/Directory.Packages.props (it pins its own Silk.NET versions and must not be governed here).
+  -->
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <ItemGroup Label="Silk.NET host + backends (Vulkan, DX12, windowing/input, maths)">
+    <PackageVersion Include="Silk.NET.Vulkan" Version="2.23.0" />
+    <PackageVersion Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.23.0" />
+    <PackageVersion Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.23.0" />
+    <PackageVersion Include="Silk.NET.Direct3D12" Version="2.23.0" />
+    <PackageVersion Include="Silk.NET.DXGI" Version="2.23.0" />
+    <PackageVersion Include="Silk.NET.Direct3D.Compilers" Version="2.23.0" />
+    <PackageVersion Include="Silk.NET.Windowing" Version="2.23.0" />
+    <PackageVersion Include="Silk.NET.Input" Version="2.23.0" />
+    <PackageVersion Include="Silk.NET.Maths" Version="2.23.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Shader toolchain + UI">
+    <PackageVersion Include="Slang.Sdk" Version="0.5.1" />
+    <PackageVersion Include="ImGui.NET" Version="1.91.6.1" />
+    <!-- Roslyn for the Loom.UI.SourceGen XAML incremental generator (build-time analyzer, PrivateAssets=all). -->
+    <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Assets (Loom.Assets image + glTF loaders)">
+    <PackageVersion Include="StbImageSharp" Version="2.30.15" />
+    <PackageVersion Include="SharpGLTF.Toolkit" Version="1.0.3" />
+  </ItemGroup>
+
+  <ItemGroup Label="Tests (TUnit on Microsoft.Testing.Platform + Shouldly assertions)">
+    <PackageVersion Include="TUnit" Version="1.56.0" />
+    <PackageVersion Include="Shouldly" Version="4.3.0" />
+  </ItemGroup>
+
+</Project>

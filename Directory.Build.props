@@ -43,8 +43,11 @@
     SDK puts TRACE/DEBUG there). Done in props (evaluation-time) so IntelliSense / source generators see it.
   -->
   <PropertyGroup Label="Feature constants">
-    <!-- Lets the host opt a DX12 code path in/out at compile time (the Sandbox's Dx12Smoke harness), matching
-         the SDK's UseDX12 backend reference so the constant is present exactly when Loom.DX12 is referenced. -->
+    <!-- Let the host opt each backend's code path in/out at compile time, matching the SDK's UseVulkan/UseDX12
+         backend references so the constant is present exactly when that backend assembly is referenced. The
+         unified Sandbox host (Program.cs) names VulkanEngineSettings under LOOM_VULKAN and DX12EngineSettings
+         under LOOM_DX12, so it compiles cleanly with either backend disabled (and defaults to whichever is on). -->
+    <DefineConstants Condition="'$(UseVulkan)' == 'true'">$(DefineConstants);LOOM_VULKAN</DefineConstants>
     <DefineConstants Condition="'$(UseDX12)' == 'true'">$(DefineConstants);LOOM_DX12</DefineConstants>
     <DefineConstants Condition="'$(UseImGui)' == 'true'">$(DefineConstants);LOOM_IMGUI</DefineConstants>
     <DefineConstants Condition="'$(UseNamedGPUObjects)' == 'true'">$(DefineConstants);LOOM_NAMED_GPU_OBJECTS</DefineConstants>

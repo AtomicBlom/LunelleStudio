@@ -11,7 +11,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
 
-  <ItemGroup Label="Silk.NET host + backends (Vulkan, DX12, windowing/input, maths)">
+  <ItemGroup Label="Silk.NET host + backends (Vulkan, DirectX12, windowing/input, maths)">
     <PackageVersion Include="Silk.NET.Vulkan" Version="2.23.0" />
     <PackageVersion Include="Silk.NET.Vulkan.Extensions.KHR" Version="2.23.0" />
     <PackageVersion Include="Silk.NET.Vulkan.Extensions.EXT" Version="2.23.0" />

@@ -17,7 +17,7 @@
 
   <PropertyGroup Label="Backend selection (read by the app-facing Loom SDK: build/Loom.Sdk/Sdk/Sdk.targets)">
     <UseVulkan Condition="'$(UseVulkan)' == ''">true</UseVulkan>
-    <UseDX12   Condition="'$(UseDX12)'   == ''">true</UseDX12>
+    <UseDirectX12   Condition="'$(UseDirectX12)'   == ''">true</UseDirectX12>
   </PropertyGroup>
 
   <PropertyGroup Label="Engine feature flags (gate code inside the engine assembly: repo-wide, not per-app)">
@@ -43,12 +43,12 @@
     SDK puts TRACE/DEBUG there). Done in props (evaluation-time) so IntelliSense / source generators see it.
   -->
   <PropertyGroup Label="Feature constants">
-    <!-- Let the host opt each backend's code path in/out at compile time, matching the SDK's UseVulkan/UseDX12
+    <!-- Let the host opt each backend's code path in/out at compile time, matching the SDK's UseVulkan/UseDirectX12
          backend references so the constant is present exactly when that backend assembly is referenced. The
-         unified Sandbox host (Program.cs) names VulkanEngineSettings under LOOM_VULKAN and DX12EngineSettings
-         under LOOM_DX12, so it compiles cleanly with either backend disabled (and defaults to whichever is on). -->
+         unified Sandbox host (Program.cs) names VulkanEngineSettings under LOOM_VULKAN and DirectX12EngineSettings
+         under LOOM_DIRECTX12, so it compiles cleanly with either backend disabled (and defaults to whichever is on). -->
     <DefineConstants Condition="'$(UseVulkan)' == 'true'">$(DefineConstants);LOOM_VULKAN</DefineConstants>
-    <DefineConstants Condition="'$(UseDX12)' == 'true'">$(DefineConstants);LOOM_DX12</DefineConstants>
+    <DefineConstants Condition="'$(UseDirectX12)' == 'true'">$(DefineConstants);LOOM_DIRECTX12</DefineConstants>
     <DefineConstants Condition="'$(UseImGui)' == 'true'">$(DefineConstants);LOOM_IMGUI</DefineConstants>
     <DefineConstants Condition="'$(UseNamedGPUObjects)' == 'true'">$(DefineConstants);LOOM_NAMED_GPU_OBJECTS</DefineConstants>
     <DefineConstants Condition="'$(UseDebugVisualization)' == 'true'">$(DefineConstants);LOOM_DEBUG_VIZ</DefineConstants>

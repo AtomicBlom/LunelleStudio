@@ -21,18 +21,15 @@
   </PropertyGroup>
 
   <PropertyGroup Label="Engine feature flags (gate code inside the engine assembly: repo-wide, not per-app)">
-    <UseImGui           Condition="'$(UseImGui)'           == ''">true</UseImGui>
     <UseNamedGPUObjects Condition="'$(UseNamedGPUObjects)' == ''">true</UseNamedGPUObjects>
   </PropertyGroup>
 
   <!--
-    Per-resource debug-visualization (the M13 resource viewer + frustum-freeze wireframe). These hit the
-    win-arm64 ImGui ImVec2-by-value HFA marshaling defect that no-ops igImage/igDummy — so M13 does NOT use
-    ImGui's image/line helpers: the engine draws the thumbnails + wireframe itself as raw-float quads
-    (ImGuiRenderer.DrawThumbnails / DrawLines), which marshals correctly on every architecture. The feature
-    is therefore on by default everywhere now. (The flag is kept as a production knob: set it false to compile
-    the debug viz out while keeping ImGui for game UI. No code reads LOOM_DEBUG_VIZ yet — the M13 viz is gated
-    on LOOM_IMGUI, since it needs ImGui windows; wire host debug UI to this flag if finer gating is wanted.)
+    Per-resource debug-visualization (the resource viewer + frustum-freeze wireframe). The resource viewer is
+    rendered through the engine's neutral draw-list API (IRenderContext.ResolveInspectable + IEngine
+    .ResourceInspectionEnabled), sidestepping ImGui's image/line helpers (which hit the win-arm64
+    ImVec2-by-value HFA marshaling defect). A production knob: no code reads LOOM_DEBUG_VIZ yet — wire host
+    debug UI to this flag if finer gating is wanted.
   -->
   <PropertyGroup Label="Debug visualization">
     <UseDebugVisualization Condition="'$(UseDebugVisualization)' == ''">true</UseDebugVisualization>
@@ -49,7 +46,6 @@
          under LOOM_DIRECTX12, so it compiles cleanly with either backend disabled (and defaults to whichever is on). -->
     <DefineConstants Condition="'$(UseVulkan)' == 'true'">$(DefineConstants);LOOM_VULKAN</DefineConstants>
     <DefineConstants Condition="'$(UseDirectX12)' == 'true'">$(DefineConstants);LOOM_DIRECTX12</DefineConstants>
-    <DefineConstants Condition="'$(UseImGui)' == 'true'">$(DefineConstants);LOOM_IMGUI</DefineConstants>
     <DefineConstants Condition="'$(UseNamedGPUObjects)' == 'true'">$(DefineConstants);LOOM_NAMED_GPU_OBJECTS</DefineConstants>
     <DefineConstants Condition="'$(UseDebugVisualization)' == 'true'">$(DefineConstants);LOOM_DEBUG_VIZ</DefineConstants>
   </PropertyGroup>

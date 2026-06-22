@@ -40,4 +40,8 @@
     <PackageVersion Include="Shouldly" Version="4.3.0" />
   </ItemGroup>
 
+  <ItemGroup Label="NuGet packaging + SourceLink">
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
+  </ItemGroup>
+
 </Project>

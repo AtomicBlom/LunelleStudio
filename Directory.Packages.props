@@ -25,6 +25,11 @@
 
   <ItemGroup Label="Shader toolchain + UI">
     <PackageVersion Include="Slang.Sdk" Version="0.5.1" />
+    <!-- Hermetic DXC for DXIL signing (replaces non-hermetic Windows-SDK DXC glob). Add a
+         Microsoft.Direct3D.DXC PackageReference with GeneratePathProperty=true to any project
+         that compiles shaders with LoomEmitDxil=true; Loom.Shaders.targets picks it up via
+         $(PkgMicrosoft_Direct3D_DXC). Build-machine only — the shipped app carries signed .dxil. -->
+    <PackageVersion Include="Microsoft.Direct3D.DXC" Version="1.9.2602.24" />
     <PackageVersion Include="ImGui.NET" Version="1.91.6.1" />
     <!-- Roslyn for the SUIsei.SourceGen XAML incremental generator (build-time analyzer, PrivateAssets=all). -->
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />

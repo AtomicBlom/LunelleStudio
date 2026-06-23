@@ -28,11 +28,19 @@
     <IncludeSymbols>true</IncludeSymbols>
     <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <!-- SourceLink: embeds the GitHub commit URL in symbols so debuggers can fetch source on demand. -->
   <ItemGroup>
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
+  </ItemGroup>
+
+  <!-- Include the repo root README in every Loom package. The Condition guards submodule projects
+       (external/VMASharp, external/SUIsei) whose Directory.Build.props walk reaches this file but
+       whose own readme is in a different location — they set PackageReadmeFile themselves. -->
+  <ItemGroup Condition="Exists('$(MSBuildThisFileDirectory)README.md') and '$(PackageReadmeFile)' == 'README.md'">
+    <None Include="$(MSBuildThisFileDirectory)README.md" Pack="true" PackagePath="README.md" />
   </ItemGroup>
 
   <PropertyGroup Label="Backend selection (read by the app-facing Loom SDK: build/Loom.Sdk/Sdk/Sdk.targets)">

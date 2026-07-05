@@ -40,6 +40,9 @@
   <PropertyGroup Label="Backend selection (read by the app-facing Loom SDK: build/Loom.Sdk/Sdk/Sdk.targets)">
     <UseVulkan Condition="'$(UseVulkan)' == ''">true</UseVulkan>
     <UseDirectX12   Condition="'$(UseDirectX12)'   == ''">true</UseDirectX12>
+    <!-- The WebGPU backend is browser-only (Loom.Web / WASM); desktop builds don't reference it, so it
+         defaults off and the browser host opts in. -->
+    <UseWebGPU Condition="'$(UseWebGPU)' == ''">false</UseWebGPU>
   </PropertyGroup>
 
   <PropertyGroup Label="Engine feature flags (gate code inside the engine assembly: repo-wide, not per-app)">
@@ -68,6 +71,7 @@
          under LOOM_DIRECTX12, so it compiles cleanly with either backend disabled (and defaults to whichever is on). -->
     <DefineConstants Condition="'$(UseVulkan)' == 'true'">$(DefineConstants);LOOM_VULKAN</DefineConstants>
     <DefineConstants Condition="'$(UseDirectX12)' == 'true'">$(DefineConstants);LOOM_DIRECTX12</DefineConstants>
+    <DefineConstants Condition="'$(UseWebGPU)' == 'true'">$(DefineConstants);LOOM_WEBGPU</DefineConstants>
     <DefineConstants Condition="'$(UseNamedGPUObjects)' == 'true'">$(DefineConstants);LOOM_NAMED_GPU_OBJECTS</DefineConstants>
     <DefineConstants Condition="'$(UseDebugVisualization)' == 'true'">$(DefineConstants);LOOM_DEBUG_VIZ</DefineConstants>
   </PropertyGroup>

@@ -364,3 +364,4 @@ FodyWeavers.xsd
 
 # Loom: throwaway cross-backend capture/verification PNGs (--capture output)
 captures/
+scratch-pub/

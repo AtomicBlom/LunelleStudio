@@ -13,7 +13,7 @@
     Crucially it does NOT inject project references or shader-compile targets — those live in the Loom
     SDK files under build/Loom.Sdk/ and are imported *explicitly* by the projects that need them. Keeping
     the constant translation here (auto-applied to every project) is deliberate: the flags gate code inside
-    the engine assembly (Loom.Vulkan), so the constant must be present when the engine itself compiles.
+    the engine assembly (Loom.Backend.Vulkan), so the constant must be present when the engine itself compiles.
     This is the engine-as-source-in-the-game-repo model — flipping a flag here recompiles the engine.
   -->
 

@@ -36,6 +36,15 @@
     <PackageReference Include="Microsoft.SourceLink.GitHub" PrivateAssets="All" />
   </ItemGroup>
 
+  <!-- Include each project's own README.md in its package. PackageReadmeFile alone does NOT auto-include the
+       file — the SDK still requires an explicit Pack=true item, confirmed by a dry-run publish failing NU5039
+       ("readme file does not exist") on every packed project without this. Submodule projects (external/SUIsei)
+       that reach this file but have their readme elsewhere include it explicitly in their own csproj and will
+       not match this condition (no README.md beside SUIsei.csproj). -->
+  <ItemGroup Condition="Exists('$(MSBuildProjectDirectory)/README.md')">
+    <None Include="$(MSBuildProjectDirectory)/README.md" Pack="true" PackagePath="README.md" />
+  </ItemGroup>
+
 
   <PropertyGroup Label="Backend selection (read by the app-facing Loom SDK: build/Loom.Sdk/Sdk/Sdk.targets)">
     <UseVulkan Condition="'$(UseVulkan)' == ''">true</UseVulkan>

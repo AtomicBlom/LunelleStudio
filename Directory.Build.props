@@ -17,6 +17,23 @@
     This is the engine-as-source-in-the-game-repo model — flipping a flag here recompiles the engine.
   -->
 
+  <!--
+    Warnings are errors across the Loom repo's own projects — the engine, samples, and tests build
+    warning-clean, so CI enforces it. Scoped naturally: external/ (vendored VMASharp + the SUIsei submodule)
+    and Loom.Web (the isolated browser MVP) each have their own Directory.Build.props that stop MSBuild's
+    upward walk, so this never reaches vendored or web-MVP code.
+
+    NoWarn covers the residual trim/AOT (ILxxxx) warnings a PublishAot surfaces from third-party Silk.NET —
+    its single-file Assembly.Location/CodeBase/DependencyContext use (IL3000/IL3002) and the per-assembly trim
+    rollup (IL2104). They aren't ours to fix, and an AOT publish must not fail on them under warnings-as-errors.
+    Our own trim/AOT issues still surface as detailed ILxxxx warnings (not these rollup/single-file codes) and
+    remain errors.
+  -->
+  <PropertyGroup Label="Warnings as errors">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <NoWarn>$(NoWarn);IL2104;IL3000;IL3002</NoWarn>
+  </PropertyGroup>
+
   <PropertyGroup Label="NuGet package metadata (applies to all packable projects in the Loom repo)">
     <Version>$(LoomVersion)</Version>
     <Authors>AtomicBlom</Authors>

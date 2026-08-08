@@ -1,4 +1,10 @@
-# Loom coding conventions. See CLAUDE.md for the human-readable summary.
+# Shared C# coding conventions, kept byte-identical between Loom and SUIsei.
+#
+# The two are developed together and SUIsei is vendored into Loom as a submodule, so a divergence here would have a
+# `dotnet format` run in either repo restyle the other's sources — and undo it again on the next run from the other
+# side. Change this file in both repositories as one change. Loom's CLAUDE.md carries the human-readable summary.
+#
+# Vendored code Loom does not own is excluded separately, by external/.editorconfig.
 root = true
 
 [*]

@@ -29,7 +29,7 @@
          Microsoft.Direct3D.DXC PackageReference with GeneratePathProperty=true to any project
          that compiles shaders with LoomEmitDxil=true; Loom.Shaders.targets picks it up via
          $(PkgMicrosoft_Direct3D_DXC). Build-machine only — the shipped app carries signed .dxil. -->
-    <PackageVersion Include="Microsoft.Direct3D.DXC" Version="1.9.2602.24" />
+    <PackageVersion Include="Microsoft.Direct3D.DXC" Version="1.9.2609.5" />
     <PackageVersion Include="ImGui.NET" Version="1.91.6.1" />
     <!-- Roslyn for the SUIsei.SourceGen XAML incremental generator (build-time analyzer, PrivateAssets=all). -->
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp" Version="4.14.0" />
@@ -39,17 +39,17 @@
   </ItemGroup>
 
   <ItemGroup Label="Assets (Loom.Assets image + glTF loaders)">
-    <PackageVersion Include="StbImageSharp" Version="2.30.15" />
-    <PackageVersion Include="SharpGLTF.Toolkit" Version="1.0.3" />
+    <PackageVersion Include="StbImageSharp" Version="2.30.16" />
+    <PackageVersion Include="SharpGLTF.Toolkit" Version="1.0.7" />
   </ItemGroup>
 
   <ItemGroup Label="Tests (TUnit on Microsoft.Testing.Platform + Shouldly assertions)">
-    <PackageVersion Include="TUnit" Version="1.56.0" />
+    <PackageVersion Include="TUnit" Version="1.74.0" />
     <PackageVersion Include="Shouldly" Version="4.3.0" />
   </ItemGroup>
 
   <ItemGroup Label="NuGet packaging + SourceLink">
-    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
+    <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.401" />
   </ItemGroup>
 
 </Project>

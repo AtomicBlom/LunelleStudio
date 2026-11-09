@@ -24,6 +24,8 @@
   </ItemGroup>
 
   <ItemGroup Label="Shader toolchain + UI">
+    <!-- Also pinned as LoomSlangVersion in build/Loom.Sdk/Sdk/Sdk.targets, for consumers outside this file; the build
+         fails if the two differ. -->
     <PackageVersion Include="Slang.Sdk" Version="0.5.1" />
     <!-- Hermetic DXC for DXIL signing (replaces non-hermetic Windows-SDK DXC glob). Add a
          Microsoft.Direct3D.DXC PackageReference with GeneratePathProperty=true to any project

@@ -179,4 +179,17 @@ public sealed class WorkbenchViewModel : ViewModel
 
 	/// <summary>The part chosen, as a grid.</summary>
 	public PatternViewModel Pattern { get; } = new();
+
+	/// <summary>Plays a note on the bench (a key of the on-screen keyboard), at <see cref="Velocity"/>; returns it, to let go.</summary>
+	public Synth.Chip.NoteHandle PlayNote(int note) => _workbench.AuditionOn(note, Velocity);
+
+	/// <summary>Lets a note from <see cref="PlayNote"/> go.</summary>
+	public void ReleaseNote(Synth.Chip.NoteHandle note) => _workbench.AuditionOff(note);
+
+	/// <summary>Hits a pad: a piece of the bench's kit, by its index in <see cref="Pads"/>.</summary>
+	public void HitPad(int index)
+	{
+		if ((uint)index < (uint)Pads.Count)
+			_workbench.AuditionHit(new Synth.Chip.DrumPiece(Pads[index]), Velocity);
+	}
 }

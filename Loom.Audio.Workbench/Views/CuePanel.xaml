@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The cues: a row each, a slider for a level, a button per option for a choice. -->
+<ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                x:Class="Loom.Audio.Workbench.Views.CuePanel"
+                IsTabStop="False">
+    <StackPanel>
+        <TextBlock x:Name="Heading" Text="Cues" FontSize="13" Margin="0,0,0,6" />
+        <StackPanel x:Name="Rows" />
+    </StackPanel>
+</ContentControl>

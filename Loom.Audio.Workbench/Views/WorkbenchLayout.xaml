@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The workbench page: the transport across the top, the error under it when a song fails to build, the sections and
+    the cues, the tracks and the patch bench, the chosen part as a grid, and the chip's load. Each region is a view of its
+    own, made in code over the page's view model and put in its host here.
+-->
+<ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                x:Class="Loom.Audio.Workbench.Views.WorkbenchLayout"
+                IsTabStop="False">
+    <Grid x:Name="Page" MinWidth="960" MinHeight="600">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="200" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <ContentControl x:Name="TransportHost" Grid.Row="0" IsTabStop="False" Margin="12,10,12,6" />
+
+        <Border x:Name="ErrorBanner" Grid.Row="1" Margin="12,0,12,6" Padding="10,6,10,7" CornerRadius="6" Background="#962A2C"
+                Visibility="Collapsed">
+            <TextBlock x:Name="ErrorText" FontSize="14" Foreground="#FFFFFF" TextWrapping="Wrap" />
+        </Border>
+
+        <Grid Grid.Row="2" Margin="12,0,12,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Margin="0,0,6,0" Padding="10,8" CornerRadius="8" Background="#1C1F28">
+                <ContentControl x:Name="SectionHost" IsTabStop="False" />
+            </Border>
+            <Border Grid.Column="1" Margin="6,0,0,0" Padding="10,8" CornerRadius="8" Background="#1C1F28">
+                <ContentControl x:Name="CueHost" IsTabStop="False" />
+            </Border>
+        </Grid>
+
+        <Grid Grid.Row="3" Margin="12,0,12,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <Border Grid.Column="0" Margin="0,0,6,0" Padding="10,8" CornerRadius="8" Background="#1C1F28">
+                <ContentControl x:Name="TrackHost" IsTabStop="False" />
+            </Border>
+            <Border Grid.Column="1" Margin="6,0,0,0" Padding="10,8" CornerRadius="8" Background="#1C1F28">
+                <ContentControl x:Name="BenchHost" IsTabStop="False" />
+            </Border>
+        </Grid>
+
+        <Border Grid.Row="4" Margin="12,0,12,6" Padding="10,8" CornerRadius="8" Background="#1C1F28">
+            <ContentControl x:Name="PatternHost" IsTabStop="False" />
+        </Border>
+
+        <TextBlock x:Name="StatusText" Grid.Row="5" Margin="14,0,14,8" FontSize="13" Foreground="#8C94A4" />
+    </Grid>
+</ContentControl>

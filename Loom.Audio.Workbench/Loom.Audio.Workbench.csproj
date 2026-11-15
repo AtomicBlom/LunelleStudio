@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!-- The music workbench: a SUIsei page that plays a song while its code is edited under dotnet watch, rebuilding it
+	     and swapping it in on the next bar. Its model and view models need no window; its views are SUIsei XAML. Given a
+	     catalog of songs, patches, kits and cues by the app that hosts it; knows nothing of any game. -->
+	<Import Project="..\external\SUIsei\build\SUIsei.props" />
+
+	<PropertyGroup>
+		<TargetFramework>net10.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<!-- Not a package yet: it becomes one once its surface settles. -->
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="Loom.Tests" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Loom.Core\Loom.Core.csproj" />
+		<ProjectReference Include="..\Loom.Input\Loom.Input.csproj" />
+		<ProjectReference Include="..\Loom.Audio.Synth\Loom.Audio.Synth.csproj" />
+		<ProjectReference Include="..\external\SUIsei\SUIsei\SUIsei.csproj" />
+		<ProjectReference Include="..\Loom.UI.SUIsei\Loom.UI.SUIsei.csproj" />
+	</ItemGroup>
+
+	<Import Project="..\external\SUIsei\build\SUIsei.targets" />
+
+</Project>

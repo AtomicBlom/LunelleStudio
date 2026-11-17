@@ -10,7 +10,7 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<!-- Not a package yet: it becomes one once its surface settles. -->
+		<!-- Not packed: an app references the project, as HelloSynth does. -->
 		<IsPackable>false</IsPackable>
 	</PropertyGroup>
 
@@ -19,11 +19,9 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Loom.Core\Loom.Core.csproj" />
 		<ProjectReference Include="..\Loom.Input\Loom.Input.csproj" />
 		<ProjectReference Include="..\Loom.Audio.Synth\Loom.Audio.Synth.csproj" />
 		<ProjectReference Include="..\external\SUIsei\SUIsei\SUIsei.csproj" />
-		<ProjectReference Include="..\Loom.UI.SUIsei\Loom.UI.SUIsei.csproj" />
 	</ItemGroup>
 
 	<Import Project="..\external\SUIsei\build\SUIsei.targets" />

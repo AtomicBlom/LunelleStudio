@@ -32,7 +32,7 @@
 
         <ScrollViewer Grid.Row="1" Visibility="{x:Bind views:Display.Not(ViewModel.Designer.IsCodeTab), Mode=OneWay}">
             <StackPanel Margin="12,0,16,12">
-                <ItemsControl ItemsSource="{x:Bind ViewModel.Designer.Inspector}">
+                <ItemsControl ItemsSource="{x:Bind ViewModel.Designer.Inspector, Mode=OneWay}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="wb:InspectorItemViewModel">
                             <StackPanel>
@@ -80,7 +80,7 @@
 
                 <StackPanel Visibility="{x:Bind ViewModel.Designer.IsMacrosTab, Mode=OneWay}" Margin="0,8,0,0">
                     <TextBlock Text="NOW, AS THE GAME WOULD TURN THEM" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Margin="0,8,0,4" />
-                    <ItemsControl ItemsSource="{x:Bind ViewModel.Macros}">
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.Macros, Mode=OneWay}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="wb:MacroViewModel">
                                 <StackPanel Orientation="Horizontal">
@@ -100,7 +100,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="12,0,12,6">
-                <Button Command="{x:Bind ViewModel.Designer.CopyCommand}">
+                <Button Command="{x:Bind ViewModel.Designer.CopyCommand, Mode=OneWay}">
                     <TextBlock Text="Copy" FontSize="12" Margin="8,3,8,4" />
                 </Button>
                 <TextBlock Text="{x:Bind ViewModel.CopyStatus, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Dim}" Margin="10,0,0,0"

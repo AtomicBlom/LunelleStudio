@@ -20,33 +20,31 @@
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <Grid Grid.Row="0" Margin="12,8,12,6">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="0" Orientation="Horizontal">
+        <StackPanel Grid.Row="0" Margin="12,8,12,6">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
                 <TextBlock Text="{x:Bind ViewModel.Designer.Name, Mode=OneWay}" FontSize="16" Foreground="{x:Static views:Theme.Ink}" VerticalAlignment="Center" />
                 <TextBlock Text="{x:Bind ViewModel.Designer.Status, Mode=OneWay}" FontSize="12" VerticalAlignment="Center" Margin="12,0,0,0"
                            Foreground="{x:Bind views:Display.Problem(ViewModel.Designer.HasProblems), Mode=OneWay}" />
             </StackPanel>
-            <StackPanel Grid.Column="1" Orientation="Horizontal">
+            <StackPanel Orientation="Horizontal">
                 <ToggleButton IsChecked="{x:Bind ViewModel.Designer.HearOriginal, Mode=TwoWay}" Margin="0,0,6,0">
                     <TextBlock Text="Hear its code" FontSize="12" Margin="8,3,8,4" />
                 </ToggleButton>
                 <ToggleButton IsChecked="{x:Bind ViewModel.Designer.AddOpen, Mode=TwoWay}" Margin="0,0,6,0">
                     <TextBlock Text="+ Operator" FontSize="12" Margin="8,3,8,4" />
                 </ToggleButton>
-                <Button Command="{x:Bind ViewModel.Designer.RevertCommand}" Margin="0,0,6,0">
+                <Button Command="{x:Bind ViewModel.Designer.RevertCommand, Mode=OneWay}" Margin="0,0,6,0">
                     <TextBlock Text="Revert" FontSize="12" Margin="8,3,8,4" />
                 </Button>
-                <Button Command="{x:Bind ViewModel.Designer.CopyCommand}">
+                <Button Command="{x:Bind ViewModel.Designer.CopyCommand, Mode=OneWay}">
                     <TextBlock Text="Copy C#" FontSize="12" Margin="8,3,8,4" />
                 </Button>
+                <TextBlock Text="{x:Bind ViewModel.CopyStatus, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Dim}"
+                           VerticalAlignment="Center" Margin="10,0,0,0" />
             </StackPanel>
-        </Grid>
+        </StackPanel>
 
-        <ItemsControl Grid.Row="1" ItemsSource="{x:Bind ViewModel.Designer.AddButtons}" Margin="12,0,12,6"
+        <ItemsControl Grid.Row="1" ItemsSource="{x:Bind ViewModel.Designer.AddButtons, Mode=OneWay}" Margin="12,0,12,6"
                       Visibility="{x:Bind ViewModel.Designer.AddOpen, Mode=OneWay}">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
@@ -70,10 +68,11 @@
         <Grid Grid.Row="3" Margin="12,0,12,6">
             <TextBlock Text="Choose a patch from the library." FontSize="13" Foreground="{x:Static views:Theme.Dim}"
                        Visibility="{x:Bind views:Display.Not(ViewModel.Designer.IsLoaded), Mode=OneWay}" />
-            <views:OperatorGraph Designer="{x:Bind ViewModel.Designer}" />
+            <views:OperatorGraph Designer="{x:Bind ViewModel.Designer, Mode=OneWay}" />
         </Grid>
 
-        <ItemsControl Grid.Row="4" ItemsSource="{x:Bind ViewModel.Designer.Stages}" Margin="12,0,12,6">
+        <ScrollViewer Grid.Row="4" HorizontalScrollMode="Enabled" Margin="12,0,12,6">
+        <ItemsControl ItemsSource="{x:Bind ViewModel.Designer.Stages, Mode=OneWay}" Margin="0,0,0,10">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>
                     <StackPanel Orientation="Horizontal" />
@@ -90,7 +89,8 @@
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
         </ItemsControl>
+        </ScrollViewer>
 
-        <views:ScopeView Grid.Row="5" Margin="12,0,12,10" ViewModel="{x:Bind ViewModel}" HorizontalAlignment="Left" />
+        <views:ScopeView Grid.Row="5" Margin="12,0,12,10" ViewModel="{x:Bind ViewModel, Mode=OneWay}" HorizontalAlignment="Left" />
     </Grid>
 </ContentControl>

@@ -14,7 +14,9 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <StackPanel Grid.Column="0" Orientation="Horizontal">
+            <!-- Scrolls sideways when a host's extras make it wider than the window, rather than running under the right -->
+            <ScrollViewer Grid.Column="0" HorizontalScrollMode="Enabled" Margin="0,0,10,0">
+            <StackPanel Orientation="Horizontal">
                 <TextBlock Text="{x:Bind ViewModel.SongName, Mode=OneWay}" FontSize="15" Foreground="{x:Static views:Theme.Ink}"
                            VerticalAlignment="Center" Margin="2,0,14,0" />
                 <ToggleButton IsChecked="{x:Bind ViewModel.IsPlaying, Mode=TwoWay}" Width="72" Margin="0,0,14,0" VerticalAlignment="Center">
@@ -31,6 +33,7 @@
                 </ToggleButton>
                 <StackPanel x:Name="ExtrasPanel" Orientation="Horizontal" VerticalAlignment="Center" />
             </StackPanel>
+            </ScrollViewer>
             <StackPanel Grid.Column="1" Orientation="Horizontal">
                 <ToggleButton IsChecked="{x:Bind ViewModel.ErrorOpen, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,12,0">
                     <Border Background="{x:Bind views:Display.Pill(ViewModel.HasError), Mode=OneWay}" CornerRadius="10">

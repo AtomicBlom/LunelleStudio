@@ -155,7 +155,7 @@
         </ScrollViewer>
 
         <Border Grid.Row="2" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="0,1,0,0" Padding="12,8,12,8">
-            <views:PatternView Pattern="{x:Bind ViewModel.Pattern}" />
+            <views:PatternView Pattern="{x:Bind ViewModel.Pattern, Mode=OneWay}" />
         </Border>
     </Grid>
 </ContentControl>

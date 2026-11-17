@@ -12,12 +12,12 @@ namespace Loom.Audio.Workbench.Views;
 /// </summary>
 internal sealed class ScopeView : ContentControl
 {
-	private const float ScopeWidth = 300f;
-	private const float SpectrumWidth = 460f;
+	private const float ScopeWidth = 240f;
+	private const float SpectrumWidth = 380f;
 	private const float DrawnHeight = 110f;
 	private const int Samples = 4096;
-	private const int ScopePoints = 300;
-	private const int SpectrumPoints = 230;
+	private const int ScopePoints = 240;
+	private const int SpectrumPoints = 190;
 
 	private readonly float[] _heard = new float[Samples];
 	private readonly Point[] _scopePoints = new Point[ScopePoints];

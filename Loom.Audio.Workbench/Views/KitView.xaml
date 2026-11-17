@@ -38,10 +38,10 @@
                     <ToggleButton IsChecked="{x:Bind ViewModel.Sketch.IsLooping, Mode=TwoWay}" Margin="0,0,6,0">
                         <TextBlock Text="Loop it" FontSize="12" Margin="8,3,8,4" />
                     </ToggleButton>
-                    <Button Command="{x:Bind ViewModel.Sketch.ClearCommand}" Margin="0,0,6,0">
+                    <Button Command="{x:Bind ViewModel.Sketch.ClearCommand, Mode=OneWay}" Margin="0,0,6,0">
                         <TextBlock Text="Clear" FontSize="12" Margin="8,3,8,4" />
                     </Button>
-                    <Button Command="{x:Bind ViewModel.Sketch.CopyCommand}" Margin="0,0,10,0">
+                    <Button Command="{x:Bind ViewModel.Sketch.CopyCommand, Mode=OneWay}" Margin="0,0,10,0">
                         <TextBlock Text="Copy Beat" FontSize="12" Margin="8,3,8,4" />
                     </Button>
                     <TextBlock Text="tempo" FontSize="12" Foreground="{x:Static views:Theme.Dim}" VerticalAlignment="Center" Margin="0,0,6,0" />
@@ -51,7 +51,7 @@
                 </StackPanel>
                 <TextBlock Text="A click turns a step to x (a hit), X (an accent), o (a ghost note), then off." FontSize="11"
                            Foreground="{x:Static views:Theme.Faint}" Margin="0,0,0,6" />
-                <ItemsControl ItemsSource="{x:Bind ViewModel.Sketch.Rows}">
+                <ItemsControl ItemsSource="{x:Bind ViewModel.Sketch.Rows, Mode=OneWay}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="wb:BeatRowViewModel">
                             <StackPanel Orientation="Horizontal" Margin="0,0,0,3">

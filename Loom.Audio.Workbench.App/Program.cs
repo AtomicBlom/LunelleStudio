@@ -1,16 +1,28 @@
+using Loom.Audio.Workbench;
 using Loom.Audio.Workbench.App;
 using Loom.Audio.Workbench.Projects;
 using Loom.Core.Hosting;
 using Loom.Hosting.Desktop;
 
-// loom-workbench <project.csproj | folder>   the workbench over that music project
-// loom-workbench new <folder>                 makes a music project there to start from, and opens it
+// loom-workbench <project.csproj | folder> [--extension <extension.csproj>] [the extension's own options]
+//     the workbench over that music project, with its extension: the one its LoomWorkbenchExtension property names, or
+//     the one given (--extension none for none)
+// loom-workbench new <folder>
+//     makes a music project there to start from, and opens it
 // The host's own options still apply (--backend and the rest).
 #if DEBUG
 // SUIsei's diagnostics endpoint, which RoseMCP's live UI tools reach the window's tree through
 SUIsei.DiagnosticsEndpoint.Start();
 #endif
 var appArgs = HostOptions.Parse(args).AppArgs.ToList();
+string? extensionProject = null;
+var at = appArgs.IndexOf("--extension");
+if (at >= 0 && at + 1 < appArgs.Count)
+{
+	extensionProject = appArgs[at + 1];
+	appArgs.RemoveRange(at, 2);
+}
+
 string project;
 try
 {
@@ -27,7 +39,31 @@ catch (Exception ex) when (ex is ArgumentException or InvalidOperationException 
 	return 1;
 }
 Console.WriteLine($"[workbench] {project}");
-LoomApplication.Run(new WorkbenchApp(project), args);
+
+// The extension, built and loaded before the window opens: it gives the bus the music plays into
+IWorkbenchExtension? extension = null;
+try
+{
+	extensionProject = extensionProject switch
+	{
+		"none" => null,
+		null => await WorkbenchExtensions.NamedByAsync(project),
+		_ => Path.GetFullPath(extensionProject),
+	};
+	if (extensionProject is not null)
+	{
+		Console.WriteLine($"[workbench] building the extension {extensionProject}");
+		extension = await WorkbenchExtensions.BuildAndLoadAsync(extensionProject, WorkbenchApp.Configuration);
+		Console.WriteLine($"[workbench] extension {extension.GetType().FullName}");
+	}
+}
+catch (InvalidOperationException ex)
+{
+	Console.Error.WriteLine($"[workbench] the extension couldn't be loaded, so the workbench opens without it: {ex.Message}");
+}
+
+// What the workbench didn't take (the project, "new" and its folder) is the extension's
+LoomApplication.Run(new WorkbenchApp(project, extension, [.. appArgs.Skip(appArgs is ["new", ..] ? 2 : 1)]), args);
 return 0;
 
 // A .csproj as given, or the one in a folder

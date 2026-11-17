@@ -48,4 +48,45 @@ internal static class DesignTimeBuild
 		return [.. json.RootElement.GetProperty("Items").GetProperty("CscCommandLineArgs").EnumerateArray()
 			.Select(item => item.GetProperty("Identity").GetString()!)];
 	}
+
+	/// <summary>An MSBuild property of <paramref name="projectPath"/> as it evaluates, or null when it is empty.</summary>
+	/// <exception cref="InvalidOperationException">The project couldn't be evaluated.</exception>
+	public static async Task<string?> PropertyAsync(string projectPath, string name, CancellationToken cancellation = default)
+	{
+		var text = await RunAsync(["msbuild", projectPath, "-nologo", $"-getProperty:{name}"], Path.GetDirectoryName(projectPath)!, cancellation);
+		var value = text.Trim();
+		return value.Length == 0 ? null : value;
+	}
+
+	/// <summary>Builds <paramref name="projectPath"/> and returns its assembly's path (its TargetPath).</summary>
+	/// <exception cref="InvalidOperationException">It didn't build; the message has the build's output.</exception>
+	public static async Task<string> BuildAsync(string projectPath, string configuration, CancellationToken cancellation = default)
+	{
+		var text = await RunAsync(["build", projectPath, "-nologo", "-v:q", "-c", configuration, "-getProperty:TargetPath"],
+			Path.GetDirectoryName(projectPath)!, cancellation);
+		var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+		return lines.Length > 0 && File.Exists(lines[^1]) ? lines[^1] : throw new InvalidOperationException($"{Path.GetFileName(projectPath)} built nothing to load:\n{text}");
+	}
+
+	// dotnet, with its output when it succeeds and an exception holding it when it doesn't
+	private static async Task<string> RunAsync(string[] arguments, string directory, CancellationToken cancellation)
+	{
+		var start = new ProcessStartInfo("dotnet")
+		{
+			RedirectStandardOutput = true,
+			RedirectStandardError = true,
+			UseShellExecute = false,
+			WorkingDirectory = directory,
+		};
+		foreach (var argument in arguments)
+			start.ArgumentList.Add(argument);
+		using var process = Process.Start(start) ?? throw new InvalidOperationException("dotnet couldn't be started.");
+		var output = process.StandardOutput.ReadToEndAsync(cancellation);
+		var errors = process.StandardError.ReadToEndAsync(cancellation);
+		await process.WaitForExitAsync(cancellation);
+		var text = await output;
+		if (process.ExitCode != 0)
+			throw new InvalidOperationException($"dotnet {string.Join(' ', arguments)} failed:\n{text}{await errors}");
+		return text;
+	}
 }

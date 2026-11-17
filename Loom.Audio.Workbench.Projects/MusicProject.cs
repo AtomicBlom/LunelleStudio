@@ -227,7 +227,7 @@ public sealed class MusicProject : IDisposable
 				context.Unload();
 				return new ProjectBuild(null, [problem!], watch.Elapsed, null);
 			}
-			return new ProjectBuild(catalog, [], watch.Elapsed, context);
+			return new ProjectBuild(catalog, [], watch.Elapsed, context) { Music = assembly };
 		}
 		catch (Exception ex) when (ex is BadImageFormatException or FileLoadException or FileNotFoundException or TypeLoadException or MissingMethodException)
 		{

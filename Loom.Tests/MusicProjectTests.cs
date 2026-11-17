@@ -18,7 +18,7 @@ public class MusicProjectTests
 	private static string SynthProject([CallerFilePath] string here = "") =>
 		Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "Loom.Audio.Synth", "Loom.Audio.Synth.csproj"));
 
-	private static string Music(string notes, string extra = "") => $$"""
+	internal static string Music(string notes, string extra = "") => $$"""
 		using Loom.Audio.Synth.Chip;
 		using Loom.Audio.Synth.Music;
 
@@ -45,7 +45,7 @@ public class MusicProjectTests
 		}
 		""";
 
-	private static async Task<string> MakeProjectAsync()
+	internal static async Task<string> MakeProjectAsync()
 	{
 		var folder = Path.Combine(Path.GetTempPath(), "loom-music-" + Guid.NewGuid().ToString("N")[..8]);
 		Directory.CreateDirectory(folder);

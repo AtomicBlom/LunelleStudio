@@ -35,4 +35,7 @@ public sealed class ProjectBuild
 		_context?.Unload();
 		_context = null;
 	}
+
+	/// <summary>The music's assembly when it built: held only while it plays, so its context can unload after.</summary>
+	public System.Reflection.Assembly? Music { get; internal init; }
 }

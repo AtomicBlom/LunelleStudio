@@ -10,10 +10,12 @@ using SUIsei;
 namespace Loom.Audio.Workbench.App;
 
 /// <summary>
-/// The workbench over a music project: the window opens at once on an empty workbench while the project is opened and
-/// compiled beside it, then plays what it built and takes up each save. What it was doing is kept beside the project.
+/// The workbench over a music project: the window opens at once on an empty workbench (or the extension's own build
+/// of the music) while the project is opened and compiled beside it, then plays what it built and takes up each save.
+/// A project's extension, loaded before the window opens, gives the bus the music plays into and controls of its own,
+/// and is kept across every save. What it was doing is kept beside the project.
 /// </summary>
-public sealed class WorkbenchApp(string projectPath) : LoomApplication
+public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extension = null, IReadOnlyList<string>? arguments = null) : LoomApplication
 {
 	private readonly WorkbenchStateFile _state = WorkbenchStateFile.Beside(projectPath);
 	private UIHost _ui = null!;
@@ -44,11 +46,23 @@ public sealed class WorkbenchApp(string projectPath) : LoomApplication
 		_painter = UIPainter.Create(Engine, _ui);
 		_view = _ui.CreateRoot(UILayer.Default);
 
-		_workbench = new Workbench(Audio, Audio.CreateBus("music"), new WorkbenchCatalog()) { CopyText = SetClipboardText };
+		// The extension's bus (a game's mix) and its own build of the music, to play until the project has compiled
+		var catalog = extension?.Catalog;
+		_workbench = new Workbench(Audio, extension?.Output(Audio) ?? Audio.CreateBus("music"), catalog ?? new WorkbenchCatalog())
+		{
+			CopyText = SetClipboardText,
+		};
 		_workbench.ReportStatus($"opening {Name}…");
 		_restore = _state.Load();
-		_opening = MusicProject.OpenAsync(projectPath);
-		_view.Root.Content = new WorkbenchView(_workbench.ViewModel);
+		if (catalog is not null && _restore is not null)
+		{
+			_workbench.RestoreState(_restore);
+			_restore = null;
+		}
+		_opening = MusicProject.OpenAsync(projectPath, new Dictionary<string, string> { ["Configuration"] = Configuration });
+		var view = new WorkbenchView(_workbench.ViewModel);
+		extension?.Attach(new WorkbenchExtensionContext(_workbench, Audio, view.TransportExtras, arguments ?? []));
+		_view.Root.Content = view;
 		PushInputLayer(new SUIseiInputLayer(_ui));
 
 		SetGraph(RenderGraph.Define(g =>
@@ -76,6 +90,7 @@ public sealed class WorkbenchApp(string projectPath) : LoomApplication
 		}
 		_workbench.HandleInput(Input);
 		_workbench.Update(time.DeltaSeconds);
+		extension?.Update(time.DeltaSeconds);
 		_sinceSave += time.DeltaSeconds;
 		if (_sinceSave >= 1.0 && _restore is null)
 		{
@@ -92,7 +107,7 @@ public sealed class WorkbenchApp(string projectPath) : LoomApplication
 		_opened = true;
 		if (_opening.IsCompletedSuccessfully)
 		{
-			_project = new WorkbenchProject(_opening.Result, _workbench);
+			_project = new WorkbenchProject(_opening.Result, _workbench) { Extension = extension };
 			return;
 		}
 		var problem = _opening.Exception?.GetBaseException().Message ?? "it was cancelled";
@@ -114,5 +129,14 @@ public sealed class WorkbenchApp(string projectPath) : LoomApplication
 			_state.Save(_workbench.CaptureState());
 		_project?.Dispose();
 		_workbench.Dispose();
+		extension?.Dispose();
 	}
+
+	/// <summary>The configuration this was built in, which the project and its extension are built in too, so their builds share its Loom.</summary>
+	public static string Configuration =>
+#if DEBUG
+		"Debug";
+#else
+		"Release";
+#endif
 }

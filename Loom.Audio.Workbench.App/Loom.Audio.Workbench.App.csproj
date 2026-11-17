@@ -25,6 +25,8 @@
 		<AssemblyName>loom-workbench</AssemblyName>
 		<RootNamespace>Loom.Audio.Workbench.App</RootNamespace>
 		<LoomShaderSourceDir>$(MSBuildProjectDirectory)\Shaders</LoomShaderSourceDir>
+		<!-- On the newest .NET installed, so it can load a project (and an extension) that targets a newer one than Loom -->
+		<RollForward>LatestMajor</RollForward>
 	</PropertyGroup>
 
 	<ItemGroup>

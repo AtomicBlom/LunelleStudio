@@ -28,7 +28,10 @@ internal static class SharedReferences
 			if (!loaded.TryGetValue(name, out var assembly))
 				continue;
 			var built = ProjectLoadContext.Implementation(reference);
-			if (ModuleId(built) is { } id && id != assembly.ManifestModule.ModuleVersionId)
+			// A library built for several frameworks (SUIsei) gives a project on another framework a build of its own, whose
+			// id differs by design: only builds for the same framework are compared
+			if (ModuleId(built) is { } mine && mine.Id != assembly.ManifestModule.ModuleVersionId
+				&& (mine.Framework is null || mine.Framework == assembly.GetCustomAttribute<System.Runtime.Versioning.TargetFrameworkAttribute>()?.FrameworkName))
 				problems.Add($"{name}: the project's is {built}, the workbench runs {assembly.Location}");
 		}
 		return problems.Count == 0
@@ -38,8 +41,9 @@ internal static class SharedReferences
 				+ "rebuilt since the workbench started needs it restarted.\n" + string.Join("\n", problems);
 	}
 
-	// The module's version id, or null for a reference assembly (which has no code to compare) or one that can't be read
-	private static Guid? ModuleId(string path)
+	// The module's version id and the framework it was built for, or null for a reference assembly (which has no code to
+	// compare) or one that can't be read
+	private static (Guid Id, string? Framework)? ModuleId(string path)
 	{
 		try
 		{
@@ -48,15 +52,25 @@ internal static class SharedReferences
 			if (!pe.HasMetadata)
 				return null;
 			var metadata = pe.GetMetadataReader();
+			string? framework = null;
 			foreach (var handle in metadata.GetAssemblyDefinition().GetCustomAttributes())
 			{
 				var attribute = metadata.GetCustomAttribute(handle);
-				if (attribute.Constructor.Kind == HandleKind.MemberReference
-					&& metadata.GetMemberReference((MemberReferenceHandle)attribute.Constructor).Parent is { Kind: HandleKind.TypeReference } parent
-					&& metadata.GetString(metadata.GetTypeReference((TypeReferenceHandle)parent).Name) == "ReferenceAssemblyAttribute")
+				if (attribute.Constructor.Kind != HandleKind.MemberReference
+					|| metadata.GetMemberReference((MemberReferenceHandle)attribute.Constructor).Parent is not { Kind: HandleKind.TypeReference } parent)
+					continue;
+				var type = metadata.GetString(metadata.GetTypeReference((TypeReferenceHandle)parent).Name);
+				if (type == "ReferenceAssemblyAttribute")
 					return null;
+				if (type == "TargetFrameworkAttribute")
+				{
+					// A custom attribute's value: a prolog, then its one string argument
+					var value = metadata.GetBlobReader(attribute.Value);
+					value.ReadUInt16();
+					framework = value.ReadSerializedString();
+				}
 			}
-			return metadata.GetGuid(metadata.GetModuleDefinition().Mvid);
+			return (metadata.GetGuid(metadata.GetModuleDefinition().Mvid), framework);
 		}
 		catch (Exception ex) when (ex is IOException or BadImageFormatException or UnauthorizedAccessException)
 		{

@@ -31,6 +31,8 @@ public sealed class WorkbenchProject(MusicProject project, Workbench workbench) 
 			Workbench.UseCatalog(catalog);
 			_current?.Release();
 			_current = build;
+			if (build.Music is { } music)
+				Extension?.MusicBuilt(music);
 		}
 		Workbench.ReportBuild(build.Errors, build.Took);
 	}
@@ -40,4 +42,7 @@ public sealed class WorkbenchProject(MusicProject project, Workbench workbench) 
 
 	// The project's C#, which the workbench ejects pieces into and brings them back from
 	private readonly MusicCode _code = new(() => project.SourceFiles);
+
+	/// <summary>The project's workbench extension, told of each new build; null for none.</summary>
+	public IWorkbenchExtension? Extension { get; init; }
 }

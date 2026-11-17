@@ -26,6 +26,12 @@ public sealed class PaletteItemViewModel : ViewModel
 		internal set => Set(ref _isSelected, value);
 	}
 
+	// What a click on it does: the palette runs it and closes
+	internal Action? Chosen { get; set; }
+
+	/// <summary>Runs it from a click, as Enter does on the selection.</summary>
+	public System.Windows.Input.ICommand ChooseCommand => field ??= new ActionCommand(() => Chosen?.Invoke());
+
 	internal void Run() => _run();
 
 	internal bool Matches(string[] words)

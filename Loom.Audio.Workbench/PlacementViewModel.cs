@@ -114,6 +114,9 @@ public sealed class PlacementViewModel : ViewModel
 	/// <summary>How many rows its notes lie on: pitches or pieces.</summary>
 	public int Rows { get; internal init; }
 
+	/// <summary>It, for a view drawing the clip from all of it at once.</summary>
+	public PlacementViewModel Self => this;
+
 	/// <summary>Shows it in the pattern view, for a button.</summary>
 	public ICommand SelectCommand => field ??= new ActionCommand(Select);
 

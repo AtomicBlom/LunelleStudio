@@ -33,6 +33,40 @@ internal static class Display
 	/// <summary>Whether an index chooses something (not −1).</summary>
 	public static bool Chosen(int index) => index >= 0;
 
+	public static bool NoneChosen(int index) => index < 0;
+
 	/// <summary>Whether there is text to show.</summary>
 	public static bool Any(string text) => text.Length > 0;
+
+	public static bool Not(bool value) => !value;
+
+	// A part's condition, green while it holds
+	public static SolidColorBrush Met(bool met) => met ? Theme.Meter : Theme.Faint;
+
+	// A clip's edge, blue while it is the part chosen
+	public static SolidColorBrush Chosen(bool chosen) => chosen ? Theme.Note : Theme.Line;
+
+	// A section on the timeline, outlined while it plays
+	public static SolidColorBrush Playing(bool playing) => playing ? Theme.Accent : Theme.Line;
+
+	// A column of the lanes, lit faintly while its section plays
+	public static SolidColorBrush Column(bool current) => current ? Theme.AccentSoft : Theme.Clear;
+
+	// The build's pill: red while the last build failed
+	public static SolidColorBrush Pill(bool error) => error ? Theme.ErrorSoft : Theme.Raised;
+
+	public static SolidColorBrush PillInk(bool error) => error ? Theme.Error : Theme.Dim;
+
+	// A palette item, lit while Enter would run it
+	public static SolidColorBrush Highlight(bool selected) => selected ? Theme.AccentSoft : Theme.Clear;
+
+	// A cue the song never reads, dimmed
+	public static float Used(bool used) => used ? 1f : 0.45f;
+
+	// Where the playhead crosses a column, as a left margin
+	public static SUIsei.Thickness Playhead(float x) => new(x, 0f, 0f, 0f);
+
+	public static string Pin(bool pinned) => pinned ? "Unpin" : "Pin";
+
+	public static string Percent(float value) => $"{value * 100f:0}%";
 }

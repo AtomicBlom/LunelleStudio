@@ -19,6 +19,15 @@ internal static class Theme
 	public static SolidColorBrush Note { get; } = Brush(120, 180, 255);
 	public static SolidColorBrush BarLine { get; } = Brush(70, 76, 92);
 	public static SolidColorBrush Playhead { get; } = Brush(255, 196, 64, 200);
+	public static SolidColorBrush Raised { get; } = Brush(37, 41, 54);
+	public static SolidColorBrush Sunk { get; } = Brush(22, 24, 31);
+	public static SolidColorBrush Line { get; } = Brush(226, 230, 238, 30);
+	public static SolidColorBrush Faint { get; } = Brush(93, 100, 118);
+	public static SolidColorBrush AccentSoft { get; } = Brush(255, 196, 64, 40);
+	public static SolidColorBrush AccentInk { get; } = Brush(26, 20, 5);
+	public static SolidColorBrush ErrorSoft { get; } = Brush(224, 88, 93, 46);
+	public static SolidColorBrush Backdrop { get; } = Brush(0, 0, 0, 120);
+	public static SolidColorBrush Clear { get; } = Brush(0, 0, 0, 0);
 
 	public static SolidColorBrush Brush(byte r, byte g, byte b, byte a = 255) => new(HdrColor.FromRgb(r, g, b, a));
 }

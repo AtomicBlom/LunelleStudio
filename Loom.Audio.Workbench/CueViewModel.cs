@@ -53,6 +53,9 @@ public sealed class CueViewModel : ViewModel
 		internal set => Set(ref field, value);
 	} = true;
 
+	/// <summary>It, for a view drawing from all of it at once.</summary>
+	public CueViewModel Self => this;
+
 	/// <summary>A level's value, 0 to 1. Setting it tells the music.</summary>
 	public float Value
 	{

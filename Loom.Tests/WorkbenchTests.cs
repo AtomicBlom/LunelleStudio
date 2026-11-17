@@ -224,6 +224,43 @@ public class WorkbenchTests
 	}
 
 	[Test]
+	public void The_window_lays_out_over_a_playing_song_in_every_mode_with_the_library_and_palette()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		var host = new SUIsei.UIHost();
+		var view = new WorkbenchView(model);
+		host.CreateRoot(SUIsei.UILayer.Default).Root.Content = view;
+		var size = new System.Numerics.Vector2(1280f, 800f);
+		void Frame()
+		{
+			rig.Step(MusicRig.Bar / 16);
+			host.Tick(1.0 / 60.0, 1f, size);
+			host.Render();
+		}
+
+		rig.Workbench.Play();
+		Frame();
+		model.Tracks[1].Placements[0].Select();
+		Frame();
+		model.LibraryOpen = true;
+		Frame();
+		model.LibraryPinned = true;
+		Frame();
+		model.PaletteOpen = true;
+		Frame();
+		model.PaletteQuery = "sec";
+		Frame();
+		model.PaletteOpen = false;
+		model.Mode = WorkbenchMode.Patch;
+		Frame();
+		model.Mode = WorkbenchMode.Kit;
+		Frame();
+		view.LayoutRect.Width.ShouldBe(1280f);
+		view.LayoutRect.Height.ShouldBe(800f);
+	}
+
+	[Test]
 	public void Its_view_models_steer_the_music()
 	{
 		using var rig = new Rig();

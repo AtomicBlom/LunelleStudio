@@ -34,6 +34,13 @@ public sealed class LaneCellViewModel : ViewModel
 	public float Progress
 	{
 		get => _progress;
-		internal set => Set(ref _progress, value);
+		internal set
+		{
+			if (Set(ref _progress, value))
+				Changed(nameof(PlayheadX));
+		}
 	}
+
+	/// <summary>Where the playhead crosses the column, from its left edge.</summary>
+	public float PlayheadX => Width * _progress;
 }

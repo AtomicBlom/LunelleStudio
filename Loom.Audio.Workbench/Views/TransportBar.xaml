@@ -1,35 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The transport: a button per song, the one chosen lit; play; where the song is, its tempo and scale; and room for an app's own controls. -->
+<!--
+    The transport: the song chosen, play, where it is, its tempo and scale, the loop, and room for an app's own controls;
+    at the right, the last build's status (red when it failed: a click opens its error) and the palette.
+-->
 <ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-                xmlns:wb="using:Loom.Audio.Workbench"
                 xmlns:views="using:Loom.Audio.Workbench.Views"
                 x:Class="Loom.Audio.Workbench.Views.TransportBar"
                 IsTabStop="False">
-    <StackPanel Orientation="Horizontal">
-        <ItemsControl ItemsSource="{x:Bind ViewModel.Songs, Mode=OneWay}" VerticalAlignment="Center">
-            <ItemsControl.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel Orientation="Horizontal" />
-                </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="wb:ChoiceViewModel">
-                    <ToggleButton IsChecked="{x:Bind IsSelected, Mode=TwoWay}" Margin="0,0,4,4">
-                        <TextBlock Text="{x:Bind Name}" FontSize="13" Margin="8,3,8,4" HorizontalAlignment="Center" />
-                    </ToggleButton>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-        <ToggleButton IsChecked="{x:Bind ViewModel.IsPlaying, Mode=TwoWay}" Width="80" Margin="8,0,12,0" VerticalAlignment="Center">
-            <TextBlock Text="{x:Bind views:Display.PlayLabel(ViewModel.IsPlaying), Mode=OneWay}" FontSize="14" HorizontalAlignment="Center" />
-        </ToggleButton>
-        <TextBlock Text="{x:Bind ViewModel.PositionText, Mode=OneWay}" FontSize="15" Foreground="{x:Static views:Theme.Ink}"
-                   VerticalAlignment="Center" Margin="0,0,16,0" />
-        <TextBlock Text="{x:Bind ViewModel.TempoText, Mode=OneWay}" FontSize="15" Foreground="{x:Static views:Theme.Dim}"
-                   VerticalAlignment="Center" Margin="0,0,16,0" />
-        <TextBlock Text="{x:Bind ViewModel.ScaleText, Mode=OneWay}" FontSize="15" Foreground="{x:Static views:Theme.Dim}"
-                   VerticalAlignment="Center" Margin="0,0,16,0" />
-        <StackPanel x:Name="ExtrasPanel" Orientation="Horizontal" VerticalAlignment="Center" />
-    </StackPanel>
+    <Border Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1" CornerRadius="8">
+        <Grid Margin="10,6,10,6">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Orientation="Horizontal">
+                <TextBlock Text="{x:Bind ViewModel.SongName, Mode=OneWay}" FontSize="15" Foreground="{x:Static views:Theme.Ink}"
+                           VerticalAlignment="Center" Margin="2,0,14,0" />
+                <ToggleButton IsChecked="{x:Bind ViewModel.IsPlaying, Mode=TwoWay}" Width="72" Margin="0,0,14,0" VerticalAlignment="Center">
+                    <TextBlock Text="{x:Bind views:Display.PlayLabel(ViewModel.IsPlaying), Mode=OneWay}" FontSize="14" HorizontalAlignment="Center" />
+                </ToggleButton>
+                <TextBlock Text="{x:Bind ViewModel.PositionText, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.Ink}"
+                           VerticalAlignment="Center" Margin="0,0,14,0" />
+                <TextBlock Text="{x:Bind ViewModel.TempoText, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.Dim}"
+                           VerticalAlignment="Center" Margin="0,0,14,0" />
+                <TextBlock Text="{x:Bind ViewModel.ScaleText, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.Dim}"
+                           VerticalAlignment="Center" Margin="0,0,14,0" />
+                <ToggleButton IsChecked="{x:Bind ViewModel.LoopSection, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,14,0">
+                    <TextBlock Text="Loop section" FontSize="12" Margin="8,3,8,4" />
+                </ToggleButton>
+                <StackPanel x:Name="ExtrasPanel" Orientation="Horizontal" VerticalAlignment="Center" />
+            </StackPanel>
+            <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <ToggleButton IsChecked="{x:Bind ViewModel.ErrorOpen, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,12,0">
+                    <Border Background="{x:Bind views:Display.Pill(ViewModel.HasError), Mode=OneWay}" CornerRadius="10">
+                        <StackPanel Orientation="Horizontal" Margin="8,3,10,4">
+                            <Ellipse Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,6,0"
+                                     Fill="{x:Bind views:Display.PillInk(ViewModel.HasError), Mode=OneWay}" />
+                            <TextBlock Text="{x:Bind ViewModel.BuildText, Mode=OneWay}" FontSize="12"
+                                       Foreground="{x:Bind views:Display.PillInk(ViewModel.HasError), Mode=OneWay}" />
+                        </StackPanel>
+                    </Border>
+                </ToggleButton>
+                <ToggleButton IsChecked="{x:Bind ViewModel.PaletteOpen, Mode=TwoWay}" VerticalAlignment="Center">
+                    <TextBlock Text="Find  Ctrl K" FontSize="12" Margin="8,3,8,4" />
+                </ToggleButton>
+            </StackPanel>
+        </Grid>
+    </Border>
 </ContentControl>

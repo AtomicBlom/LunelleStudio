@@ -1,0 +1,161 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Arrange: the song's sections as a timeline, each as wide as its bars, lit while it plays with how far through it is,
+    marked while a jump to it waits for the next bar; what plays next, and why. Under it the tracks as lanes, a column per
+    section: each track's mute, solo, gain and meter, and its parts as clips in the sections they play in, drawn small,
+    their conditions green while they hold, each held on, off or left to its condition. The part chosen is drawn below.
+-->
+<ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:wb="using:Loom.Audio.Workbench"
+                xmlns:views="using:Loom.Audio.Workbench.Views"
+                x:Class="Loom.Audio.Workbench.Views.ArrangeView"
+                IsTabStop="False">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="160" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="12,8,12,8">
+            <TextBlock Text="{x:Bind ViewModel.SongName, Mode=OneWay}" FontSize="16" Foreground="{x:Static views:Theme.Ink}" VerticalAlignment="Center" />
+            <TextBlock Text="{x:Bind ViewModel.NextText, Mode=OneWay}" FontSize="13" Foreground="{x:Static views:Theme.Dim}"
+                       Margin="16,0,0,0" VerticalAlignment="Center" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" HorizontalScrollMode="Enabled">
+            <StackPanel Margin="0,0,14,14">
+                <!-- The timeline, its columns as wide as the lanes' -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                    <TextBlock Text="SECTIONS" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Width="208" Margin="12,6,0,0" />
+                    <ItemsControl ItemsSource="{x:Bind ViewModel.Sections, Mode=OneWay}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="wb:SectionViewModel">
+                                <ToggleButton IsChecked="{x:Bind IsCurrent, Mode=TwoWay}" Width="{x:Bind Width}" Margin="0,0,0,0">
+                                    <Grid>
+                                        <StackPanel Margin="8,4,8,8">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{x:Bind Name}" FontSize="13" />
+                                                <TextBlock Text="{x:Bind Detail}" FontSize="11" Foreground="{x:Static views:Theme.Faint}"
+                                                           Margin="8,1,0,0" />
+                                                <TextBlock Text="at the next bar" FontSize="11" Foreground="{x:Static views:Theme.Accent}"
+                                                           Margin="8,1,0,0" Visibility="{x:Bind IsQueued, Mode=OneWay}" />
+                                            </StackPanel>
+                                            <TextBlock Text="{x:Bind ChordText}" FontSize="11" Foreground="{x:Static views:Theme.Dim}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <Border Height="3" VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                                                Width="{x:Bind ProgressWidth, Mode=OneWay}" Background="{x:Static views:Theme.Accent}" />
+                                    </Grid>
+                                </ToggleButton>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- The lanes: a track's header, then a column per section with the parts it plays there -->
+                <ItemsControl ItemsSource="{x:Bind ViewModel.Tracks, Mode=OneWay}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="wb:TrackViewModel">
+                            <Border BorderBrush="{x:Static views:Theme.Line}" BorderThickness="0,0,0,1">
+                                <StackPanel Orientation="Horizontal">
+                                    <StackPanel Width="208" Margin="12,8,8,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{x:Bind Name}" FontSize="14" Foreground="{x:Static views:Theme.Ink}"
+                                                       VerticalAlignment="Center" />
+                                            <ToggleButton Grid.Column="1" IsChecked="{x:Bind Muted, Mode=TwoWay}" Width="28" Margin="0,0,4,0">
+                                                <TextBlock Text="M" FontSize="12" HorizontalAlignment="Center" />
+                                            </ToggleButton>
+                                            <ToggleButton Grid.Column="2" IsChecked="{x:Bind Solo, Mode=TwoWay}" Width="28">
+                                                <TextBlock Text="S" FontSize="12" HorizontalAlignment="Center" />
+                                            </ToggleButton>
+                                        </Grid>
+                                        <TextBlock Text="{x:Bind Instrument}" FontSize="11" Foreground="{x:Static views:Theme.Dim}" Margin="0,3,0,2"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <Slider Minimum="-24" Maximum="6" StepFrequency="0.5" Height="26" Value="{x:Bind GainDb, Mode=TwoWay}" />
+                                        <Border Height="5" CornerRadius="2" Background="{x:Static views:Theme.Sunk}">
+                                            <Border HorizontalAlignment="Left" CornerRadius="2" Background="{x:Static views:Theme.Meter}"
+                                                    Width="{x:Bind views:Display.Meter(Peak), Mode=OneWay}" />
+                                        </Border>
+                                    </StackPanel>
+                                    <ItemsControl ItemsSource="{x:Bind Cells}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="wb:LaneCellViewModel">
+                                                <Grid Width="{x:Bind Width}" Background="{x:Bind views:Display.Column(IsCurrent), Mode=OneWay}">
+                                                    <Border BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1,0,0,0" />
+                                                    <ItemsControl ItemsSource="{x:Bind Placements}" Margin="6,6,6,0">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate x:DataType="wb:PlacementViewModel">
+                                                                <Border Background="{x:Static views:Theme.Raised}" BorderBrush="{x:Bind views:Display.Chosen(IsSelected), Mode=OneWay}"
+                                                                        BorderThickness="1" CornerRadius="6" Margin="0,0,0,6">
+                                                                    <StackPanel Margin="6,4,6,5">
+                                                                        <Grid>
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="12" />
+                                                                                <ColumnDefinition Width="*" />
+                                                                                <ColumnDefinition Width="Auto" />
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <Ellipse Grid.Column="0" Width="8" Height="8" VerticalAlignment="Center"
+                                                                                     Fill="{x:Bind views:Display.Lit(IsActive), Mode=OneWay}" />
+                                                                            <Button Grid.Column="1" Command="{x:Bind SelectCommand}" HorizontalAlignment="Stretch">
+                                                                                <TextBlock Text="{x:Bind Title}" FontSize="13" Margin="4,1,4,2" TextTrimming="CharacterEllipsis" />
+                                                                            </Button>
+                                                                            <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="4,0,0,0">
+                                                                                <ToggleButton IsChecked="{x:Bind IsAuto, Mode=TwoWay}" Width="34" Margin="0,0,1,0">
+                                                                                    <TextBlock Text="auto" FontSize="10" HorizontalAlignment="Center" />
+                                                                                </ToggleButton>
+                                                                                <ToggleButton IsChecked="{x:Bind IsOn, Mode=TwoWay}" Width="26" Margin="0,0,1,0">
+                                                                                    <TextBlock Text="on" FontSize="10" HorizontalAlignment="Center" />
+                                                                                </ToggleButton>
+                                                                                <ToggleButton IsChecked="{x:Bind IsOff, Mode=TwoWay}" Width="26">
+                                                                                    <TextBlock Text="off" FontSize="10" HorizontalAlignment="Center" />
+                                                                                </ToggleButton>
+                                                                            </StackPanel>
+                                                                        </Grid>
+                                                                        <StackPanel Orientation="Horizontal" Margin="2,3,0,0">
+                                                                            <TextBlock Text="{x:Bind KindText}" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Margin="0,0,8,0" />
+                                                                            <TextBlock Text="{x:Bind ConditionText}" Visibility="{x:Bind HasCondition}" FontSize="11"
+                                                                                       Foreground="{x:Bind views:Display.Met(ConditionMet), Mode=OneWay}" TextTrimming="CharacterEllipsis" />
+                                                                        </StackPanel>
+                                                                        <views:ClipPattern Part="{x:Bind Self}" Margin="0,4,0,0" HorizontalAlignment="Left" />
+                                                                    </StackPanel>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                    <Border Width="2" HorizontalAlignment="Left" Background="{x:Static views:Theme.Playhead}"
+                                                            Margin="{x:Bind views:Display.Playhead(PlayheadX), Mode=OneWay}"
+                                                            Visibility="{x:Bind IsCurrent, Mode=OneWay}" IsHitTestVisible="False" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+
+        <Border Grid.Row="2" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="0,1,0,0" Padding="12,8,12,8">
+            <views:PatternView Pattern="{x:Bind ViewModel.Pattern}" />
+        </Border>
+    </Grid>
+</ContentControl>

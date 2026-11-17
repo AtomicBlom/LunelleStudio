@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    The workbench page: the transport across the top, the error under it when a song fails to build, the sections and
-    the cues, the tracks and the patch bench, the chosen part as a grid, and the chip's load. Each region is a view of its
-    own, handed the page's view model.
+    The workbench: the transport across the top; down the left a rail (the library, and the modes: Arrange, Patch, Kit);
+    the mode's view in the middle, with the library over it or pinned beside it, and a failed build's error over its top;
+    the cues beside Arrange; the keyboard docked along the bottom; and the command palette over everything when open.
 -->
 <ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -12,51 +12,74 @@
     <Grid MinWidth="960" MinHeight="600" Background="{x:Static views:Theme.Page}">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="200" />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <views:TransportBar x:Name="TransportView" Grid.Row="0" Margin="12,10,12,6" ViewModel="{x:Bind ViewModel}" />
+        <views:TransportBar x:Name="TransportView" Grid.Row="0" Margin="12,10,12,8" ViewModel="{x:Bind ViewModel}" />
 
-        <Border Grid.Row="1" Margin="12,0,12,6" Padding="10,6,10,7" CornerRadius="6" Background="{x:Static views:Theme.Error}"
-                Visibility="{x:Bind views:Display.Any(ViewModel.Error), Mode=OneWay}">
-            <TextBlock Text="{x:Bind ViewModel.Error, Mode=OneWay}" FontSize="14" Foreground="#FFFFFF" TextWrapping="Wrap" />
-        </Border>
-
-        <Grid Grid.Row="2" Margin="12,0,12,6">
+        <Grid Grid.Row="1" Margin="12,0,12,8">
             <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <Border Grid.Column="0" Margin="0,0,6,0" Padding="10,8" CornerRadius="8" Background="{x:Static views:Theme.Panel}">
-                <views:SectionStrip ViewModel="{x:Bind ViewModel}" />
+
+            <!-- The rail -->
+            <Border Grid.Column="0" Width="78" Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}"
+                    BorderThickness="1" CornerRadius="8">
+                <StackPanel Margin="5,6,5,6">
+                    <ToggleButton IsChecked="{x:Bind ViewModel.LibraryOpen, Mode=TwoWay}" HorizontalAlignment="Stretch" Margin="0,0,0,10">
+                        <TextBlock Text="Library" FontSize="12" HorizontalAlignment="Center" Margin="0,6,0,7" />
+                    </ToggleButton>
+                    <ToggleButton IsChecked="{x:Bind ViewModel.IsArrange, Mode=TwoWay}" HorizontalAlignment="Stretch" Margin="0,0,0,4">
+                        <TextBlock Text="Arrange" FontSize="12" HorizontalAlignment="Center" Margin="0,6,0,7" />
+                    </ToggleButton>
+                    <ToggleButton IsChecked="{x:Bind ViewModel.IsPatch, Mode=TwoWay}" HorizontalAlignment="Stretch" Margin="0,0,0,4">
+                        <TextBlock Text="Patch" FontSize="12" HorizontalAlignment="Center" Margin="0,6,0,7" />
+                    </ToggleButton>
+                    <ToggleButton IsChecked="{x:Bind ViewModel.IsKit, Mode=TwoWay}" HorizontalAlignment="Stretch">
+                        <TextBlock Text="Kit" FontSize="12" HorizontalAlignment="Center" Margin="0,6,0,7" />
+                    </ToggleButton>
+                </StackPanel>
             </Border>
-            <Border Grid.Column="1" Margin="6,0,0,0" Padding="10,8" CornerRadius="8" Background="{x:Static views:Theme.Panel}">
+
+            <!-- The library, pinned as a column -->
+            <views:CatalogBrowser Grid.Column="1" Width="230" Margin="8,0,0,0" ViewModel="{x:Bind ViewModel}"
+                                  Visibility="{x:Bind ViewModel.LibraryPinned, Mode=OneWay}" />
+
+            <!-- The mode's view, with the library over it and a failed build's error over its top -->
+            <Grid Grid.Column="2" Margin="8,0,0,0">
+                <Border Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1" CornerRadius="8">
+                    <Grid>
+                        <views:ArrangeView ViewModel="{x:Bind ViewModel}" Visibility="{x:Bind ViewModel.IsArrange, Mode=OneWay}" />
+                        <views:PatchBench ViewModel="{x:Bind ViewModel}" Visibility="{x:Bind ViewModel.IsPatch, Mode=OneWay}" />
+                        <views:KitView ViewModel="{x:Bind ViewModel}" Visibility="{x:Bind ViewModel.IsKit, Mode=OneWay}" />
+                    </Grid>
+                </Border>
+                <views:CatalogBrowser Width="270" HorizontalAlignment="Left" ViewModel="{x:Bind ViewModel}"
+                                      Visibility="{x:Bind ViewModel.LibraryFlyout, Mode=OneWay}" />
+                <Border VerticalAlignment="Top" Margin="10,10,10,0" Padding="12,8,12,9" CornerRadius="6"
+                        Background="{x:Static views:Theme.ErrorSoft}" BorderBrush="{x:Static views:Theme.Error}" BorderThickness="1"
+                        Visibility="{x:Bind ViewModel.ErrorOpen, Mode=OneWay}">
+                    <StackPanel>
+                        <TextBlock Text="{x:Bind ViewModel.Error, Mode=OneWay}" FontSize="13" Foreground="{x:Static views:Theme.Ink}" TextWrapping="Wrap" />
+                        <TextBlock Text="The last song that built plays on. Fix it and save; Escape hides this." FontSize="11"
+                                   Foreground="{x:Static views:Theme.Dim}" Margin="0,4,0,0" />
+                    </StackPanel>
+                </Border>
+            </Grid>
+
+            <!-- The cues beside Arrange -->
+            <Border Grid.Column="3" Width="300" Margin="8,0,0,0" Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}"
+                    BorderThickness="1" CornerRadius="8" Visibility="{x:Bind ViewModel.IsArrange, Mode=OneWay}">
                 <views:CuePanel ViewModel="{x:Bind ViewModel}" />
             </Border>
         </Grid>
 
-        <Grid Grid.Row="3" Margin="12,0,12,6">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="*" />
-            </Grid.ColumnDefinitions>
-            <Border Grid.Column="0" Margin="0,0,6,0" Padding="10,8" CornerRadius="8" Background="{x:Static views:Theme.Panel}">
-                <views:TrackList ViewModel="{x:Bind ViewModel}" />
-            </Border>
-            <Border Grid.Column="1" Margin="6,0,0,0" Padding="10,8" CornerRadius="8" Background="{x:Static views:Theme.Panel}">
-                <views:PatchBench ViewModel="{x:Bind ViewModel}" />
-            </Border>
-        </Grid>
+        <views:KeyboardDock Grid.Row="2" Margin="12,0,12,10" ViewModel="{x:Bind ViewModel}" />
 
-        <Border Grid.Row="4" Margin="12,0,12,6" Padding="10,8" CornerRadius="8" Background="{x:Static views:Theme.Panel}">
-            <views:PatternView Pattern="{x:Bind ViewModel.Pattern}" />
-        </Border>
-
-        <TextBlock Grid.Row="5" Text="{x:Bind ViewModel.StatsText, Mode=OneWay}" Margin="14,0,14,8" FontSize="13"
-                   Foreground="{x:Static views:Theme.Dim}" />
+        <views:CommandPalette Grid.RowSpan="3" ViewModel="{x:Bind ViewModel}" Visibility="{x:Bind ViewModel.PaletteOpen, Mode=OneWay}" />
     </Grid>
 </ContentControl>

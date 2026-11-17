@@ -360,11 +360,11 @@ public sealed class WorkbenchViewModel : ViewModel
 	/// <summary>Whether the last build failed (and the last that built plays on).</summary>
 	public bool HasError => Error.Length > 0;
 
-	/// <summary>Whether the failed build's error is open under the transport. Opens by itself when a build fails.</summary>
+	/// <summary>Whether the failed build's error is open under the transport. Opens by itself when a build fails; never open without one.</summary>
 	public bool ErrorOpen
 	{
 		get;
-		set => Set(ref field, value);
+		set => Set(ref field, value && HasError);
 	}
 
 	/// <summary>Opens or closes the failed build's error.</summary>
@@ -426,6 +426,7 @@ public sealed class WorkbenchViewModel : ViewModel
 		foreach (var item in _workbench.PaletteCommands())
 			if (item.Matches(words))
 			{
+				item.Chosen = () => RunPalette(PaletteItems.IndexOf(item));
 				PaletteItems.Add(item);
 				if (PaletteItems.Count == 40)
 					break;

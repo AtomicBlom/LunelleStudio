@@ -32,9 +32,10 @@ public sealed class MusicProject : IDisposable
 	private bool _reloadArguments;
 	private CancellationTokenSource? _debounce;
 
-	private MusicProject(string projectPath)
+	private MusicProject(string projectPath, IReadOnlyDictionary<string, string> properties)
 	{
 		ProjectPath = projectPath;
+		_properties = properties;
 		Directory = Path.GetDirectoryName(projectPath)!;
 		_watcher = new FileSystemWatcher(Directory)
 		{
@@ -59,11 +60,15 @@ public sealed class MusicProject : IDisposable
 	/// <summary>Whether a compile is under way.</summary>
 	public bool IsCompiling => _compiling.CurrentCount == 0;
 
-	/// <summary>Opens <paramref name="projectPath"/> and compiles it once, the build waiting in <see cref="TakeBuild"/>.</summary>
+	/// <summary>
+	/// Opens <paramref name="projectPath"/> and compiles it once, the build waiting in <see cref="TakeBuild"/>.
+	/// <paramref name="properties"/> are MSBuild properties for its design-time build: the host's <c>Configuration</c>,
+	/// so the project's references are the builds the host runs.
+	/// </summary>
 	/// <exception cref="InvalidOperationException">Its design-time build failed (it may need building once first).</exception>
-	public static async Task<MusicProject> OpenAsync(string projectPath, CancellationToken cancellation = default)
+	public static async Task<MusicProject> OpenAsync(string projectPath, IReadOnlyDictionary<string, string>? properties = null, CancellationToken cancellation = default)
 	{
-		var project = new MusicProject(Path.GetFullPath(projectPath));
+		var project = new MusicProject(Path.GetFullPath(projectPath), properties ?? new Dictionary<string, string>());
 		await project.LoadArgumentsAsync(cancellation);
 		project.Publish(await project.CompileAsync(cancellation));
 		project._watcher.EnableRaisingEvents = true;
@@ -123,8 +128,9 @@ public sealed class MusicProject : IDisposable
 	// editorconfigs they read and its options
 	private async Task LoadArgumentsCoreAsync(CancellationToken cancellation)
 	{
-		var arguments = await DesignTimeBuild.CompilerArgumentsAsync(ProjectPath, cancellation);
+		var arguments = await DesignTimeBuild.CompilerArgumentsAsync(ProjectPath, _properties, cancellation);
 		var parsed = CSharpCommandLineParser.Default.Parse(arguments, Directory, sdkDirectory: null);
+		_resources = [.. parsed.ManifestResources];
 		var id = ProjectId.CreateNewId(Name);
 		DocumentInfo Document(string path) => DocumentInfo.Create(DocumentId.CreateNewId(id), Path.GetFileName(path),
 			loader: new FileTextLoader(path, Encoding.UTF8), filePath: path);
@@ -200,7 +206,7 @@ public sealed class MusicProject : IDisposable
 			?? throw new InvalidOperationException("The project has no compilation.");
 		using var pe = new MemoryStream();
 		using var pdb = new MemoryStream();
-		var result = compilation.Emit(pe, pdb, options: Emit, cancellationToken: cancellation);
+		var result = compilation.Emit(pe, pdb, manifestResources: _resources, options: Emit, cancellationToken: cancellation);
 		if (!result.Success)
 			return new ProjectBuild(null, [.. result.Diagnostics.Where(d => d.Severity == DiagnosticSeverity.Error).Select(Describe)], watch.Elapsed, null);
 		if (SharedReferences.Mismatch(_references) is { } mismatch)
@@ -266,4 +272,8 @@ public sealed class MusicProject : IDisposable
 		_debounce?.Cancel();
 		TakeBuild()?.Release();
 	}
+
+	// MSBuild properties for the design-time build (the host's Configuration, say), and the resources the compiler embeds
+	private readonly IReadOnlyDictionary<string, string> _properties;
+	private ResourceDescription[] _resources = [];
 }

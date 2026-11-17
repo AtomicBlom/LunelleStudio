@@ -47,8 +47,8 @@
                                 <ItemsControl Visibility="{x:Bind IsChoice}" ItemsSource="{x:Bind Options}" Margin="0,6,0,0">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="wb:ChoiceViewModel">
-                                            <ToggleButton IsChecked="{x:Bind IsSelected, Mode=TwoWay}" Margin="0,0,0,3" HorizontalAlignment="Left">
-                                                <TextBlock Text="{x:Bind Name}" FontSize="12" Margin="8,2,8,3" />
+                                            <ToggleButton IsChecked="{x:Bind IsSelected, Mode=TwoWay}" Margin="0,0,0,3" HorizontalAlignment="Left" Padding="8,2,8,3">
+                                                <TextBlock Text="{x:Bind Name}" FontSize="12" />
                                             </ToggleButton>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>

@@ -70,12 +70,19 @@ public sealed class PatchDesigner : ViewModel
 		get;
 		private set
 		{
-			if (!Set(ref field, value))
+			if (field == value)
 				return;
+			// The nodes first: whatever redraws on the change reads which one is chosen from them.
 			foreach (var node in Nodes)
 				node.IsSelected = node.Index == value;
+			Set(ref field, value);
 		}
 	} = -1;
+
+	/// <summary>Raised once <see cref="Nodes"/> are laid out and each says what its operator is: after a new patch, a change
+	/// to its operators, or an edit to one. A view drawing the graph redraws on it rather than as each node is added, before
+	/// it is described.</summary>
+	public event EventHandler? NodesDescribed;
 
 	/// <summary>What the inspector shows.</summary>
 	public DesignerTab Tab
@@ -363,6 +370,8 @@ public sealed class PatchDesigner : ViewModel
 				? o.Drivers.Length > 0 ? "driven by " + string.Join(", ", o.Drivers.Select(NameOf)) : o.Kind == OperatorKind.String ? "plucked" : "not driven"
 				: $"level {N(o.Level)}{(o.Velocity != 0f ? " · vel " + N(o.Velocity) : "")}";
 		}
+
+		NodesDescribed?.Invoke(this, EventArgs.Empty);
 	}
 
 	private string NameOf(int index) => index >= 0 && index < _names.Count ? _names[index] : $"#{index}";

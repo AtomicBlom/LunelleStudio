@@ -20,8 +20,8 @@
             <ItemsControl ItemsSource="{x:Bind ViewModel.Files.Files, Mode=OneWay}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="wb:FileEntryViewModel">
-                        <ToggleButton IsChecked="{x:Bind IsSelected, Mode=TwoWay}" HorizontalAlignment="Stretch" Margin="0,0,0,3">
-                            <StackPanel Margin="8,3,8,4">
+                        <ToggleButton IsChecked="{x:Bind IsSelected, Mode=TwoWay}" HorizontalAlignment="Stretch" Margin="0,0,0,3" Padding="8,4,8,6">
+                            <StackPanel>
                                 <TextBlock Text="{x:Bind Name}" FontSize="12" TextTrimming="CharacterEllipsis" />
                                 <TextBlock Text="{x:Bind Kind}" FontSize="10" Foreground="{x:Static views:Theme.Faint}" />
                             </StackPanel>
@@ -40,12 +40,12 @@
             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
                 <TextBlock Text="{x:Bind ViewModel.Files.Title, Mode=OneWay}" FontSize="13" Foreground="{x:Static views:Theme.Ink}"
                            VerticalAlignment="Center" Margin="0,0,12,0" TextTrimming="CharacterEllipsis" />
-                <Button Command="{x:Bind ViewModel.Files.CopyFileCommand, Mode=OneWay}" Margin="0,0,10,0">
-                    <TextBlock Text="Copy file" FontSize="12" Margin="8,2,8,3" />
+                <Button Command="{x:Bind ViewModel.Files.CopyFileCommand, Mode=OneWay}" Margin="0,0,10,0" Padding="8,2,8,3">
+                    <TextBlock Text="Copy file" FontSize="12" />
                 </Button>
                 <TextBlock Text="{x:Bind ViewModel.CopyStatus, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Dim}" VerticalAlignment="Center" />
             </StackPanel>
-            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" Margin="0,0,0,8">
+            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="0,0,0,8">
                 <ItemsControl ItemsSource="{x:Bind ViewModel.Files.Pieces, Mode=OneWay}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -54,8 +54,8 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="wb:FilePieceViewModel">
-                            <Button Command="{x:Bind CopyCommand}" Margin="0,0,3,0">
-                                <TextBlock Text="{x:Bind Name}" FontSize="11" Margin="6,2,6,3" />
+                            <Button Command="{x:Bind CopyCommand}" Margin="0,0,3,0" Padding="6,2,6,3">
+                                <TextBlock Text="{x:Bind Name}" FontSize="11" />
                             </Button>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

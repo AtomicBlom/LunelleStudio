@@ -25,8 +25,8 @@
                     <TextBox x:Name="Filter" Height="28" />
                 </StackPanel>
                 <ToggleButton Grid.Column="1" IsChecked="{x:Bind ViewModel.LibraryPinned, Mode=TwoWay}" Margin="6,16,0,0"
-                              VerticalAlignment="Bottom" Height="28">
-                    <TextBlock Text="{x:Bind views:Display.Pin(ViewModel.LibraryPinned), Mode=OneWay}" FontSize="12" Margin="8,3,8,4" />
+                              VerticalAlignment="Bottom" Height="28" Padding="8,3,8,4">
+                    <TextBlock Text="{x:Bind views:Display.Pin(ViewModel.LibraryPinned), Mode=OneWay}" FontSize="12" />
                 </ToggleButton>
             </Grid>
             <ScrollViewer Grid.Row="1">
@@ -36,8 +36,8 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="wb:ChoiceViewModel">
                                 <ToggleButton IsChecked="{x:Bind IsSelected, Mode=TwoWay}" Visibility="{x:Bind IsVisible, Mode=OneWay}"
-                                              HorizontalAlignment="Stretch" Margin="0,0,0,2">
-                                    <TextBlock Text="{x:Bind Name}" FontSize="13" Margin="8,3,8,4" />
+                                              HorizontalAlignment="Stretch" Margin="0,0,0,2" Padding="8,3,8,4">
+                                    <TextBlock Text="{x:Bind Name}" FontSize="13" />
                                 </ToggleButton>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -47,8 +47,8 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="wb:ChoiceViewModel">
                                 <ToggleButton IsChecked="{x:Bind IsSelected, Mode=TwoWay}" Visibility="{x:Bind IsVisible, Mode=OneWay}"
-                                              HorizontalAlignment="Stretch" Margin="0,0,0,2">
-                                    <TextBlock Text="{x:Bind Name}" FontSize="13" Margin="8,3,8,4" />
+                                              HorizontalAlignment="Stretch" Margin="0,0,0,2" Padding="8,3,8,4">
+                                    <TextBlock Text="{x:Bind Name}" FontSize="13" />
                                 </ToggleButton>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
@@ -58,8 +58,8 @@
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="wb:ChoiceViewModel">
                                 <ToggleButton IsChecked="{x:Bind IsSelected, Mode=TwoWay}" Visibility="{x:Bind IsVisible, Mode=OneWay}"
-                                              HorizontalAlignment="Stretch" Margin="0,0,0,2">
-                                    <TextBlock Text="{x:Bind Name}" FontSize="13" Margin="8,3,8,4" />
+                                              HorizontalAlignment="Stretch" Margin="0,0,0,2" Padding="8,3,8,4">
+                                    <TextBlock Text="{x:Bind Name}" FontSize="13" />
                                 </ToggleButton>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>

@@ -15,7 +15,7 @@
             <TextBlock Text="{x:Bind ViewModel.DockLabel, Mode=OneWay}" FontSize="16" Foreground="{x:Static views:Theme.Ink}" Margin="0,0,0,10" />
             <TextBlock Text="Choose a kit from the library." FontSize="13" Foreground="{x:Static views:Theme.Dim}"
                        Visibility="{x:Bind views:Display.NoneChosen(ViewModel.SelectedKit), Mode=OneWay}" />
-            <ScrollViewer HorizontalScrollBarVisibility="Auto">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                 <ItemsControl ItemsSource="{x:Bind ViewModel.Pads, Mode=OneWay}" Margin="0,0,0,14">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -35,14 +35,14 @@
             <StackPanel Visibility="{x:Bind views:Display.Chosen(ViewModel.SelectedKit), Mode=OneWay}">
                 <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
                     <TextBlock Text="BEAT SKETCHER" FontSize="10" Foreground="{x:Static views:Theme.Faint}" VerticalAlignment="Center" Margin="0,0,12,0" />
-                    <ToggleButton IsChecked="{x:Bind ViewModel.Sketch.IsLooping, Mode=TwoWay}" Margin="0,0,6,0">
-                        <TextBlock Text="Loop it" FontSize="12" Margin="8,3,8,4" />
+                    <ToggleButton IsChecked="{x:Bind ViewModel.Sketch.IsLooping, Mode=TwoWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                        <TextBlock Text="Loop it" FontSize="12" />
                     </ToggleButton>
-                    <Button Command="{x:Bind ViewModel.Sketch.ClearCommand, Mode=OneWay}" Margin="0,0,6,0">
-                        <TextBlock Text="Clear" FontSize="12" Margin="8,3,8,4" />
+                    <Button Command="{x:Bind ViewModel.Sketch.ClearCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                        <TextBlock Text="Clear" FontSize="12" />
                     </Button>
-                    <Button Command="{x:Bind ViewModel.Sketch.CopyCommand, Mode=OneWay}" Margin="0,0,10,0">
-                        <TextBlock Text="Copy Beat" FontSize="12" Margin="8,3,8,4" />
+                    <Button Command="{x:Bind ViewModel.Sketch.CopyCommand, Mode=OneWay}" Margin="0,0,10,0" Padding="8,3,8,4">
+                        <TextBlock Text="Copy Beat" FontSize="12" />
                     </Button>
                     <TextBlock Text="tempo" FontSize="12" Foreground="{x:Static views:Theme.Dim}" VerticalAlignment="Center" Margin="0,0,6,0" />
                     <Slider Minimum="60" Maximum="200" StepFrequency="1" Width="140" Height="26" Value="{x:Bind ViewModel.Sketch.Tempo, Mode=TwoWay}" />

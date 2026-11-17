@@ -42,6 +42,18 @@ public sealed class RollViewModel : ViewModel
 	/// <summary>Whether it shows a part it can edit.</summary>
 	public bool IsEditable => Kind != RollKind.None;
 
+	/// <summary>Whether it shows a line, whose notes take flats, sharps and slides as a beat's hits and a strum's strokes don't.</summary>
+	public bool IsLine => Kind == RollKind.Line;
+
+	/// <summary>How the roll is worked with the pointer, for the kind of part it shows.</summary>
+	public string Hint => Kind switch
+	{
+		RollKind.Line => "Click to add a note, drag to lengthen or move it; right-click or click it twice to delete. The glyphs mark the note chosen.",
+		RollKind.Beat => "Click a step: x a hit, X an accent, o a ghost note, then off.",
+		RollKind.Strum => "Click a step: D a down stroke, U up, d and u softer, x a mute, _ a hold, then off.",
+		_ => "",
+	};
+
 	/// <summary>The part's name and section, and how it is written.</summary>
 	public string Title { get; private set => Set(ref field, value); } = "";
 
@@ -187,6 +199,8 @@ public sealed class RollViewModel : ViewModel
 	private void Bump()
 	{
 		Changed(nameof(IsEditable));
+		Changed(nameof(IsLine));
+		Changed(nameof(Hint));
 		Version++;
 	}
 

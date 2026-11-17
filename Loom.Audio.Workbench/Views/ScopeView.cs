@@ -7,7 +7,7 @@ using SUIsei.Shapes;
 namespace Loom.Audio.Workbench.Views;
 
 /// <summary>
-/// What the workbench's bus is heard playing, 30 times a second: a scope (held still on a rising zero crossing) and a
+/// What the workbench's bus is heard playing, every frame while the patch designer shows: a scope (held still on a rising zero crossing) and a
 /// spectrum from 20 Hz to 20 kHz on a log scale, 100 dB tall.
 /// </summary>
 internal sealed class ScopeView : ContentControl
@@ -20,6 +20,10 @@ internal sealed class ScopeView : ContentControl
 	private const int SpectrumPoints = 190;
 
 	private readonly float[] _heard = new float[Samples];
+	// The spectrum's working space and its bins, kept, so drawing it every frame allocates nothing
+	private readonly double[] _real = new double[Samples];
+	private readonly double[] _imaginary = new double[Samples];
+	private readonly float[] _bins = new float[Samples / 2 + 1];
 	private readonly Point[] _scopePoints = new Point[ScopePoints];
 	private readonly Point[] _spectrumPoints = new Point[SpectrumPoints];
 	private readonly Polyline _scope = new() { Stroke = Theme.Meter, StrokeThickness = 1.3f };
@@ -35,17 +39,17 @@ internal sealed class ScopeView : ContentControl
 		Content = row;
 	}
 
-	/// <summary>The workbench whose bus it draws.</summary>
+	/// <summary>The workbench whose bus it draws, every frame while the patch designer shows.</summary>
 	public WorkbenchViewModel? ViewModel
 	{
 		get;
 		set
 		{
 			if (field is { } old)
-				old.Refreshed -= Draw;
+				old.Frame -= Draw;
 			field = value;
 			if (value is not null)
-				value.Refreshed += Draw;
+				value.Frame += Draw;
 		}
 	}
 
@@ -76,7 +80,8 @@ internal sealed class ScopeView : ContentControl
 
 	private void Draw()
 	{
-		if (ViewModel is not { } model || Visibility != Visibility.Visible)
+		// Only while it can be seen: the designer it sits in is hidden in the other modes, not the scope itself
+		if (ViewModel is not { IsPatch: true } model || Visibility != Visibility.Visible)
 			return;
 		var count = model.ReadScope(_heard);
 		if (count < Samples)
@@ -97,7 +102,8 @@ internal sealed class ScopeView : ContentControl
 		}
 		_scope.Points.SetAll(_scopePoints);
 
-		var bins = AudioAnalysis.Spectrum(_heard);
+		var bins = _bins;
+		AudioAnalysis.Spectrum(_heard, _real, _imaginary, bins);
 		var nyquist = model.SampleRate / 2f;
 		for (var p = 0; p < SpectrumPoints; p++)
 		{

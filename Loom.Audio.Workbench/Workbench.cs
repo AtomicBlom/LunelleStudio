@@ -19,6 +19,8 @@ public sealed class Workbench : IDisposable
 
 	private static int _changes;
 
+	private const double RefreshSeconds = 1.0 / 30.0;
+
 	private readonly AudioEngine _audio;
 	private readonly AudioBus _bus;
 	private WorkbenchCatalog _catalog;
@@ -482,14 +484,17 @@ public sealed class Workbench : IDisposable
 			SavePatch();
 		if (_editor?.Update(deltaSeconds) == true)
 			ViewModel.BuildText = $"saved {Path.GetFileName(_editor.Path)} {DateTime.Now:HH:mm:ss}";
+		// Thirty refreshes a second, on average: what is left over carries to the next, so a frame rate that doesn't divide it
+		// evenly still refreshes thirty times rather than every third frame at 60
 		_sinceRefresh += deltaSeconds;
-		if (_sinceRefresh >= 1.0 / 30.0)
+		if (_sinceRefresh >= RefreshSeconds)
 		{
-			_sinceRefresh = 0;
+			_sinceRefresh = Math.Min(_sinceRefresh - RefreshSeconds, RefreshSeconds);
 			Refresh();
 			RefreshSketch();
 			ViewModel.RaiseRefreshed();
 		}
+		ViewModel.RaiseFrame();
 	}
 
 	private void Refresh()

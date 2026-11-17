@@ -27,23 +27,23 @@
                            Foreground="{x:Bind views:Display.Problem(ViewModel.Designer.HasProblems), Mode=OneWay}" />
             </StackPanel>
             <StackPanel Orientation="Horizontal">
-                <ToggleButton IsChecked="{x:Bind ViewModel.Designer.HearOriginal, Mode=TwoWay}" Margin="0,0,6,0">
-                    <TextBlock Text="Hear its code" FontSize="12" Margin="8,3,8,4" />
+                <ToggleButton IsChecked="{x:Bind ViewModel.Designer.HearOriginal, Mode=TwoWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <TextBlock Text="Hear its code" FontSize="12" />
                 </ToggleButton>
-                <ToggleButton IsChecked="{x:Bind ViewModel.Designer.AddOpen, Mode=TwoWay}" Margin="0,0,6,0">
-                    <TextBlock Text="+ Operator" FontSize="12" Margin="8,3,8,4" />
+                <ToggleButton IsChecked="{x:Bind ViewModel.Designer.AddOpen, Mode=TwoWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <TextBlock Text="+ Operator" FontSize="12" />
                 </ToggleButton>
-                <Button Command="{x:Bind ViewModel.Designer.RevertCommand, Mode=OneWay}" Margin="0,0,6,0">
-                    <TextBlock Text="Revert" FontSize="12" Margin="8,3,8,4" />
+                <Button Command="{x:Bind ViewModel.Designer.RevertCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <TextBlock Text="Revert" FontSize="12" />
                 </Button>
-                <Button Command="{x:Bind ViewModel.Designer.CopyCommand, Mode=OneWay}" Margin="0,0,6,0">
-                    <TextBlock Text="Copy C#" FontSize="12" Margin="8,3,8,4" />
+                <Button Command="{x:Bind ViewModel.Designer.CopyCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <TextBlock Text="Copy C#" FontSize="12" />
                 </Button>
-                <Button Command="{x:Bind ViewModel.Designer.EjectCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Designer.CanEject, Mode=OneWay}" Margin="0,0,6,0">
-                    <TextBlock Text="Eject to code" FontSize="12" Margin="8,3,8,4" />
+                <Button Command="{x:Bind ViewModel.Designer.EjectCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Designer.CanEject, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <TextBlock Text="Eject to code" FontSize="12" />
                 </Button>
-                <Button Command="{x:Bind ViewModel.Designer.BringBackCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Designer.IsCode, Mode=OneWay}" Margin="0,0,6,0">
-                    <TextBlock Text="Bring back as data" FontSize="12" Margin="8,3,8,4" />
+                <Button Command="{x:Bind ViewModel.Designer.BringBackCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Designer.IsCode, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <TextBlock Text="Bring back as data" FontSize="12" />
                 </Button>
                 <TextBlock Text="code: edits are heard, not saved" Visibility="{x:Bind ViewModel.Designer.IsCode, Mode=OneWay}" FontSize="11"
                            Foreground="{x:Static views:Theme.Accent}" VerticalAlignment="Center" Margin="4,0,0,0" />
@@ -61,8 +61,8 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="wb:InspectorItemViewModel">
-                    <Button Command="{x:Bind Command}" Margin="0,0,4,0">
-                        <TextBlock Text="{x:Bind Label}" FontSize="12" Margin="8,3,8,4" />
+                    <Button Command="{x:Bind Command}" Margin="0,0,4,0" Padding="8,3,8,4">
+                        <TextBlock Text="{x:Bind Label}" FontSize="12" />
                     </Button>
                 </DataTemplate>
             </ItemsControl.ItemTemplate>
@@ -79,7 +79,7 @@
             <views:OperatorGraph Designer="{x:Bind ViewModel.Designer, Mode=OneWay}" />
         </Grid>
 
-        <ScrollViewer Grid.Row="4" HorizontalScrollBarVisibility="Auto" Margin="12,0,12,6">
+        <ScrollViewer Grid.Row="4" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="12,0,12,6">
         <ItemsControl ItemsSource="{x:Bind ViewModel.Designer.Stages, Mode=OneWay}" Margin="0,0,0,10">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>

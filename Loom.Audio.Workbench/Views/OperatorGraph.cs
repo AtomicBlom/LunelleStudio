@@ -44,13 +44,13 @@ internal sealed class OperatorGraph : ContentControl
 			if (field is { } old)
 			{
 				old.PropertyChanged -= OnDesignerChanged;
-				old.Nodes.CollectionChanged -= OnNodesChanged;
+				old.NodesDescribed -= OnNodesDescribed;
 			}
 			field = value;
 			if (value is not null)
 			{
 				value.PropertyChanged += OnDesignerChanged;
-				value.Nodes.CollectionChanged += OnNodesChanged;
+				value.NodesDescribed += OnNodesDescribed;
 			}
 			Draw();
 		}
@@ -62,7 +62,7 @@ internal sealed class OperatorGraph : ContentControl
 			Draw();
 	}
 
-	private void OnNodesChanged(object? sender, NotifyCollectionChangedEventArgs e) => Draw();
+	private void OnNodesDescribed(object? sender, EventArgs e) => Draw();
 
 	private void Draw()
 	{

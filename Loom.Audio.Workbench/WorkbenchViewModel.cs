@@ -234,6 +234,11 @@ public sealed class WorkbenchViewModel : ViewModel
 
 	internal void RaiseRefreshed() => Refreshed?.Invoke();
 
+	/// <summary>Raised every frame, for views that draw what is heard as it is heard: the scope and spectrum.</summary>
+	public event Action? Frame;
+
+	internal void RaiseFrame() => Frame?.Invoke();
+
 	/// <summary>Copies the newest frames heard on the workbench's bus into <paramref name="into"/>; returns how many.</summary>
 	public int ReadScope(Span<float> into) => _workbench.ReadScope(into);
 

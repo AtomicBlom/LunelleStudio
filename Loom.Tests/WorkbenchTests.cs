@@ -280,6 +280,29 @@ public class WorkbenchTests
 	}
 
 	[Test]
+	public void The_designer_marks_its_nodes_before_it_says_the_choice_changed_and_describes_them_before_it_says_so()
+	{
+		using var rig = new Rig();
+		var designer = rig.Workbench.ViewModel.Designer;
+		var described = new List<string>();
+		designer.NodesDescribed += (_, _) => described.AddRange(designer.Nodes.Select(n => n.Summary));
+		rig.Workbench.ChoosePatch(0);
+		described.ShouldNotBeEmpty();
+		described.ShouldAllBe(summary => summary.Length > 0); // what a graph redrawn then shows
+
+		// Whatever redraws on the choice reads which node is chosen from the nodes, as the graph does
+		var marked = new List<bool>();
+		designer.PropertyChanged += (_, e) =>
+		{
+			if (e.PropertyName == nameof(PatchDesigner.Selected))
+				marked.Add(designer.Nodes[0].IsSelected);
+		};
+		designer.Select(-1);
+		designer.Select(0);
+		marked.ShouldBe([false, true]);
+	}
+
+	[Test]
 	public void An_edit_is_heard_at_the_next_note_and_the_code_follows_it()
 	{
 		using var rig = new Rig();

@@ -63,6 +63,9 @@ internal static class Display
 	// A cue the song never reads, dimmed
 	public static float Used(bool used) => used ? 1f : 0.45f;
 
+	// A rail icon, in the accent while its mode is the one showing
+	public static SolidColorBrush RailInk(bool on) => on ? Theme.Accent : Theme.Dim;
+
 	// Where the playhead crosses a column, as a left margin
 	public static SUIsei.Thickness Playhead(float x) => new(x, 0f, 0f, 0f);
 

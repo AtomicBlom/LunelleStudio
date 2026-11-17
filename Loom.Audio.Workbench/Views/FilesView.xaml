@@ -45,7 +45,7 @@
                 </Button>
                 <TextBlock Text="{x:Bind ViewModel.CopyStatus, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Dim}" VerticalAlignment="Center" />
             </StackPanel>
-            <ScrollViewer Grid.Row="1" HorizontalScrollMode="Enabled" Margin="0,0,0,8">
+            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto" Margin="0,0,0,8">
                 <ItemsControl ItemsSource="{x:Bind ViewModel.Files.Pieces, Mode=OneWay}">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>
@@ -62,7 +62,7 @@
                 </ItemsControl>
             </ScrollViewer>
             <Border Grid.Row="2" Background="{x:Static views:Theme.Sunk}" CornerRadius="6">
-                <ScrollViewer HorizontalScrollMode="Enabled">
+                <ScrollViewer HorizontalScrollBarVisibility="Auto">
                     <TextBlock Text="{x:Bind ViewModel.Files.Text, Mode=OneWay}" FontSize="12" Foreground="{x:Static views:Theme.Ink}" Margin="10,8,10,8" />
                 </ScrollViewer>
             </Border>

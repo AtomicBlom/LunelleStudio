@@ -25,7 +25,7 @@ internal sealed class OperatorGraph : ContentControl
 	private const float Pad = 16f;
 
 	private readonly Canvas _canvas = new();
-	private readonly ScrollViewer _scroll = new() { HorizontalScrollMode = ScrollMode.Enabled };
+	private readonly ScrollViewer _scroll = new() { HorizontalScrollBarVisibility = ScrollBarVisibility.Auto };
 	private readonly DoubleCollection _dash = [4, 3];
 
 	public OperatorGraph()

@@ -1,5 +1,6 @@
 using System.ComponentModel;
 
+using SUIsei;
 using SUIsei.Controls;
 using SUIsei.Input;
 using SUIsei.RoutedEvents;
@@ -58,7 +59,7 @@ internal sealed partial class CommandPalette : ContentControl, INotifyPropertyCh
 		if (model.PaletteOpen)
 		{
 			Query.Text = "";
-			Query.Focus();
+			Query.Focus(FocusState.Programmatic);
 		}
 		model.IsTyping = model.PaletteOpen;
 	}

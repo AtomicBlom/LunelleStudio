@@ -15,7 +15,7 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <!-- Scrolls sideways when a host's extras make it wider than the window, rather than running under the right -->
-            <ScrollViewer Grid.Column="0" HorizontalScrollMode="Enabled" Margin="0,0,10,0">
+            <ScrollViewer Grid.Column="0" HorizontalScrollBarVisibility="Auto" Margin="0,0,10,0">
             <StackPanel Orientation="Horizontal">
                 <TextBlock Text="{x:Bind ViewModel.SongName, Mode=OneWay}" FontSize="15" Foreground="{x:Static views:Theme.Ink}"
                            VerticalAlignment="Center" Margin="2,0,14,0" />

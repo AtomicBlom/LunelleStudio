@@ -15,7 +15,7 @@
             <TextBlock Text="{x:Bind ViewModel.DockLabel, Mode=OneWay}" FontSize="16" Foreground="{x:Static views:Theme.Ink}" Margin="0,0,0,10" />
             <TextBlock Text="Choose a kit from the library." FontSize="13" Foreground="{x:Static views:Theme.Dim}"
                        Visibility="{x:Bind views:Display.NoneChosen(ViewModel.SelectedKit), Mode=OneWay}" />
-            <ScrollViewer HorizontalScrollMode="Enabled">
+            <ScrollViewer HorizontalScrollBarVisibility="Auto">
                 <ItemsControl ItemsSource="{x:Bind ViewModel.Pads, Mode=OneWay}" Margin="0,0,0,14">
                     <ItemsControl.ItemsPanel>
                         <ItemsPanelTemplate>

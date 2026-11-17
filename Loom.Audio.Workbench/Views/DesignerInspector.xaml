@@ -106,7 +106,7 @@
                 <TextBlock Text="{x:Bind ViewModel.CopyStatus, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Dim}" Margin="10,0,0,0"
                            VerticalAlignment="Center" />
             </StackPanel>
-            <ScrollViewer Grid.Row="1" HorizontalScrollMode="Enabled">
+            <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto">
                 <TextBlock Text="{x:Bind ViewModel.Designer.Code, Mode=OneWay}" FontSize="12" Foreground="{x:Static views:Theme.Ink}" Margin="12,0,16,12" />
             </ScrollViewer>
         </Grid>

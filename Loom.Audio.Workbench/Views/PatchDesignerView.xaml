@@ -79,7 +79,7 @@
             <views:OperatorGraph Designer="{x:Bind ViewModel.Designer, Mode=OneWay}" />
         </Grid>
 
-        <ScrollViewer Grid.Row="4" HorizontalScrollMode="Enabled" Margin="12,0,12,6">
+        <ScrollViewer Grid.Row="4" HorizontalScrollBarVisibility="Auto" Margin="12,0,12,6">
         <ItemsControl ItemsSource="{x:Bind ViewModel.Designer.Stages, Mode=OneWay}" Margin="0,0,0,10">
             <ItemsControl.ItemsPanel>
                 <ItemsPanelTemplate>

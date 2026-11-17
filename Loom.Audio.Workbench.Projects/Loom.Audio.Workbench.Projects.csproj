@@ -5,7 +5,7 @@
 	     Loom with the host, and its catalog found by MusicCatalogAttribute. What the workbench reloads by, in place of
 	     dotnet watch. No window: tests drive it as the workbench apps do. -->
 	<PropertyGroup>
-		<TargetFramework>net10.0</TargetFramework>
+		<TargetFramework>net11.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>

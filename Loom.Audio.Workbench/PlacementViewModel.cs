@@ -24,7 +24,7 @@ public sealed class PlacementViewModel : ViewModel
 	/// <summary>Its name, and its section's.</summary>
 	public string Name { get; }
 
-	/// <summary>When it plays, in words: "when intensity above 0.35", "level follows forest"; empty when always.</summary>
+	/// <summary>When it plays, in words: "when energy above 0.35", "level follows energy"; empty when always.</summary>
 	public string ConditionText { get; }
 
 	/// <summary>Whether it is playing now.</summary>

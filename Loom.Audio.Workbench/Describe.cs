@@ -9,7 +9,7 @@ internal static class Describe
 {
 	private static readonly string[] NoteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
 
-	// "when intensity above 0.35, level follows forest", or empty when it always plays at its own level
+	// "when energy above 0.35, level follows calm", or empty when it always plays at its own level
 	public static string Placement(Placement placement)
 	{
 		var parts = new List<string>();

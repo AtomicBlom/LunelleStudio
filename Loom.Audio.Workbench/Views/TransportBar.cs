@@ -25,6 +25,8 @@ internal sealed partial class TransportBar : ContentControl, INotifyPropertyChan
 		}
 	}
 
-	/// <summary>A panel at the bar's end for an app's own controls (the Studio's recording toggle).</summary>
+	/// <summary>
+	/// A panel at the bar's end for an app's own controls (a toggle for a sound of its own under the music).
+	/// </summary>
 	public StackPanel Extras => ExtrasPanel;
 }

@@ -215,6 +215,27 @@ public sealed class WorkbenchViewModel : ViewModel
 	/// <summary>The part chosen, as a grid.</summary>
 	public PatternViewModel Pattern { get; } = new();
 
+	/// <summary>The patch designer, which Patch mode shows: the patch chosen, as data under the hands.</summary>
+	public PatchDesigner Designer { get; } = new();
+
+	/// <summary>What the last copy did: "C# copied", or why it couldn't.</summary>
+	public string CopyStatus
+	{
+		get;
+		internal set => Set(ref field, value);
+	} = "";
+
+	/// <summary>Raised at each refresh (30 a second), for views that draw what is heard: the scope and spectrum.</summary>
+	public event Action? Refreshed;
+
+	internal void RaiseRefreshed() => Refreshed?.Invoke();
+
+	/// <summary>Copies the newest frames heard on the workbench's bus into <paramref name="into"/>; returns how many.</summary>
+	public int ReadScope(Span<float> into) => _workbench.ReadScope(into);
+
+	/// <summary>The rate the workbench's audio runs at, for a spectrum's frequencies.</summary>
+	public int SampleRate => _workbench.SampleRate;
+
 	/// <summary>Plays a note on the bench (a key of the on-screen keyboard), at <see cref="Velocity"/>; returns it, to let go.</summary>
 	public Synth.Chip.NoteHandle PlayNote(int note) => _workbench.AuditionOn(note, Velocity);
 

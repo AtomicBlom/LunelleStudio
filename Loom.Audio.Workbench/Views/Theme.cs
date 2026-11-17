@@ -28,6 +28,16 @@ internal static class Theme
 	public static SolidColorBrush ErrorSoft { get; } = Brush(224, 88, 93, 46);
 	public static SolidColorBrush Backdrop { get; } = Brush(0, 0, 0, 120);
 	public static SolidColorBrush Clear { get; } = Brush(0, 0, 0, 0);
+	// Driving edges, and the colours of the operator kinds in the patch designer's graph
+	public static SolidColorBrush Drive { get; } = Brush(79, 209, 197);
+	public static SolidColorBrush KindSine { get; } = Brush(120, 180, 255);
+	public static SolidColorBrush KindWave { get; } = Brush(183, 155, 255);
+	public static SolidColorBrush KindNoise { get; } = Brush(163, 171, 187);
+	public static SolidColorBrush KindString { get; } = Brush(240, 163, 94);
+	public static SolidColorBrush KindModes { get; } = Brush(79, 209, 197);
+	public static SolidColorBrush KindTube { get; } = Brush(132, 217, 126);
+	public static SolidColorBrush KindLevel { get; } = Brush(207, 212, 222);
+	public static SolidColorBrush KindSample { get; } = Brush(255, 143, 177);
 
 	public static SolidColorBrush Brush(byte r, byte g, byte b, byte a = 255) => new(HdrColor.FromRgb(r, g, b, a));
 }

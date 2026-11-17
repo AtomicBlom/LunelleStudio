@@ -69,4 +69,23 @@ internal static class Display
 	public static string Pin(bool pinned) => pinned ? "Unpin" : "Pin";
 
 	public static string Percent(float value) => $"{value * 100f:0}%";
+
+	// An operator's colour by its kind
+	public static SolidColorBrush Kind(Loom.Audio.Synth.Chip.OperatorKind kind) => kind switch
+	{
+		Loom.Audio.Synth.Chip.OperatorKind.Sine => Theme.KindSine,
+		Loom.Audio.Synth.Chip.OperatorKind.Wave => Theme.KindWave,
+		Loom.Audio.Synth.Chip.OperatorKind.Noise => Theme.KindNoise,
+		Loom.Audio.Synth.Chip.OperatorKind.String => Theme.KindString,
+		Loom.Audio.Synth.Chip.OperatorKind.Modes => Theme.KindModes,
+		Loom.Audio.Synth.Chip.OperatorKind.Tube => Theme.KindTube,
+		Loom.Audio.Synth.Chip.OperatorKind.Sample => Theme.KindSample,
+		_ => Theme.KindLevel,
+	};
+
+	// A stage of the voice: dim when it does nothing
+	public static SolidColorBrush StageInk(bool off) => off ? Theme.Faint : Theme.Ink;
+
+	// The designer's problems, red
+	public static SolidColorBrush Problem(bool problems) => problems ? Theme.Error : Theme.Meter;
 }

@@ -20,4 +20,10 @@ public sealed record WorkbenchCatalog
 
 	/// <summary>The game's cues, shown whether or not the song playing uses them.</summary>
 	public IReadOnlyList<CueBase> Cues { get; init; } = [];
+
+	/// <summary>
+	/// How the game names a macro in code ("Macros.Bright"), for the patch designer's code and its macros; null, or null for
+	/// a macro, writes <c>new Macro(n)</c>.
+	/// </summary>
+	public Func<int, string?>? MacroName { get; init; }
 }

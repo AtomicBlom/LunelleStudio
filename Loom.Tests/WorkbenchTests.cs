@@ -23,7 +23,8 @@ public class WorkbenchTests
 			var catalog = new WorkbenchCatalog
 			{
 				Songs = [("first", First), ("second", Second)],
-				Patches = [("click", () => MusicRig.Click)],
+				Patches = [("click", () => MusicRig.Click), ("tone", () => ChipRig.Tone)],
+				MacroName = id => id == 0 ? "Macros.Bright" : null,
 				Cues = [Energy],
 			};
 			Workbench = new Workbench(Session.Engine, Session.Engine.Master, catalog);
@@ -258,6 +259,99 @@ public class WorkbenchTests
 		Frame();
 		view.LayoutRect.Width.ShouldBe(1280f);
 		view.LayoutRect.Height.ShouldBe(800f);
+	}
+
+	[Test]
+	public void Choosing_a_patch_opens_it_in_the_designer_as_a_graph_its_voice_and_its_code()
+	{
+		using var rig = new Rig();
+		var designer = rig.Workbench.ViewModel.Designer;
+		rig.Workbench.ChoosePatch(0);
+
+		designer.Name.ShouldBe("click");
+		designer.Nodes.ShouldHaveSingleItem().Summary.ShouldBe("SINE 1 kHz");
+		designer.Selected.ShouldBe(0);
+		designer.Inspector.ShouldContain(i => i.Label == "frequency" && i.IsSlider);
+		designer.Code.ShouldContain("Patch.Build(\"click\"");
+		designer.IsDirty.ShouldBeFalse();
+		designer.HasProblems.ShouldBeFalse();
+		designer.Stages.Select(s => s.Name).ShouldContain("Filter");
+	}
+
+	[Test]
+	public void An_edit_is_heard_at_the_next_note_and_the_code_follows_it()
+	{
+		using var rig = new Rig();
+		var designer = rig.Workbench.ViewModel.Designer;
+		rig.Workbench.ChoosePatch(1);
+		var ratio = designer.Inspector.First(i => i.Label == "ratio");
+		ratio.Position = 2f;
+		designer.Spec.Operators[0].Ratio.ShouldBe(2f);
+		designer.IsDirty.ShouldBeTrue();
+		designer.Code.ShouldContain("p.Sine(2f, Env.Gate)");
+
+		rig.Session.Clear();
+		var note = rig.Workbench.AuditionOn(57f, 0.8f);
+		rig.Step(MusicRig.Rate / 4);
+		rig.Workbench.AuditionOff(note);
+		AudioAnalysis.PeakFrequency(rig.Session.Left(), MusicRig.Rate, 100, 2000).ShouldBe(440, 4);
+
+		designer.RevertCommand.Execute(null);
+		designer.IsDirty.ShouldBeFalse();
+		designer.Spec.Operators[0].Ratio.ShouldBe(1f);
+	}
+
+	[Test]
+	public void What_the_builder_refuses_is_shown_and_the_last_patch_that_built_plays_on()
+	{
+		using var rig = new Rig();
+		var designer = rig.Workbench.ViewModel.Designer;
+		rig.Workbench.ChoosePatch(1);
+		designer.AddButtons.First(b => b.Label == "Modes").Command!.Execute(null);
+		designer.Nodes.Count.ShouldBe(2);
+		designer.HasProblems.ShouldBeFalse();   // a Modes is driven by the operator before it
+
+		designer.Inspector.First(i => i.IsToggle && i.Label == "sine1").IsOn = false;
+		designer.HasProblems.ShouldBeTrue();
+		designer.Problems.ShouldContain("nothing ringing them");
+		designer.Current.ShouldBeNull();
+
+		designer.Inspector.First(i => i.IsToggle && i.Label == "sine1").IsOn = true;
+		designer.HasProblems.ShouldBeFalse();
+		designer.Inspector.First(i => i.IsAction && i.Label == "Delete").Command!.Execute(null);
+		designer.Nodes.Count.ShouldBe(1);
+	}
+
+	[Test]
+	public void A_rebuild_after_a_code_change_keeps_the_designers_edits_and_the_code_names_the_games_macros()
+	{
+		using var rig = new Rig();
+		var designer = rig.Workbench.ViewModel.Designer;
+		rig.Workbench.ChoosePatch(1);
+		designer.Tab = DesignerTab.Macros;
+		designer.Inspector.First(i => i.Label == "+ Macro").Command!.Execute(null);
+		designer.Code.ShouldContain("p.Macro(Macros.Bright, MacroTarget.FilterOctaves, -1f, 1f);");
+
+		Workbench.CodeChanged();
+		rig.Step(256);
+		designer.IsDirty.ShouldBeTrue();
+		designer.Spec.Macros.Count.ShouldBe(1);
+	}
+
+	[Test]
+	public void The_code_is_copied_through_the_host_and_says_so()
+	{
+		using var rig = new Rig();
+		var copied = "";
+		rig.Workbench.CopyText = text =>
+		{
+			copied = text;
+			return true;
+		};
+		rig.Workbench.ChoosePatch(0);
+		rig.Workbench.ViewModel.Designer.CopyCommand.Execute(null);
+		copied.ShouldBe(rig.Workbench.ViewModel.Designer.Code);
+		rig.Workbench.ViewModel.CopyStatus.ShouldStartWith("C# copied");
 	}
 
 	[Test]

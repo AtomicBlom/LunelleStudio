@@ -46,6 +46,29 @@ public sealed class Workbench : IDisposable
 	private int _kitChoice = -1;
 	// The track the keyboard plays in Arrange, by name, so a rebuild finds it again
 	private string? _dockTrack;
+	// What the workbench's bus heard last, for the scope and spectrum
+	private readonly AudioTap _tap = new(8192);
+
+	/// <summary>
+	/// Puts text on the clipboard (the patch designer's code), returning whether it could; null when the host has none.
+	/// The host sets it: a desktop app to its window's clipboard.
+	/// </summary>
+	public Func<string, bool>? CopyText { get; set; }
+
+	internal int ReadScope(Span<float> into) => _tap.Read(into);
+
+	internal int SampleRate => _audio.SampleRate;
+
+	// The designer's patch built after an edit: the keyboard's instrument plays it from its next note
+	private void OnDesignerBuilt(Patch patch)
+	{
+		if (_bench is { } chip && _benchKit is null && _benchPatch >= 0)
+			chip.Replace(_benchInstrument, patch);
+	}
+
+	private void OnCopyRequested(string text) =>
+		ViewModel.CopyStatus = CopyText is null ? "This host has no clipboard: select the code to copy it."
+			: CopyText(text) ? $"C# copied at {DateTime.Now:HH:mm:ss}" : "The clipboard refused it.";
 
 	/// <summary>A workbench playing on <paramref name="bus"/> of <paramref name="audio"/>, over <paramref name="catalog"/>; its first song is chosen, not yet playing.</summary>
 	public Workbench(AudioEngine audio, AudioBus bus, WorkbenchCatalog catalog)
@@ -57,6 +80,9 @@ public sealed class Workbench : IDisposable
 		_catalog = catalog;
 		Player = new MusicPlayer(audio, bus);
 		ViewModel = new WorkbenchViewModel(this);
+		audio.AddEffect(bus, _tap);
+		ViewModel.Designer.Built += OnDesignerBuilt;
+		ViewModel.Designer.CopyRequested += OnCopyRequested;
 		foreach (var (name, _) in catalog.Songs)
 			ViewModel.AddSong(name);
 		foreach (var (name, _) in catalog.Patches)
@@ -348,6 +374,7 @@ public sealed class Workbench : IDisposable
 		{
 			_sinceRefresh = 0;
 			Refresh();
+			ViewModel.RaiseRefreshed();
 		}
 	}
 
@@ -520,6 +547,8 @@ public sealed class Workbench : IDisposable
 		ViewModel.ShowPads([]);
 		foreach (var macro in ViewModel.Macros)
 			chip.SetMacro(_benchInstrument, new Macro(macro.Index), macro.Value);
+		// The same patch built again after a code change keeps the designer's edits; another opens afresh
+		ViewModel.Designer.Load(patch, _catalog.MacroName, keepEdits: true);
 	}
 
 	/// <summary>Chooses a kit for the bench, whose pads (and keys) play its pieces.</summary>

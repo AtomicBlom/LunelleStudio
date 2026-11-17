@@ -2,7 +2,7 @@
 <!--
     The workbench: the transport across the top; down the left a rail (the library, and the modes: Arrange, Patch, Kit);
     the mode's view in the middle, with the library over it or pinned beside it, and a failed build's error over its top;
-    the cues beside Arrange; the keyboard docked along the bottom; and the command palette over everything when open.
+    the cues beside Arrange, the patch designer's inspector beside Patch; the keyboard docked along the bottom; and the command palette over everything when open.
 -->
 <ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -54,7 +54,7 @@
                 <Border Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1" CornerRadius="8">
                     <Grid>
                         <views:ArrangeView ViewModel="{x:Bind ViewModel}" Visibility="{x:Bind ViewModel.IsArrange, Mode=OneWay}" />
-                        <views:PatchBench ViewModel="{x:Bind ViewModel}" Visibility="{x:Bind ViewModel.IsPatch, Mode=OneWay}" />
+                        <views:PatchDesignerView ViewModel="{x:Bind ViewModel}" Visibility="{x:Bind ViewModel.IsPatch, Mode=OneWay}" />
                         <views:KitView ViewModel="{x:Bind ViewModel}" Visibility="{x:Bind ViewModel.IsKit, Mode=OneWay}" />
                     </Grid>
                 </Border>
@@ -75,6 +75,12 @@
             <Border Grid.Column="3" Width="300" Margin="8,0,0,0" Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}"
                     BorderThickness="1" CornerRadius="8" Visibility="{x:Bind ViewModel.IsArrange, Mode=OneWay}">
                 <views:CuePanel ViewModel="{x:Bind ViewModel}" />
+            </Border>
+
+            <!-- The patch designer's inspector beside Patch -->
+            <Border Grid.Column="3" Width="360" Margin="8,0,0,0" Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}"
+                    BorderThickness="1" CornerRadius="8" Visibility="{x:Bind ViewModel.IsPatch, Mode=OneWay}">
+                <views:DesignerInspector ViewModel="{x:Bind ViewModel}" />
             </Border>
         </Grid>
 

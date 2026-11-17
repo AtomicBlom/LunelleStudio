@@ -25,7 +25,10 @@ public sealed class WorkbenchProject(MusicProject project, Workbench workbench) 
 		// The catalog first: taking it up rebuilds the song, which notes its own time, and the compile's line goes over it
 		if (build.Succeeded)
 		{
-			Workbench.UseCatalog(build.Catalog!);
+			var catalog = build.Catalog!;
+			_code.Types = [.. catalog.Songs.Select(s => catalog.SongSource(s.Name)?.Type).Append(catalog.PatchesType).OfType<string>()];
+			Workbench.Code = _code;
+			Workbench.UseCatalog(catalog);
 			_current?.Release();
 			_current = build;
 		}
@@ -34,4 +37,7 @@ public sealed class WorkbenchProject(MusicProject project, Workbench workbench) 
 
 	/// <summary>Stops watching the project.</summary>
 	public void Dispose() => Project.Dispose();
+
+	// The project's C#, which the workbench ejects pieces into and brings them back from
+	private readonly MusicCode _code = new(() => project.SourceFiles);
 }

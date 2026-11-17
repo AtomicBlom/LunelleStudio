@@ -36,4 +36,7 @@ public sealed record WorkbenchCatalog
 
 	/// <summary>The file a patch is built from (a <c>.patch.json</c>), by the patch's name in the catalog; null for code.</summary>
 	public Func<string, string?> PatchFile { get; init; } = _ => null;
+
+	/// <summary>The class the generator writes the patches' properties into, in full, whose own half holds a patch that is code.</summary>
+	public string? PatchesType { get; init; }
 }

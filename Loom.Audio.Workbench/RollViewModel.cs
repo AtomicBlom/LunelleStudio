@@ -22,6 +22,7 @@ public sealed class RollViewModel : ViewModel
 
 	internal RollViewModel(Workbench workbench)
 	{
+		_workbench = workbench;
 		UndoCommand = new ActionCommand(() => workbench.UndoEdit());
 		RedoCommand = new ActionCommand(() => workbench.RedoEdit());
 		RevertCommand = new ActionCommand(() => workbench.RevertPart());
@@ -329,4 +330,32 @@ public sealed class RollViewModel : ViewModel
 			change(text);
 			rows[piece] = text.ToString();
 		});
+
+	/// <summary>Whether the part shown can be made code: data, in a song whose C# the host can write.</summary>
+	public bool CanEject { get; private set => Set(ref field, value); }
+
+	/// <summary>Whether the part shown is code that can be made data again.</summary>
+	public bool CanBringBack { get; private set => Set(ref field, value); }
+
+	/// <summary>Where the part's code is, when it is code: "in OpenRoad.cs, line 12".</summary>
+	public string CodeWhere { get; private set => Set(ref field, value); } = "";
+
+	/// <summary>Makes the part's notation code, its condition and name staying data.</summary>
+	public ICommand EjectNotationCommand => field ??= new ActionCommand(() => _workbench.EjectSelected(placement: false));
+
+	/// <summary>Makes the whole placement code.</summary>
+	public ICommand EjectPlacementCommand => field ??= new ActionCommand(() => _workbench.EjectSelected(placement: true));
+
+	/// <summary>Makes the code part data again, from what its code builds.</summary>
+	public ICommand BringBackCommand => field ??= new ActionCommand(() => _workbench.BringBackSelected());
+
+	private Workbench _workbench = null!;
+
+	/// <summary>Says what the part chosen can do between data and code.</summary>
+	internal void ShowCode(bool canEject, bool canBringBack, string where)
+	{
+		CanEject = canEject;
+		CanBringBack = canBringBack;
+		CodeWhere = where;
+	}
 }

@@ -28,6 +28,7 @@ public sealed class MusicProject : IDisposable
 	private ProjectId _project = null!;
 	private Dictionary<string, string> _references = [];
 	private string[] _musicFiles = [];
+	private string[] _sourceFiles = [];
 	private ProjectBuild? _pending;
 	private int _builds;
 	private bool _reloadArguments;
@@ -136,6 +137,7 @@ public sealed class MusicProject : IDisposable
 		DocumentInfo Document(string path) => DocumentInfo.Create(DocumentId.CreateNewId(id), Path.GetFileName(path),
 			loader: new FileTextLoader(path, Encoding.UTF8), filePath: path);
 		var references = parsed.MetadataReferences.Select(r => MetadataReference.CreateFromFile(r.Reference, r.Properties)).ToArray();
+		_sourceFiles = [.. parsed.SourceFiles.Select(f => Path.GetFullPath(f.Path, Directory))];
 		_musicFiles = [.. parsed.AdditionalFiles.Select(f => Path.GetFullPath(f.Path, Directory))];
 		_references = parsed.MetadataReferences
 			.GroupBy(r => Path.GetFileNameWithoutExtension(r.Reference), StringComparer.OrdinalIgnoreCase)
@@ -278,4 +280,7 @@ public sealed class MusicProject : IDisposable
 	// MSBuild properties for the design-time build (the host's Configuration, say), and the resources the compiler embeds
 	private readonly IReadOnlyDictionary<string, string> _properties;
 	private ResourceDescription[] _resources = [];
+
+	/// <summary>The project's C# files, as its compiler is given them.</summary>
+	public IReadOnlyList<string> SourceFiles => _sourceFiles;
 }

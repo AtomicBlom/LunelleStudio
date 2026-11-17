@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Files: the project's music as files, each song's and patch's data and the C# that is theirs, down the left; the one
+    chosen beside them as it is on disk, with Copy file and a button per piece to copy (a class or a member; a track, a
+    section or a part; an operator).
+-->
+<ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:wb="using:Loom.Audio.Workbench"
+                xmlns:views="using:Loom.Audio.Workbench.Views"
+                x:Class="Loom.Audio.Workbench.Views.FilesView"
+                IsTabStop="False">
+    <Grid Margin="12,10,12,10">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="230" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <ScrollViewer Grid.Column="0" Margin="0,0,10,0">
+            <ItemsControl ItemsSource="{x:Bind ViewModel.Files.Files, Mode=OneWay}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="wb:FileEntryViewModel">
+                        <ToggleButton IsChecked="{x:Bind IsSelected, Mode=TwoWay}" HorizontalAlignment="Stretch" Margin="0,0,0,3">
+                            <StackPanel Margin="8,3,8,4">
+                                <TextBlock Text="{x:Bind Name}" FontSize="12" TextTrimming="CharacterEllipsis" />
+                                <TextBlock Text="{x:Bind Kind}" FontSize="10" Foreground="{x:Static views:Theme.Faint}" />
+                            </StackPanel>
+                        </ToggleButton>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
+                <TextBlock Text="{x:Bind ViewModel.Files.Title, Mode=OneWay}" FontSize="13" Foreground="{x:Static views:Theme.Ink}"
+                           VerticalAlignment="Center" Margin="0,0,12,0" TextTrimming="CharacterEllipsis" />
+                <Button Command="{x:Bind ViewModel.Files.CopyFileCommand, Mode=OneWay}" Margin="0,0,10,0">
+                    <TextBlock Text="Copy file" FontSize="12" Margin="8,2,8,3" />
+                </Button>
+                <TextBlock Text="{x:Bind ViewModel.CopyStatus, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Dim}" VerticalAlignment="Center" />
+            </StackPanel>
+            <ScrollViewer Grid.Row="1" HorizontalScrollMode="Enabled" Margin="0,0,0,8">
+                <ItemsControl ItemsSource="{x:Bind ViewModel.Files.Pieces, Mode=OneWay}">
+                    <ItemsControl.ItemsPanel>
+                        <ItemsPanelTemplate>
+                            <StackPanel Orientation="Horizontal" />
+                        </ItemsPanelTemplate>
+                    </ItemsControl.ItemsPanel>
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="wb:FilePieceViewModel">
+                            <Button Command="{x:Bind CopyCommand}" Margin="0,0,3,0">
+                                <TextBlock Text="{x:Bind Name}" FontSize="11" Margin="6,2,6,3" />
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+            <Border Grid.Row="2" Background="{x:Static views:Theme.Sunk}" CornerRadius="6">
+                <ScrollViewer HorizontalScrollMode="Enabled">
+                    <TextBlock Text="{x:Bind ViewModel.Files.Text, Mode=OneWay}" FontSize="12" Foreground="{x:Static views:Theme.Ink}" Margin="10,8,10,8" />
+                </ScrollViewer>
+            </Border>
+        </Grid>
+    </Grid>
+</ContentControl>

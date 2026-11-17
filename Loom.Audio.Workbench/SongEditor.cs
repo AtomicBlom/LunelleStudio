@@ -198,4 +198,11 @@ public sealed class SongEditor
 		_inGesture = false;
 		_gestureKept = false;
 	}
+
+	/// <summary>The part at <c>sections[section].parts[index]</c> as the file has it, code or not, or null.</summary>
+	public JsonObject? RawPart(int section, int index) =>
+		_root["sections"] is JsonArray sections && (uint)section < (uint)sections.Count
+		&& sections[section]?["parts"] is JsonArray parts && (uint)index < (uint)parts.Count
+			? parts[index] as JsonObject
+			: null;
 }

@@ -44,7 +44,7 @@ internal static class CatalogReader
 				Part = n => Member(n)?.Invoke(null, null) as Part,
 				Placement = (n, section, track) => Member(n)?.Invoke(null, [section, track]) as Placement,
 				Hook = (n, song, sections) => Member(n)?.Invoke(null, [song, .. sections]),
-			}));
+			}, code?.FullName));
 		}
 		return (new WorkbenchCatalog
 		{
@@ -55,6 +55,10 @@ internal static class CatalogReader
 			MacroName = macroName,
 			SongSource = name => songFiles.GetValueOrDefault(name),
 			PatchFile = name => patchFiles.GetValueOrDefault(name),
+			// The class a patch file's property is generated into: the one with a static Patch property named for the file
+			PatchesType = patchFiles.Keys.Select(stem => assembly.GetTypes().FirstOrDefault(t =>
+				t.GetProperty(PatchCode.Pascal(stem), BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)?.PropertyType == typeof(Patch)))
+				.FirstOrDefault(t => t is not null)?.FullName,
 		}, null);
 	}
 

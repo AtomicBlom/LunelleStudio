@@ -784,4 +784,27 @@ public sealed class PatchDesigner : ViewModel
 
 	/// <summary>Each operator's name, by index, as the code and the file write them.</summary>
 	public IReadOnlyList<string> Names => _names;
+
+	/// <summary>Whether the patch is code (its file says so): the designer's edits are heard but not saved until it is data again.</summary>
+	public bool IsCode { get; private set => Set(ref field, value); }
+
+	/// <summary>Whether the patch can be made code: data in a file, in a project whose C# the host can write.</summary>
+	public bool CanEject { get; private set => Set(ref field, value); }
+
+	/// <summary>Makes the patch code: a member of the patches' own C#, its file pointing at it.</summary>
+	public ICommand EjectCommand => field ??= new ActionCommand(() => EjectRequested?.Invoke());
+
+	/// <summary>Makes the code patch data again, from what its code builds.</summary>
+	public ICommand BringBackCommand => field ??= new ActionCommand(() => BringBackRequested?.Invoke());
+
+	internal event Action? EjectRequested;
+
+	internal event Action? BringBackRequested;
+
+	/// <summary>Says whether the patch is code, and whether it can be made code.</summary>
+	internal void ShowCode(bool isCode, bool canEject)
+	{
+		IsCode = isCode;
+		CanEject = canEject;
+	}
 }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    The workbench: the transport across the top; down the left a rail (the library, and the modes: Arrange, Patch, Kit);
+    The workbench: the transport across the top; down the left a rail (the library, and the modes: Arrange, Patch, Kit, Files);
     the mode's view in the middle, with the library over it or pinned beside it, and a failed build's error over its top;
     the cues beside Arrange, the patch designer's inspector beside Patch; the keyboard docked along the bottom; and the command palette over everything when open.
 -->
@@ -39,8 +39,11 @@
                     <ToggleButton IsChecked="{x:Bind ViewModel.IsPatch, Mode=TwoWay}" HorizontalAlignment="Stretch" Margin="0,0,0,4">
                         <TextBlock Text="Patch" FontSize="12" HorizontalAlignment="Center" Margin="0,6,0,7" />
                     </ToggleButton>
-                    <ToggleButton IsChecked="{x:Bind ViewModel.IsKit, Mode=TwoWay}" HorizontalAlignment="Stretch">
+                    <ToggleButton IsChecked="{x:Bind ViewModel.IsKit, Mode=TwoWay}" HorizontalAlignment="Stretch" Margin="0,0,0,4">
                         <TextBlock Text="Kit" FontSize="12" HorizontalAlignment="Center" Margin="0,6,0,7" />
+                    </ToggleButton>
+                    <ToggleButton IsChecked="{x:Bind ViewModel.IsFiles, Mode=TwoWay}" HorizontalAlignment="Stretch">
+                        <TextBlock Text="Files" FontSize="12" HorizontalAlignment="Center" Margin="0,6,0,7" />
                     </ToggleButton>
                 </StackPanel>
             </Border>
@@ -56,6 +59,7 @@
                         <views:ArrangeView ViewModel="{x:Bind ViewModel}" Visibility="{x:Bind ViewModel.IsArrange, Mode=OneWay}" />
                         <views:PatchDesignerView ViewModel="{x:Bind ViewModel}" Visibility="{x:Bind ViewModel.IsPatch, Mode=OneWay}" />
                         <views:KitView ViewModel="{x:Bind ViewModel}" Visibility="{x:Bind ViewModel.IsKit, Mode=OneWay}" />
+                        <views:FilesView ViewModel="{x:Bind ViewModel}" Visibility="{x:Bind ViewModel.IsFiles, Mode=OneWay}" />
                     </Grid>
                 </Border>
                 <views:CatalogBrowser Width="270" HorizontalAlignment="Left" ViewModel="{x:Bind ViewModel}"

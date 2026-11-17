@@ -36,9 +36,17 @@
                 <Button Command="{x:Bind ViewModel.Designer.RevertCommand, Mode=OneWay}" Margin="0,0,6,0">
                     <TextBlock Text="Revert" FontSize="12" Margin="8,3,8,4" />
                 </Button>
-                <Button Command="{x:Bind ViewModel.Designer.CopyCommand, Mode=OneWay}">
+                <Button Command="{x:Bind ViewModel.Designer.CopyCommand, Mode=OneWay}" Margin="0,0,6,0">
                     <TextBlock Text="Copy C#" FontSize="12" Margin="8,3,8,4" />
                 </Button>
+                <Button Command="{x:Bind ViewModel.Designer.EjectCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Designer.CanEject, Mode=OneWay}" Margin="0,0,6,0">
+                    <TextBlock Text="Eject to code" FontSize="12" Margin="8,3,8,4" />
+                </Button>
+                <Button Command="{x:Bind ViewModel.Designer.BringBackCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Designer.IsCode, Mode=OneWay}" Margin="0,0,6,0">
+                    <TextBlock Text="Bring back as data" FontSize="12" Margin="8,3,8,4" />
+                </Button>
+                <TextBlock Text="code: edits are heard, not saved" Visibility="{x:Bind ViewModel.Designer.IsCode, Mode=OneWay}" FontSize="11"
+                           Foreground="{x:Static views:Theme.Accent}" VerticalAlignment="Center" Margin="4,0,0,0" />
                 <TextBlock Text="{x:Bind ViewModel.CopyStatus, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Dim}"
                            VerticalAlignment="Center" Margin="10,0,0,0" />
             </StackPanel>

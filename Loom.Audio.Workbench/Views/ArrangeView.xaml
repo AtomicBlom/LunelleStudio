@@ -160,6 +160,10 @@
                 <StackPanel Visibility="{x:Bind views:Display.Not(ViewModel.Roll.IsEditable), Mode=OneWay}">
                     <views:PatternView Pattern="{x:Bind ViewModel.Pattern, Mode=OneWay}" />
                     <TextBlock Text="{x:Bind ViewModel.Roll.Status, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Faint}" Margin="0,4,0,0" />
+                    <Button Command="{x:Bind ViewModel.Roll.BringBackCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Roll.CanBringBack, Mode=OneWay}"
+                            HorizontalAlignment="Left" Margin="0,6,0,0">
+                        <TextBlock Text="Bring back as data" FontSize="12" Margin="8,2,8,3" />
+                    </Button>
                 </StackPanel>
                 <Grid Visibility="{x:Bind ViewModel.Roll.IsEditable, Mode=OneWay}">
                     <Grid.RowDefinitions>
@@ -184,7 +188,11 @@
                         <Button Command="{x:Bind ViewModel.Roll.RemoveBarCommand, Mode=OneWay}" Margin="0,0,10,0"><TextBlock Text="− bar" FontSize="12" Margin="8,2,8,3" /></Button>
                         <Button Command="{x:Bind ViewModel.Roll.UndoCommand, Mode=OneWay}" IsEnabled="{x:Bind ViewModel.Roll.CanUndo, Mode=OneWay}" Margin="0,0,2,0"><TextBlock Text="Undo" FontSize="12" Margin="8,2,8,3" /></Button>
                         <Button Command="{x:Bind ViewModel.Roll.RedoCommand, Mode=OneWay}" IsEnabled="{x:Bind ViewModel.Roll.CanRedo, Mode=OneWay}" Margin="0,0,2,0"><TextBlock Text="Redo" FontSize="12" Margin="8,2,8,3" /></Button>
-                        <Button Command="{x:Bind ViewModel.Roll.RevertCommand, Mode=OneWay}"><TextBlock Text="Revert part" FontSize="12" Margin="8,2,8,3" /></Button>
+                        <Button Command="{x:Bind ViewModel.Roll.RevertCommand, Mode=OneWay}" Margin="0,0,10,0"><TextBlock Text="Revert part" FontSize="12" Margin="8,2,8,3" /></Button>
+                        <StackPanel Orientation="Horizontal" Visibility="{x:Bind ViewModel.Roll.CanEject, Mode=OneWay}">
+                            <Button Command="{x:Bind ViewModel.Roll.EjectNotationCommand, Mode=OneWay}" Margin="0,0,2,0"><TextBlock Text="Eject notation" FontSize="12" Margin="8,2,8,3" /></Button>
+                            <Button Command="{x:Bind ViewModel.Roll.EjectPlacementCommand, Mode=OneWay}"><TextBlock Text="Eject placement" FontSize="12" Margin="8,2,8,3" /></Button>
+                        </StackPanel>
                         </StackPanel>
                         </ScrollViewer>
                     </StackPanel>

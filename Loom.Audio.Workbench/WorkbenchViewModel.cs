@@ -271,6 +271,7 @@ public sealed class WorkbenchViewModel : ViewModel
 		Changed(nameof(IsArrange));
 		Changed(nameof(IsPatch));
 		Changed(nameof(IsKit));
+		Changed(nameof(IsFiles));
 	}
 
 	/// <summary>Whether Arrange has the middle.</summary>
@@ -502,4 +503,18 @@ public sealed class WorkbenchViewModel : ViewModel
 
 	/// <summary>The part chosen as the roll edits it, when its song has a file and the part is data.</summary>
 	public RollViewModel Roll { get; }
+
+	/// <summary>Whether the Files view has the middle.</summary>
+	public bool IsFiles
+	{
+		get => Mode == WorkbenchMode.Files;
+		set
+		{
+			if (value)
+				Mode = WorkbenchMode.Files;
+		}
+	}
+
+	/// <summary>The Files view: the music as files, to read and copy.</summary>
+	public FilesViewModel Files { get; } = new();
 }

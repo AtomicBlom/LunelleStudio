@@ -116,6 +116,9 @@ public sealed class Workbench : IDisposable
 		audio.AddEffect(bus, _tap);
 		ViewModel.Designer.Built += OnDesignerBuilt;
 		ViewModel.Designer.CopyRequested += OnCopyRequested;
+		ViewModel.Designer.EjectRequested += EjectPatch;
+		ViewModel.Files.CopyRequested += OnCopyRequested;
+		ViewModel.Designer.BringBackRequested += BringBackPatch;
 		ViewModel.Sketch.Edited += OnSketchEdited;
 		ViewModel.Sketch.CopyRequested += OnCopyRequested;
 		foreach (var (name, _) in catalog.Songs)
@@ -191,6 +194,8 @@ public sealed class Workbench : IDisposable
 		ViewModel.ShowBench(_benchPatch, _benchKitIndex);
 		Rebuild();
 		RebuildBench();
+		if (ViewModel.Mode == WorkbenchMode.Files)
+			RefreshFiles();
 	}
 
 	/// <summary>
@@ -739,6 +744,9 @@ public sealed class Workbench : IDisposable
 			case WorkbenchMode.Kit when _catalog.Kits.Count > 0:
 				SelectKit(Math.Max(0, _kitChoice));
 				break;
+			case WorkbenchMode.Files:
+				RefreshFiles();
+				break;
 		}
 	}
 
@@ -1117,21 +1125,31 @@ public sealed class Workbench : IDisposable
 		return -1;
 	}
 
-	// The part chosen in the roll, when its song has a file and the part is data there
+	// The part chosen in the roll, when its song has a file and the part is data there; what it can do between data and code
 	private void ShowRoll(Placement placement)
 	{
+		var roll = ViewModel.Roll;
 		if (_editor is null)
 		{
-			ViewModel.Roll.ShowNone(_source is null
+			roll.ShowNone(_source is null
 				? "This song is code alone: a song with a .song.json is edited here."
 				: "The song's file couldn't be read.");
+			roll.ShowCode(false, false, "");
 			return;
 		}
 		var section = placement.Section.Index;
 		var index = IndexIn(placement);
 		if (_editor.Part(section, index) is not { } part)
 		{
-			ViewModel.Roll.ShowNone("This part is code (its notation, or the whole placement, or a hook's), so it is edited in its C#.");
+			var raw = _editor.RawPart(section, index);
+			var member = raw?["code"]?.GetValue<string>() ?? raw?["part"]?["code"]?.GetValue<string>();
+			var where = member is not null && _source?.Type is { } type && Code?.Find(type, member) is { } found
+				? $"{member}, in {Path.GetFileName(found.File)} at line {found.Line}"
+				: member ?? "";
+			roll.ShowNone(member is null
+				? "A hook adds this part, so it is edited in its C#."
+				: $"This part is code ({where}), so it is edited there: bring it back to edit it here.");
+			roll.ShowCode(false, member is not null, where);
 			return;
 		}
 		var step = (part["line"] ?? part["beat"] ?? part["strum"])?.GetValue<string>() switch
@@ -1142,7 +1160,7 @@ public sealed class Workbench : IDisposable
 			_ => Ticks.Triplet,
 		};
 		var editor = _editor;
-		ViewModel.Roll.Show($"{placement.Name} · {placement.Section.Name}", (JsonObject)part.DeepClone(),
+		roll.Show($"{placement.Name} · {placement.Section.Name}", (JsonObject)part.DeepClone(),
 			placement.Section.Song.Meter.TicksPerBar / step, editor.IsEdited(section, index), editor.CanUndo, editor.CanRedo,
 			change => EditPart(section, index, change),
 			gesture =>
@@ -1152,6 +1170,7 @@ public sealed class Workbench : IDisposable
 				else
 					editor.EndGesture();
 			});
+		roll.ShowCode(Code is not null && _source?.Type is not null, false, "");
 	}
 
 	// An edit of a part in the song's file: the song built again from the file as edited, heard at the next bar
@@ -1200,32 +1219,43 @@ public sealed class Workbench : IDisposable
 	private string _patchAbout = "";
 	private double _patchSince = -1;
 
-	// The patch chosen's file, when it has one: its operators' names and its words, for the designer to save to
+	// The patch chosen's file, when it has one: its operators' names and its words, for the designer to save to; or that
+	// the file says the patch is code
 	private IReadOnlyList<string>? OpenPatchFile(string name)
 	{
 		SavePatch();
 		_patchFile = _catalog.PatchFile(name);
 		_patchAbout = "";
-		if (_patchFile is null)
-			return null;
-		try
+		_patchCode = null;
+		IReadOnlyList<string>? names = null;
+		if (_patchFile is not null)
 		{
-			var spec = PatchFile.Read(File.ReadAllText(_patchFile), out var names);
-			_patchAbout = spec.About;
-			return names;
+			try
+			{
+				var text = File.ReadAllText(_patchFile);
+				_patchCode = System.Text.Json.Nodes.JsonNode.Parse(text)?["code"]?.GetValue<string>();
+				if (_patchCode is null)
+				{
+					var spec = PatchFile.Read(text, out var read);
+					_patchAbout = spec.About;
+					names = read;
+				}
+			}
+			catch (Exception ex) when (ex is IOException or FormatException or UnauthorizedAccessException or System.Text.Json.JsonException)
+			{
+				Console.WriteLine($"[workbench] {_patchFile} couldn't be read: {ex.Message}");
+				_patchFile = null;
+			}
 		}
-		catch (Exception ex) when (ex is IOException or FormatException or UnauthorizedAccessException)
-		{
-			Console.WriteLine($"[workbench] {_patchFile} couldn't be read: {ex.Message}");
-			_patchFile = null;
-			return null;
-		}
+		ViewModel.Designer.ShowCode(_patchCode is not null, _patchFile is not null && _patchCode is null && Code is not null && _catalog.PatchesType is not null);
+		return names;
 	}
 
 	// The designer's patch written to its file, once its edits have paused (or now, leaving it)
 	private void SavePatch()
 	{
-		if (_patchSince < 0 || _patchFile is null)
+		// A patch that is code is heard as edited, and its file left saying it is code
+		if (_patchSince < 0 || _patchFile is null || _patchCode is not null)
 			return;
 		_patchSince = -1;
 		var spec = ViewModel.Designer.Spec.Clone();
@@ -1247,4 +1277,238 @@ public sealed class Workbench : IDisposable
 
 	/// <summary>The file the patch chosen is written to as the designer edits it, or null when it is code.</summary>
 	public string? PatchFilePath => _patchFile;
+
+	/// <summary>What changes the music's C# (eject, bring back, the Files view's pieces), from a project's host; null ejects nothing.</summary>
+	public IMusicCode? Code { get; set; }
+
+	private static readonly string[] PartKeys = ["line", "notes", "overChords", "octave", "beat", "rows", "strum", "voicing", "spread", "part"];
+
+	// A name for a member made of a placement, unique in its class and among its file's code
+	private string MemberName(Placement placement, string type, string suffix)
+	{
+		var wanted = PatchCode.Pascal(placement.Name == placement.Track.Name ? $"{placement.Section.Name} {placement.Track.Name}" : placement.Name) + suffix;
+		wanted = new string([.. wanted.Where(char.IsLetterOrDigit)]);
+		if (wanted.Length == 0 || char.IsDigit(wanted[0]))
+			wanted = "Part" + wanted;
+		var taken = new HashSet<string>(Code?.Members(type) ?? [], StringComparer.Ordinal);
+		var text = _editor?.Text ?? "";
+		var name = wanted;
+		for (var n = 2; taken.Contains(name) || text.Contains($"\"code\": \"{name}\"", StringComparison.Ordinal); n++)
+			name = wanted + n;
+		return name;
+	}
+
+	/// <summary>
+	/// The part chosen made code: its notation (<paramref name="placement"/> false) or its whole placement, written as a
+	/// member of the song's own C#, its file pointing at it. Heard as it was once the project has compiled.
+	/// </summary>
+	internal void EjectSelected(bool placement)
+	{
+		if (Code is null || _editor is null || _source is not { Type: { } type } source || _selected is not { } selected
+			|| FindPlacement(selected) is not { } chosen || _editor.Part(chosen.Section.Index, IndexIn(chosen)) is null)
+			return;
+		var (section, index) = (chosen.Section.Index, IndexIn(chosen));
+		var member = MemberName(chosen, type, placement ? "Placement" : "");
+		var code = placement
+			? $"// Ejected from {chosen.Section.Name} · {chosen.Name}: the whole placement, its condition and name too\n"
+				+ $"private static partial Placement {member}(Section section, SongTrack track) =>\n\t{PartCode.Write(chosen, "section", "track").Replace("\n", "\n\t", StringComparison.Ordinal)};"
+			: $"// Ejected from {chosen.Section.Name} · {chosen.Name}: its notation; its condition and name stay in the data\n"
+				+ $"private static partial Part {member}() =>\n\t{PartCode.Write(chosen.Part).Replace("\n", "\n\t", StringComparison.Ordinal)};";
+		var (file, line) = Code.AddMember(type, Path.GetDirectoryName(source.Path)!, code);
+		_editor.Edit(root =>
+		{
+			var parts = (JsonArray)root["sections"]![section]!["parts"]!;
+			var old = (JsonObject)parts[index]!;
+			var made = new JsonObject { ["track"] = old["track"]?.DeepClone() };
+			if (placement)
+				made["code"] = member;
+			else
+			{
+				if (old["name"] is { } name)
+					made["name"] = name.DeepClone();
+				made["part"] = new JsonObject { ["code"] = member };
+				foreach (var (key, value) in old)
+					if (key is not ("track" or "name") && !PartKeys.Contains(key))
+						made[key] = value?.DeepClone();
+			}
+			parts[index] = made;
+		});
+		_editor.Save();
+		ViewModel.BuildText = $"ejected to {Path.GetFileName(file)}:{line} · compiling";
+		ShowRoll(chosen);
+	}
+
+	/// <summary>
+	/// The part chosen, code, made data again: what its code builds written back to the song's file (if it is plain data:
+	/// a line, a beat or a strum) and its member taken out of the C#.
+	/// </summary>
+	internal void BringBackSelected()
+	{
+		if (_editor is null || _source is not { Type: { } type } || _selected is not { } selected || FindPlacement(selected) is not { } chosen)
+			return;
+		var (section, index) = (chosen.Section.Index, IndexIn(chosen));
+		if (_editor.RawPart(section, index) is not { } raw)
+			return;
+		string? member;
+		JsonObject data;
+		try
+		{
+			if (raw["code"]?.GetValue<string>() is { } whole)
+			{
+				member = whole;
+				data = SongFile.ToJson(chosen);
+			}
+			else if (raw["part"]?["code"]?.GetValue<string>() is { } notation)
+			{
+				member = notation;
+				data = new JsonObject { ["track"] = raw["track"]?.DeepClone() };
+				if (raw["name"] is { } name)
+					data["name"] = name.DeepClone();
+				foreach (var (key, value) in SongFile.ToJson(chosen.Part))
+					data[key] = value?.DeepClone();
+				foreach (var (key, value) in raw)
+					if (key is not ("track" or "name") && !PartKeys.Contains(key))
+						data[key] = value?.DeepClone();
+			}
+			else
+				return;
+		}
+		catch (NotSupportedException ex)
+		{
+			ViewModel.Roll.ShowNone($"Its code makes something the file can't say ({ex.Message}), so it stays code.");
+			return;
+		}
+		_editor.Edit(root => ((JsonArray)root["sections"]![section]!["parts"]!)[index] = data);
+		_editor.Save();
+		// Its member goes too, unless another piece of the file still calls it
+		if (Code is not null && !_editor.Text.Contains($"\"code\": \"{member}\"", StringComparison.Ordinal))
+			Code.RemoveMember(type, member);
+		ViewModel.BuildText = $"{member} is data again";
+		Rebuild(swap: true);
+	}
+
+	// The member the patch chosen is, when its file says it is code
+	private string? _patchCode;
+
+	// The patch chosen made code: the C# for it written into the patches' own half, its file pointing at the property
+	private void EjectPatch()
+	{
+		if (Code is null || _patchFile is null || _patchCode is not null || _catalog.PatchesType is not { } type)
+			return;
+		SavePatch();
+		var designer = ViewModel.Designer;
+		var stem = Path.GetFileName(_patchFile);
+		stem = stem[..stem.IndexOf('.', StringComparison.Ordinal)];
+		var property = PatchCode.Pascal(stem);
+		var code = $"// Ejected from {stem}.patch.json: build it any way you like; \"Bring back as data\" reads back the patch it builds\n"
+			+ PatchCode.Write(designer.Spec, property, designer.Names, _catalog.MacroName)
+				.Replace($"public static Patch {property} =>", $"public static partial Patch {property} =>", StringComparison.Ordinal);
+		var (file, line) = Code.AddMember(type, Path.GetDirectoryName(_patchFile)!, code);
+		File.WriteAllText(_patchFile, $"{{\n  \"format\": \"{PatchFile.Format}\",\n  \"name\": \"{designer.Spec.Name}\",\n  \"code\": \"{property}\"\n}}\n");
+		_patchCode = property;
+		designer.ShowCode(true, false);
+		ViewModel.BuildText = $"ejected to {Path.GetFileName(file)}:{line} · compiling";
+	}
+
+	// The code patch made data again: what it builds written to its file, its operators named as its variables are, and
+	// its member taken out of the C#
+	private void BringBackPatch()
+	{
+		if (_patchFile is null || _patchCode is not { } property || _patchChoice < 0)
+			return;
+		var patch = _catalog.Patches[_patchChoice].Build();
+		var removed = _catalog.PatchesType is { } type ? Code?.RemoveMember(type, property) : null;
+		var spec = PatchSpec.From(patch);
+		var names = removed is null ? null : VariableNames(removed, spec.Operators.Count);
+		File.WriteAllText(_patchFile, PatchFile.Write(spec, names));
+		_patchCode = null;
+		ViewModel.Designer.Load(patch, _catalog.MacroName, names: names);
+		ViewModel.Designer.ShowCode(false, Code is not null && _catalog.PatchesType is not null);
+		ViewModel.BuildText = $"{property} is data again";
+	}
+
+	// The variables a patch's C# makes its operators into, in order ("var tine = p.Sine(…)"), when each operator is one
+	private static string[]? VariableNames(string code, int operators)
+	{
+		var made = System.Text.RegularExpressions.Regex.Matches(code, @"(?:var\s+(\w+)\s*=\s*)?\bp\.(?:Sine|Wave|Noise|Level|Sample|String|Tube|Modes)\(");
+		return made.Count == operators ? [.. made.Select(m => m.Groups[1].Success ? m.Groups[1].Value : "")] : null;
+	}
+
+	// The Files view's list: every song's file, every patch's, and the C# that is theirs; the one shown kept
+	private void RefreshFiles()
+	{
+		var files = ViewModel.Files;
+		var shown = files.Files.FirstOrDefault(f => f.IsSelected)?.Path;
+		files.Files.Clear();
+		void Add(string path, string kind)
+		{
+			if (!files.Files.Any(f => string.Equals(f.Path, path, StringComparison.OrdinalIgnoreCase)))
+				files.Files.Add(new FileEntryViewModel(Path.GetFileName(path), kind, path, ShowFile));
+		}
+		foreach (var (name, _) in _catalog.Songs)
+			if (_catalog.SongSource(name) is { } source)
+				Add(source.Path, "song");
+		foreach (var (name, _) in _catalog.Patches)
+			if (_catalog.PatchFile(name) is { } patch)
+				Add(patch, "patch");
+		foreach (var file in Code?.Files ?? [])
+			Add(file, "C#");
+		if ((files.Files.FirstOrDefault(f => f.Path == shown) ?? files.Files.FirstOrDefault()) is { } first)
+			first.IsSelected = true;
+		else
+			files.Show("This project's music has no files: a song or patch made data (a .song.json, a .patch.json) shows here.", "", []);
+	}
+
+	private void ShowFile(FileEntryViewModel entry)
+	{
+		foreach (var other in ViewModel.Files.Files)
+			if (other != entry)
+				other.IsSelected = false;
+		string text;
+		try
+		{
+			text = File.ReadAllText(entry.Path);
+		}
+		catch (IOException ex)
+		{
+			ViewModel.Files.Show(entry.Name, ex.Message, []);
+			return;
+		}
+		var pieces = entry.Kind switch
+		{
+			"C#" => Code?.Pieces(entry.Path) ?? [],
+			_ => DataPieces(text),
+		};
+		ViewModel.Files.Show($"{entry.Name} · {Path.GetDirectoryName(entry.Path)}", text, pieces);
+	}
+
+	// A music file's pieces, each written alone as its file writes it: a song's tracks, sections and parts; a patch's operators
+	private static IReadOnlyList<(string Name, string Text)> DataPieces(string text)
+	{
+		JsonObject? root;
+		try
+		{
+			root = JsonNode.Parse(text) as JsonObject;
+		}
+		catch (System.Text.Json.JsonException)
+		{
+			return [];
+		}
+		if (root is null)
+			return [];
+		static string Write(JsonNode? node) => node is JsonObject obj ? SongFile.Write((JsonObject)obj.DeepClone()).TrimEnd() : node?.ToJsonString() ?? "";
+		string? Name(JsonNode? node) => node?["name"]?.GetValue<string>();
+		var pieces = new List<(string, string)>();
+		foreach (var track in root["tracks"] as JsonArray ?? [])
+			pieces.Add(($"track {Name(track)}", Write(track)));
+		foreach (var section in root["sections"] as JsonArray ?? [])
+		{
+			pieces.Add(($"section {Name(section)}", Write(section)));
+			foreach (var part in section?["parts"] as JsonArray ?? [])
+				pieces.Add(($"{Name(section)} · {Name(part) ?? part?["track"]?.GetValue<string>()}", Write(part)));
+		}
+		foreach (var op in root["operators"] as JsonArray ?? [])
+			pieces.Add(($"operator {Name(op)}", Write(op)));
+		return pieces;
+	}
 }

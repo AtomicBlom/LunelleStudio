@@ -11,4 +11,7 @@ public enum WorkbenchMode
 
 	/// <summary>A kit, played from its pads and the keyboard.</summary>
 	Kit,
+
+	/// <summary>The project's music as files: each song's and patch's data and the C# that is theirs, copied whole or a piece at a time.</summary>
+	Files,
 }

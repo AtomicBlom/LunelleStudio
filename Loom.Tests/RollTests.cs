@@ -2,6 +2,7 @@ using Loom.Audio.Synth;
 using Loom.Audio.Synth.Chip;
 using Loom.Audio.Synth.Music;
 using Loom.Audio.Workbench;
+using Loom.Audio.Workbench.Projects;
 
 namespace Loom.Tests;
 
@@ -207,6 +208,86 @@ public class RollTests
 		finally
 		{
 			File.Delete(path);
+		}
+	}
+
+	[Test]
+	public void A_member_is_added_to_a_types_own_half_in_its_indentation_and_taken_out_with_its_comment()
+	{
+		var folder = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "loom-code-" + Guid.NewGuid().ToString("N")[..8])).FullName;
+		try
+		{
+			var own = Path.Combine(folder, "Tune.cs");
+			File.WriteAllText(own, "namespace Tunes.Songs;\n\nstatic partial class Tune\n{\n    private static int Kept() => 1;\n}\n");
+			File.WriteAllText(Path.Combine(folder, "Tune.g.cs"), "namespace Tunes.Songs;\n\nstatic partial class Tune\n{\n}\n");
+			var code = new MusicCode(() => [own, Path.Combine(folder, "Tune.g.cs")]) { Types = ["Tunes.Songs.Tune"] };
+
+			var (file, line) = code.AddMember("Tunes.Songs.Tune", folder, "// A riff\nprivate static partial Part Riff() =>\n\tLine.Eighths(\"1 3\");");
+			file.ShouldBe(own);
+			File.ReadAllText(own).ShouldBe("namespace Tunes.Songs;\n\nstatic partial class Tune\n{\n    private static int Kept() => 1;\n\n    // A riff\n    private static partial Part Riff() =>\n        Line.Eighths(\"1 3\");\n}\n");
+			line.ShouldBe(7);
+			code.Members("Tunes.Songs.Tune").ShouldBe(["Kept", "Riff"]);
+			code.Find("Tunes.Songs.Tune", "Riff")!.Value.Line.ShouldBe(8);
+			code.Files.ShouldBe([own]);
+			code.Pieces(own).Select(p => p.Name).ShouldBe(["class Tune", "Kept", "Riff"]);
+
+			code.RemoveMember("Tunes.Songs.Tune", "Riff").ShouldBe("// A riff\nprivate static partial Part Riff() =>\n    Line.Eighths(\"1 3\");");
+			File.ReadAllText(own).ShouldBe("namespace Tunes.Songs;\n\nstatic partial class Tune\n{\n    private static int Kept() => 1;\n}\n");
+
+			// A type with no half of its own gets one, beside the music
+			var (made, _) = code.AddMember("Tunes.Songs.Other", folder, "static partial void OnBuilt(Song song) { }");
+			made.ShouldBe(Path.Combine(folder, "Other.cs"));
+			File.ReadAllText(made).ShouldContain("namespace Tunes.Songs;");
+			File.ReadAllText(made).ShouldContain("static partial class Other\n{\n    static partial void OnBuilt(Song song) { }\n}");
+		}
+		finally
+		{
+			Directory.Delete(folder, recursive: true);
+		}
+	}
+
+	[Test]
+	public void A_part_ejected_to_code_and_brought_back_leaves_the_song_file_and_its_code_as_they_were()
+	{
+		using var rig = new Rig();
+		var folder = Path.GetDirectoryName(rig.Path)!;
+		var own = Path.Combine(folder, "First" + Guid.NewGuid().ToString("N")[..6] + ".cs");
+		var type = "Tunes." + Path.GetFileNameWithoutExtension(own);
+		File.WriteAllText(own, $"namespace Tunes;\n\nstatic partial class {Path.GetFileNameWithoutExtension(own)}\n{{\n}}\n");
+		try
+		{
+			var catalog = rig.Catalog with
+			{
+				SongSource = name => new SongSource(rig.Path, new SongBindings
+				{
+					Patch = n => n == MusicRig.Click.Name ? MusicRig.Click : null,
+					Cue = n => n == "energy" ? Energy : null,
+				}, type),
+			};
+			rig.Workbench.UseCatalog(catalog);
+			rig.Workbench.Code = new MusicCode(() => [own]) { Types = [type] };
+			var model = rig.Workbench.ViewModel;
+			model.Tracks[0].Placements[0].SelectCommand.Execute(null);
+			model.Roll.CanEject.ShouldBeTrue();
+			var before = File.ReadAllText(rig.Path);
+
+			model.Roll.EjectNotationCommand.Execute(null);
+			File.ReadAllText(rig.Path).ShouldContain("\"part\": { \"code\": \"Melody\" }");
+			File.ReadAllText(own).ShouldContain("private static partial Part Melody() =>");
+			File.ReadAllText(own).ShouldContain("Line.Quarters(\"1 3 5 3\");");
+			model.Roll.Kind.ShouldBe(RollKind.None);
+			model.Roll.CanBringBack.ShouldBeTrue();
+			model.Roll.CodeWhere.ShouldContain("Melody, in");
+
+			// The project hasn't compiled the member, so what plays is still the data's: brought back, it is the data again
+			model.Roll.BringBackCommand.Execute(null);
+			File.ReadAllText(rig.Path).ShouldBe(before);
+			File.ReadAllText(own).ShouldNotContain("Melody");
+			model.Roll.Kind.ShouldBe(RollKind.Line);
+		}
+		finally
+		{
+			File.Delete(own);
 		}
 	}
 }

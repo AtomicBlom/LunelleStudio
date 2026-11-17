@@ -51,11 +51,11 @@ public sealed class Workbench : IDisposable
 		Player = new MusicPlayer(audio, bus);
 		ViewModel = new WorkbenchViewModel(this);
 		foreach (var (name, _) in catalog.Songs)
-			ViewModel.Songs.Add(name);
+			ViewModel.AddSong(name);
 		foreach (var (name, _) in catalog.Patches)
-			ViewModel.Patches.Add(name);
+			ViewModel.AddPatch(name);
 		foreach (var (name, _) in catalog.Kits)
-			ViewModel.Kits.Add(name);
+			ViewModel.AddKit(name);
 		foreach (var cue in catalog.Cues)
 			ViewModel.Cues.Add(new CueViewModel(this, cue, Player.GetValue(cue)));
 		if (catalog.Songs.Count > 0)
@@ -228,7 +228,10 @@ public sealed class Workbench : IDisposable
 		if (!Player.IsPlaying || Player.Song is not { } song)
 		{
 			foreach (var section in ViewModel.Sections)
-				section.IsCurrent = section.Loops = false;
+			{
+				section.ShowCurrent(false);
+				section.Loops = false;
+			}
 			ViewModel.Pattern.PlayheadTick = -1;
 			return;
 		}
@@ -236,7 +239,7 @@ public sealed class Workbench : IDisposable
 		ViewModel.PositionText = $"{position.Section} · bar {position.Bar} · beat {position.Beat}";
 		foreach (var section in ViewModel.Sections)
 		{
-			section.IsCurrent = section.Index == position.SectionIndex;
+			section.ShowCurrent(section.Index == position.SectionIndex);
 			section.Loops = section.IsCurrent && _loop;
 		}
 		foreach (var row in ViewModel.Tracks)
@@ -375,9 +378,9 @@ public sealed class Workbench : IDisposable
 		_benchPatch = index;
 		_benchKitIndex = -1;
 		ViewModel.ShowBench(index, -1);
-		ViewModel.Pads.Clear();
-		for (var m = 0; m < ViewModel.Macros.Count; m++)
-			chip.SetMacro(_benchInstrument, new Macro(m), ViewModel.Macros[m]);
+		ViewModel.ShowPads([]);
+		foreach (var macro in ViewModel.Macros)
+			chip.SetMacro(_benchInstrument, new Macro(macro.Index), macro.Value);
 	}
 
 	/// <summary>Chooses a kit for the bench, whose pads (and keys) play its pieces.</summary>
@@ -403,9 +406,7 @@ public sealed class Workbench : IDisposable
 		_benchKitIndex = index;
 		_benchPatch = -1;
 		ViewModel.ShowBench(-1, index);
-		ViewModel.Pads.Clear();
-		foreach (var piece in kit.Pieces)
-			ViewModel.Pads.Add(piece.Piece.Id);
+		ViewModel.ShowPads(kit.Pieces.Select(piece => piece.Piece.Id));
 	}
 
 	// A new chip for the bench on the workbench's bus, the old one let go

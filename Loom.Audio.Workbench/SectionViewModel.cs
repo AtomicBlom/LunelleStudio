@@ -24,12 +24,24 @@ public sealed class SectionViewModel : ViewModel
 	/// <summary>Its index in the song.</summary>
 	public int Index { get; }
 
-	/// <summary>Whether it is playing.</summary>
+	/// <summary>
+	/// Whether it is playing. Setting it true asks to go to it at the next bar line, which shows once it is heard; setting
+	/// it false does nothing, since a section stops by another starting.
+	/// </summary>
 	public bool IsCurrent
 	{
 		get => _isCurrent;
-		internal set => Set(ref _isCurrent, value);
+		set
+		{
+			if (value && !_isCurrent)
+				Jump();
+		}
 	}
+
+	internal void ShowCurrent(bool current) => Set(ref _isCurrent, current, nameof(IsCurrent));
+
+	/// <summary>Its name and length, as its button shows it: "verse (8)".</summary>
+	public string Label => $"{Name} ({Bars})";
 
 	/// <summary>Whether it is playing and held by the loop.</summary>
 	public bool Loops

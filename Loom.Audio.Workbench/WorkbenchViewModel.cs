@@ -19,10 +19,16 @@ public sealed class WorkbenchViewModel : ViewModel
 	private int _octave = 4;
 	private float _velocity = 0.8f;
 
-	internal WorkbenchViewModel(Workbench workbench) => _workbench = workbench;
+	internal WorkbenchViewModel(Workbench workbench)
+	{
+		_workbench = workbench;
+		Macros = [.. Enumerable.Range(0, 8).Select(m => new MacroViewModel(m, (index, value) => _workbench.SetBenchMacro(index, value)))];
+	}
 
-	/// <summary>The catalog's songs, by name.</summary>
-	public ObservableCollection<string> Songs { get; } = [];
+	/// <summary>The catalog's songs, one lit while it is the one chosen.</summary>
+	public ObservableCollection<ChoiceViewModel> Songs { get; } = [];
+
+	internal void AddSong(string name) => Songs.Add(new ChoiceViewModel(Songs.Count, name, index => SelectedSong = index));
 
 	/// <summary>The song chosen, by index. Setting it builds and plays it.</summary>
 	public int SelectedSong
@@ -35,7 +41,12 @@ public sealed class WorkbenchViewModel : ViewModel
 		}
 	}
 
-	internal void ShowSelectedSong(int index) => Set(ref _selectedSong, index, nameof(SelectedSong));
+	internal void ShowSelectedSong(int index)
+	{
+		Set(ref _selectedSong, index, nameof(SelectedSong));
+		foreach (var song in Songs)
+			song.Show(song.Index == index);
+	}
 
 	/// <summary>Whether the song is playing. Setting it plays or stops it.</summary>
 	public bool IsPlaying
@@ -111,11 +122,15 @@ public sealed class WorkbenchViewModel : ViewModel
 	/// <summary>The cues: the catalog's, and any other the song names.</summary>
 	public ObservableCollection<CueViewModel> Cues { get; } = [];
 
-	/// <summary>The catalog's patches, by name.</summary>
-	public ObservableCollection<string> Patches { get; } = [];
+	/// <summary>The catalog's patches, one lit while the bench plays it.</summary>
+	public ObservableCollection<ChoiceViewModel> Patches { get; } = [];
 
-	/// <summary>The catalog's kits, by name.</summary>
-	public ObservableCollection<string> Kits { get; } = [];
+	internal void AddPatch(string name) => Patches.Add(new ChoiceViewModel(Patches.Count, name, index => SelectedPatch = index));
+
+	/// <summary>The catalog's kits, one lit while the bench plays it.</summary>
+	public ObservableCollection<ChoiceViewModel> Kits { get; } = [];
+
+	internal void AddKit(string name) => Kits.Add(new ChoiceViewModel(Kits.Count, name, index => SelectedKit = index));
 
 	/// <summary>The patch the bench plays, by index, or −1. Setting it acts.</summary>
 	public int SelectedPatch
@@ -143,10 +158,24 @@ public sealed class WorkbenchViewModel : ViewModel
 	{
 		Set(ref _selectedPatch, patch, nameof(SelectedPatch));
 		Set(ref _selectedKit, kit, nameof(SelectedKit));
+		foreach (var choice in Patches)
+			choice.Show(choice.Index == patch);
+		foreach (var choice in Kits)
+			choice.Show(choice.Index == kit);
 	}
 
-	/// <summary>The pieces of the kit chosen, for its pads.</summary>
-	public ObservableCollection<string> Pads { get; } = [];
+	/// <summary>The pieces of the kit chosen, a pad each.</summary>
+	public ObservableCollection<PadViewModel> Pads { get; } = [];
+
+	internal void ShowPads(IEnumerable<string> pieces)
+	{
+		Pads.Clear();
+		foreach (var piece in pieces)
+		{
+			var index = Pads.Count;
+			Pads.Add(new PadViewModel(piece, () => HitPad(index)));
+		}
+	}
 
 	/// <summary>The keyboard's octave: its lowest C is in it.</summary>
 	public int Octave
@@ -162,19 +191,14 @@ public sealed class WorkbenchViewModel : ViewModel
 		set => Set(ref _velocity, Math.Clamp(value, 0.05f, 1f));
 	}
 
-	/// <summary>The bench patch's eight macros, 0 to 1.</summary>
-	public IReadOnlyList<float> Macros => _macros;
+	/// <summary>The bench patch's eight macros.</summary>
+	public IReadOnlyList<MacroViewModel> Macros { get; }
 
-	private readonly float[] _macros = new float[8];
-
-	/// <summary>Sets one of the bench patch's macros.</summary>
+	/// <summary>Sets one of the bench patch's macros, 0 to 1.</summary>
 	public void SetMacro(int index, float value)
 	{
-		if ((uint)index >= (uint)_macros.Length)
-			return;
-		_macros[index] = Math.Clamp(value, 0f, 1f);
-		Changed(nameof(Macros));
-		_workbench.SetBenchMacro(index, _macros[index]);
+		if ((uint)index < (uint)Macros.Count)
+			Macros[index].Value = value;
 	}
 
 	/// <summary>The part chosen, as a grid.</summary>
@@ -190,6 +214,6 @@ public sealed class WorkbenchViewModel : ViewModel
 	public void HitPad(int index)
 	{
 		if ((uint)index < (uint)Pads.Count)
-			_workbench.AuditionHit(new Synth.Chip.DrumPiece(Pads[index]), Velocity);
+			_workbench.AuditionHit(new Synth.Chip.DrumPiece(Pads[index].Piece), Velocity);
 	}
 }

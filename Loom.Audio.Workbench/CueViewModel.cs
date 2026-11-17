@@ -13,9 +13,10 @@ public sealed class CueViewModel : ViewModel
 	{
 		_workbench = workbench;
 		Cue = cue;
-		Options = cue.OptionNames;
+		Options = [.. cue.OptionNames.Select((name, index) => new ChoiceViewModel(index, name, chosen => SelectedOption = chosen))];
 		_value = value;
 		_selectedOption = Math.Max(0, OptionIndex(cue, value));
+		ShowOption();
 	}
 
 	// The option of a choice whose value is `value`, or −1
@@ -36,8 +37,11 @@ public sealed class CueViewModel : ViewModel
 	/// <summary>Whether it is a choice (options) rather than a level (a slider).</summary>
 	public bool IsChoice => Options.Count > 0;
 
-	/// <summary>A choice's options, by name.</summary>
-	public IReadOnlyList<string> Options { get; }
+	/// <summary>Whether it is a level (a slider) rather than a choice.</summary>
+	public bool IsLevel => !IsChoice;
+
+	/// <summary>A choice's options, the one chosen lit.</summary>
+	public IReadOnlyList<ChoiceViewModel> Options { get; }
 
 	/// <summary>A level's value, 0 to 1. Setting it tells the music.</summary>
 	public float Value
@@ -58,9 +62,16 @@ public sealed class CueViewModel : ViewModel
 		{
 			if (value < 0 || value >= Options.Count || !Set(ref _selectedOption, value))
 				return;
+			ShowOption();
 			_value = Cue.OptionValue(value);
 			Changed(nameof(Value));
 			_workbench.SetCue(Cue, _value);
 		}
+	}
+
+	private void ShowOption()
+	{
+		foreach (var option in Options)
+			option.Show(option.Index == _selectedOption);
 	}
 }

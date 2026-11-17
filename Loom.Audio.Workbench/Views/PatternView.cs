@@ -5,23 +5,36 @@ using SUIsei.Controls;
 
 namespace Loom.Audio.Workbench.Views;
 
-/// <summary>The chosen part as a grid (<c>PatternView.xaml</c>), drawn in code: rows, notes, bar lines and a playhead.</summary>
+/// <summary>
+/// The chosen part as a grid (<c>PatternView.xaml</c>), its title bound and its notes drawn in code from
+/// <see cref="Pattern"/>: rows, notes, bar lines and a playhead.
+/// </summary>
 internal sealed partial class PatternView : ContentControl
 {
 	private const float LabelWidth = 64f;
-	private const float Width_ = 1180f;
+	private const float GridWidth = 1180f;
 	private const float RowHeight = 12f;
 
-	private readonly PatternViewModel _pattern;
 	private Border? _playhead;
 
-	/// <summary>A view of <paramref name="pattern"/>.</summary>
-	public PatternView(PatternViewModel pattern)
+	/// <summary>A view with nothing to draw until it is given a <see cref="Pattern"/>.</summary>
+	public PatternView() => InitializeComponent();
+
+	/// <summary>What it draws: drawn again when it is set and when it changes.</summary>
+	public PatternViewModel? Pattern
 	{
-		_pattern = pattern;
-		InitializeComponent();
-		Draw();
-		pattern.PropertyChanged += OnChanged;
+		get;
+		set
+		{
+			if (field == value)
+				return;
+			if (field is not null)
+				field.PropertyChanged -= OnChanged;
+			field = value;
+			if (value is not null)
+				value.PropertyChanged += OnChanged;
+			Draw();
+		}
 	}
 
 	partial void OnComponentRebuilt() => Draw();
@@ -34,24 +47,23 @@ internal sealed partial class PatternView : ContentControl
 			Draw();
 	}
 
-	private float Scale => _pattern.LengthTicks > 0 ? (Width_ - LabelWidth) / _pattern.LengthTicks : 0f;
+	private float Scale => Pattern is { LengthTicks: > 0 } pattern ? (GridWidth - LabelWidth) / pattern.LengthTicks : 0f;
 
 	private void Draw()
 	{
-		TitleLabel.Text = _pattern.Title;
-		TitleLabel.Foreground = Theme.Dim;
+		TitleLabel.Text = Pattern?.Title ?? "";
 		Notes.Children.Clear();
 		_playhead = null;
-		if (_pattern.LengthTicks <= 0)
+		if (Pattern is not { LengthTicks: > 0 } pattern)
 			return;
-		var rows = Math.Max(1, _pattern.RowLabels.Count);
+		var rows = Math.Max(1, pattern.RowLabels.Count);
 		var rowHeight = MathF.Min(RowHeight, 150f / rows);
 		var scale = Scale;
-		for (var bar = 0; bar * _pattern.TicksPerBar <= _pattern.LengthTicks; bar++)
-			Place(new Border { Width = 1f, Height = rows * rowHeight, Background = Theme.BarLine }, LabelWidth + bar * _pattern.TicksPerBar * scale, 0f);
-		for (var r = 0; r < _pattern.RowLabels.Count; r++)
-			Place(new TextBlock { Text = _pattern.RowLabels[r], FontSize = MathF.Min(11f, rowHeight), Foreground = Theme.Dim }, 0f, r * rowHeight);
-		foreach (var note in _pattern.Notes)
+		for (var bar = 0; bar * pattern.TicksPerBar <= pattern.LengthTicks; bar++)
+			Place(new Border { Width = 1f, Height = rows * rowHeight, Background = Theme.BarLine }, LabelWidth + bar * pattern.TicksPerBar * scale, 0f);
+		for (var r = 0; r < pattern.RowLabels.Count; r++)
+			Place(new TextBlock { Text = pattern.RowLabels[r], FontSize = MathF.Min(11f, rowHeight), Foreground = Theme.Dim }, 0f, r * rowHeight);
+		foreach (var note in pattern.Notes)
 		{
 			var block = new Border
 			{
@@ -77,9 +89,9 @@ internal sealed partial class PatternView : ContentControl
 
 	private void MovePlayhead()
 	{
-		if (_playhead is null)
+		if (_playhead is null || Pattern is null)
 			return;
-		var tick = _pattern.PlayheadTick;
+		var tick = Pattern.PlayheadTick;
 		_playhead.Visibility = tick >= 0 ? Visibility.Visible : Visibility.Collapsed;
 		if (tick >= 0)
 			Canvas.SetLeft(_playhead, LabelWidth + tick * Scale);

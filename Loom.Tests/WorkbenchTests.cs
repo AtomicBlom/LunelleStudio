@@ -78,7 +78,8 @@ public class WorkbenchTests
 		rig.Workbench.Play();
 
 		model.IsPlaying.ShouldBeTrue();
-		model.Songs.ShouldBe(["first", "second"]);
+		model.Songs.Select(s => s.Name).ShouldBe(["first", "second"]);
+		model.Songs.Select(s => s.IsSelected).ShouldBe([true, false]);
 		model.Sections.Select(s => s.Name).ShouldBe(["verse", "chorus"]);
 		model.Tracks.Select(t => t.Name).ShouldBe(["lead", "pad"]);
 		model.Tracks[0].Placements.Select(p => p.Name).ShouldBe(["melody (verse)", "lead (chorus)"]);
@@ -100,6 +101,62 @@ public class WorkbenchTests
 		model.Cues[0].Value = 1f;
 		rig.Step(MusicRig.Bar);
 		model.Tracks[1].Placements[0].IsActive.ShouldBeTrue();
+	}
+
+	[Test]
+	public void A_choice_is_lit_by_the_model_and_kept_lit_until_another_is_chosen()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+
+		model.Songs[1].IsSelected = true;
+		model.SelectedSong.ShouldBe(1);
+		model.Songs.Select(s => s.IsSelected).ShouldBe([false, true]);
+
+		// A button bound to it unchecks it on a click; the model keeps it, as a radio button does
+		model.Songs[1].IsSelected = false;
+		model.Songs[1].IsSelected.ShouldBeTrue();
+
+		model.Patches[0].IsSelected = true;
+		model.SelectedPatch.ShouldBe(0);
+		model.Patches[0].IsSelected.ShouldBeTrue();
+	}
+
+	[Test]
+	public void A_part_held_on_or_off_shows_as_one_of_three()
+	{
+		using var rig = new Rig();
+		var placement = rig.Workbench.ViewModel.Tracks[1].Placements[0];
+		placement.IsAuto.ShouldBeTrue();
+
+		placement.IsOn = true;
+		placement.State.ShouldBe(PlacementState.On);
+		(placement.IsAuto, placement.IsOn, placement.IsOff).ShouldBe((false, true, false));
+
+		placement.IsOn = false;
+		placement.State.ShouldBe(PlacementState.On);
+
+		placement.IsOff = true;
+		(placement.IsAuto, placement.IsOn, placement.IsOff).ShouldBe((false, false, true));
+	}
+
+	[Test]
+	public void A_section_asked_for_lights_once_the_jump_is_heard()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		// The verse held, so the chorus comes only by the jump
+		model.LoopSection = true;
+		rig.Workbench.Play();
+		rig.Step(MusicRig.Bar / 4);
+		model.Sections[0].IsCurrent.ShouldBeTrue();
+
+		model.Sections[1].IsCurrent = true;
+		model.Sections[1].IsCurrent.ShouldBeFalse();
+
+		rig.Step(MusicRig.Bar);
+		model.Sections[1].IsCurrent.ShouldBeTrue();
+		model.Sections[0].IsCurrent.ShouldBeFalse();
 	}
 
 	[Test]

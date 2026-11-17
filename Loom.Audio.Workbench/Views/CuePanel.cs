@@ -1,37 +1,27 @@
 using System.Collections.Specialized;
+using System.ComponentModel;
 
 using SUIsei.Controls;
 
 namespace Loom.Audio.Workbench.Views;
 
-/// <summary>The cues (<c>CuePanel.xaml</c>): a <see cref="CueRow"/> each.</summary>
-internal sealed partial class CuePanel : ContentControl
+/// <summary>The cues (<c>CuePanel.xaml</c>): a row each, bound to <see cref="ViewModel"/>.</summary>
+internal sealed partial class CuePanel : ContentControl, INotifyPropertyChanged
 {
-	private readonly WorkbenchViewModel _model;
+	/// <summary>A panel with nothing to show until it is given a <see cref="ViewModel"/>.</summary>
+	public CuePanel() => InitializeComponent();
 
-	/// <summary>A panel over <paramref name="viewModel"/>'s cues.</summary>
-	public CuePanel(WorkbenchViewModel viewModel)
+	/// <inheritdoc/>
+	public event PropertyChangedEventHandler? PropertyChanged;
+
+	/// <summary>What it shows: its bindings follow it when it is set.</summary>
+	public WorkbenchViewModel? ViewModel
 	{
-		_model = viewModel;
-		InitializeComponent();
-		Apply();
-		viewModel.Cues.CollectionChanged += OnCuesChanged;
-	}
-
-	partial void OnComponentRebuilt() => Apply();
-
-	private void OnCuesChanged(object? sender, NotifyCollectionChangedEventArgs e) => MakeRows();
-
-	private void Apply()
-	{
-		Heading.Foreground = Theme.Dim;
-		MakeRows();
-	}
-
-	private void MakeRows()
-	{
-		Rows.Children.Clear();
-		foreach (var cue in _model.Cues)
-			Rows.Children.Add(new CueRow(cue));
+		get;
+		set
+		{
+			field = value;
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ViewModel)));
+		}
 	}
 }

@@ -63,7 +63,7 @@ catch (InvalidOperationException ex)
 }
 
 // What the workbench didn't take (the project, "new" and its folder) is the extension's
-LoomApplication.Run(new WorkbenchApp(project, extension, [.. appArgs.Skip(appArgs is ["new", ..] ? 2 : 1)]), args);
+LoomApplication.Run(new WorkbenchApp(project, extension, [.. appArgs.Skip(appArgs is ["new", ..] ? 2 : 1)], extension is null ? null : extensionProject), args);
 return 0;
 
 // A .csproj as given, or the one in a folder

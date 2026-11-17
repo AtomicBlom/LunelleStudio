@@ -517,4 +517,7 @@ public sealed class WorkbenchViewModel : ViewModel
 
 	/// <summary>The Files view: the music as files, to read and copy.</summary>
 	public FilesViewModel Files { get; } = new();
+
+	/// <summary>Something the host needs seen, beside the build pill until it goes: "StudioExtras changed: restart to take it up".</summary>
+	public string Notice { get; set => Set(ref field, value); } = "";
 }

@@ -167,15 +167,19 @@ public class MusicProjectTests
 		var path = ProjectTemplate.Create(folder, Path.GetDirectoryName(typeof(Song).Assembly.Location));
 		Path.GetFileName(path).ShouldBe("My Tunes.csproj");
 		Should.Throw<InvalidOperationException>(() => ProjectTemplate.Create(folder));
+		File.ReadAllText(Path.Combine(folder, "Catalog.cs")).ShouldContain("namespace My_Tunes;");
+		File.Exists(Path.Combine(folder, "Songs", "demo.song.json")).ShouldBeTrue();
 
+		// HelloSynth's music, built by the generator the template references from beside Loom
 		using var project = await MusicProject.OpenAsync(path);
 		var build = project.TakeBuild().ShouldNotBeNull();
 		build.Errors.ShouldBeEmpty();
-		build.Catalog!.Songs.ShouldHaveSingleItem().Name.ShouldBe("first song");
-		build.Catalog.Patches.Select(p => p.Name).ShouldBe(["keys", "bass"]);
-		build.Catalog.Cues.ShouldHaveSingleItem().Name.ShouldBe("intensity");
-		build.Catalog.MacroName!(0).ShouldBe("Instruments.Bright");
-		build.Catalog.Songs[0].Build().Sections.ShouldHaveSingleItem();
+		build.Catalog!.Songs.ShouldHaveSingleItem().Name.ShouldBe("demo");
+		build.Catalog.Patches.Select(p => p.Name).ShouldBe(["electric-piano", "picked-bass", "pluck", "saw-lead"]);
+		build.Catalog.Cues.Select(c => c.Name).ShouldBe(["intensity", "mood"]);
+		build.Catalog.MacroName!(0).ShouldBe("Macros.Bright");
+		build.Catalog.Songs[0].Build().Sections.Select(s => s.Name).ShouldBe(["verse", "chorus"]);
+		build.Catalog.SongSource("demo").ShouldNotBeNull().Type.ShouldBe("My_Tunes.Songs.Demo");
 		build.Release();
 	}
 }

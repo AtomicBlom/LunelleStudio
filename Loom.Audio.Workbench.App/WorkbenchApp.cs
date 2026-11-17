@@ -15,7 +15,7 @@ namespace Loom.Audio.Workbench.App;
 /// A project's extension, loaded before the window opens, gives the bus the music plays into and controls of its own,
 /// and is kept across every save. What it was doing is kept beside the project.
 /// </summary>
-public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extension = null, IReadOnlyList<string>? arguments = null) : LoomApplication
+public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extension = null, IReadOnlyList<string>? arguments = null, string? extensionProject = null) : LoomApplication
 {
 	private readonly WorkbenchStateFile _state = WorkbenchStateFile.Beside(projectPath);
 	private UIHost _ui = null!;
@@ -63,6 +63,7 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 		var view = new WorkbenchView(_workbench.ViewModel);
 		extension?.Attach(new WorkbenchExtensionContext(_workbench, Audio, view.TransportExtras, arguments ?? []));
 		_view.Root.Content = view;
+		WatchExtension();
 		PushInputLayer(new SUIseiInputLayer(_ui));
 
 		SetGraph(RenderGraph.Define(g =>
@@ -91,6 +92,8 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 		_workbench.HandleInput(Input);
 		_workbench.Update(time.DeltaSeconds);
 		extension?.Update(time.DeltaSeconds);
+		if (_extensionChanged && _workbench.ViewModel.Notice.Length == 0)
+			_workbench.ViewModel.Notice = $"{Path.GetFileNameWithoutExtension(extensionProject)} changed: restart to take it up";
 		_sinceSave += time.DeltaSeconds;
 		if (_sinceSave >= 1.0 && _restore is null)
 		{
@@ -127,9 +130,32 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 	{
 		if (_restore is null)
 			_state.Save(_workbench.CaptureState());
+		_extensionWatcher?.Dispose();
 		_project?.Dispose();
 		_workbench.Dispose();
 		extension?.Dispose();
+	}
+
+	private FileSystemWatcher? _extensionWatcher;
+	private volatile bool _extensionChanged;
+
+	// The extension isn't reloaded: a change to its project is said beside the build pill, so its author knows to restart
+	private void WatchExtension()
+	{
+		if (extension is null || extensionProject is null || Path.GetDirectoryName(extensionProject) is not { } folder)
+			return;
+		_extensionWatcher = new FileSystemWatcher(folder) { IncludeSubdirectories = true, EnableRaisingEvents = true };
+		void Changed(string path)
+		{
+			var relative = Path.GetRelativePath(folder, path);
+			if (!relative.StartsWith("bin", StringComparison.OrdinalIgnoreCase) && !relative.StartsWith("obj", StringComparison.OrdinalIgnoreCase)
+				&& Path.GetExtension(path) is ".cs" or ".csproj" or ".xaml" or ".props" or ".targets")
+				_extensionChanged = true;
+		}
+		_extensionWatcher.Changed += (_, e) => Changed(e.FullPath);
+		_extensionWatcher.Created += (_, e) => Changed(e.FullPath);
+		_extensionWatcher.Deleted += (_, e) => Changed(e.FullPath);
+		_extensionWatcher.Renamed += (_, e) => Changed(e.FullPath);
 	}
 
 	/// <summary>The configuration this was built in, which the project and its extension are built in too, so their builds share its Loom.</summary>

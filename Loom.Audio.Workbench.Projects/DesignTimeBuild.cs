@@ -58,12 +58,26 @@ internal static class DesignTimeBuild
 		return value.Length == 0 ? null : value;
 	}
 
-	/// <summary>Builds <paramref name="projectPath"/> and returns its assembly's path (its TargetPath).</summary>
+	/// <summary>
+	/// Builds <paramref name="projectPath"/> and returns its assembly's path (its TargetPath). Its references are taken as
+	/// they were last built rather than built again, since the host's own build made those it shares (Loom), and a
+	/// shared project built again, even from the same sources, is another build the host refuses: its sources' paths are
+	/// in it, and a build started from "c:\..." rather than "C:\..." compiles it again. Only a project whose references
+	/// were never built is built with them.
+	/// </summary>
 	/// <exception cref="InvalidOperationException">It didn't build; the message has the build's output.</exception>
 	public static async Task<string> BuildAsync(string projectPath, string configuration, CancellationToken cancellation = default)
 	{
-		var text = await RunAsync(["build", projectPath, "-nologo", "-v:q", "-c", configuration, "-getProperty:TargetPath"],
-			Path.GetDirectoryName(projectPath)!, cancellation);
+		string[] build = ["build", projectPath, "-nologo", "-v:q", "-c", configuration, "-t:Build", "-getProperty:TargetPath"];
+		string text;
+		try
+		{
+			text = await RunAsync([.. build, "-p:BuildProjectReferences=false"], Path.GetDirectoryName(projectPath)!, cancellation);
+		}
+		catch (InvalidOperationException)
+		{
+			text = await RunAsync(build, Path.GetDirectoryName(projectPath)!, cancellation);
+		}
 		var lines = text.Split('\n', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 		return lines.Length > 0 && File.Exists(lines[^1]) ? lines[^1] : throw new InvalidOperationException($"{Path.GetFileName(projectPath)} built nothing to load:\n{text}");
 	}

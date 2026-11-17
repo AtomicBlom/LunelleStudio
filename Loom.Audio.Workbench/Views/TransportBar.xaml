@@ -35,6 +35,8 @@
             </StackPanel>
             </ScrollViewer>
             <StackPanel Grid.Column="1" Orientation="Horizontal">
+                <TextBlock Text="{x:Bind ViewModel.Notice, Mode=OneWay}" Visibility="{x:Bind views:Display.Any(ViewModel.Notice), Mode=OneWay}"
+                           FontSize="12" Foreground="{x:Static views:Theme.Accent}" VerticalAlignment="Center" Margin="0,0,10,0" />
                 <ToggleButton IsChecked="{x:Bind ViewModel.ErrorOpen, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,12,0">
                     <Border Background="{x:Bind views:Display.Pill(ViewModel.HasError), Mode=OneWay}" CornerRadius="10">
                         <StackPanel Orientation="Horizontal" Margin="8,3,10,4">

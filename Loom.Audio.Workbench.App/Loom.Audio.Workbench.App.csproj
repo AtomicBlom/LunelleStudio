@@ -31,6 +31,8 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Loom.Audio.Workbench.Projects\Loom.Audio.Workbench.Projects.csproj" />
+		<!-- Beside the app, for a project it makes ("new") to reference as its analyzer, as it references the app's Loom -->
+		<ProjectReference Include="..\Loom.Audio.Music.Generator\Loom.Audio.Music.Generator.csproj" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(Configuration)' == 'Debug'">

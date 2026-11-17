@@ -97,6 +97,11 @@ public class WorkbenchTests
 		rig.Session.Clear();
 		rig.Step(MusicRig.Bar);
 		MusicRig.Onsets(rig.Session.Left()).ShouldBeEmpty();
+		// Unmuted, the same bar is heard: the silence was the mute's
+		model.Tracks[0].Muted = false;
+		rig.Session.Clear();
+		rig.Step(MusicRig.Bar);
+		MusicRig.Onsets(rig.Session.Left()).ShouldNotBeEmpty();
 
 		model.Cues[0].Value = 1f;
 		rig.Step(MusicRig.Bar);

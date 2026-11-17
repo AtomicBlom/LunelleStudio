@@ -14,35 +14,13 @@ internal static class Describe
 	{
 		var parts = new List<string>();
 		if (placement.Condition is { } condition)
-			parts.Add("when " + Condition(condition));
+			parts.Add("when " + condition);
 		if (placement.LevelCue is { } level)
 			parts.Add($"level follows {level.Name}");
-		if (placement.OnPhraseValue)
+		if (placement.IsOnPhrase)
 			parts.Add("on its phrase");
 		return string.Join(", ", parts);
 	}
-
-	public static string Condition(Condition condition) => condition switch
-	{
-		AboveCondition above => $"{above.Cue.Name} above {Number(above.Level)}",
-		BelowCondition below => $"{below.Cue.Name} below {Number(below.Level)}",
-		IsCondition @is => $"{@is.Cue.Name} is {Option(@is.Cue, @is.Value)}",
-		AndCondition and => $"{Condition(and.A)} and {Condition(and.B)}",
-		OrCondition or => $"({Condition(or.A)} or {Condition(or.B)})",
-		NotCondition not => $"not {Condition(not.A)}",
-		_ => "?",
-	};
-
-	private static string Option(CueBase cue, float value)
-	{
-		var names = cue.OptionNames;
-		for (var i = 0; i < names.Length; i++)
-			if (cue.OptionValue(i) == value)
-				return names[i];
-		return Number(value);
-	}
-
-	private static string Number(float value) => value.ToString("0.##", CultureInfo.InvariantCulture);
 
 	// C4 for 60
 	public static string NoteName(float midi)

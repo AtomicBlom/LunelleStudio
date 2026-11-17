@@ -22,7 +22,7 @@ public sealed class CueViewModel : ViewModel
 	// The option of a choice whose value is `value`, or −1
 	internal static int OptionIndex(CueBase cue, float value)
 	{
-		var count = cue.OptionNames.Length;
+		var count = cue.OptionNames.Count;
 		for (var i = 0; i < count; i++)
 			if (cue.OptionValue(i) == value)
 				return i;

@@ -57,7 +57,7 @@ public sealed class Workbench : IDisposable
 		foreach (var (name, _) in catalog.Kits)
 			ViewModel.AddKit(name);
 		foreach (var cue in catalog.Cues)
-			ViewModel.Cues.Add(new CueViewModel(this, cue, Player.GetValue(cue)));
+			ViewModel.Cues.Add(new CueViewModel(this, cue, Player.Get(cue)));
 		if (catalog.Songs.Count > 0)
 			SelectSong(0);
 	}
@@ -189,7 +189,7 @@ public sealed class Workbench : IDisposable
 		}
 		foreach (var cue in song.Cues)
 			if (!ViewModel.Cues.Any(c => c.Cue == cue))
-				ViewModel.Cues.Add(new CueViewModel(this, cue, Player.GetValue(cue)));
+				ViewModel.Cues.Add(new CueViewModel(this, cue, Player.Get(cue)));
 		if (_selected is { } selected && FindPlacement(selected) is { } again)
 			ShowPattern(again);
 	}
@@ -306,7 +306,7 @@ public sealed class Workbench : IDisposable
 			Player.Force(placement, state);
 	}
 
-	internal void SetCue(CueBase cue, float value) => Player.SetValue(cue, value);
+	internal void SetCue(CueBase cue, float value) => Player.Set(cue, value);
 
 	internal void SetLoop(bool loop)
 	{
@@ -330,15 +330,9 @@ public sealed class Workbench : IDisposable
 	// A placement's notes over one pass of its part: a row per pitch (highest first) or per drum piece
 	private void ShowPattern(Placement placement)
 	{
-		var song = placement.Section.Song;
-		var compiled = Player.Compiled is { } playing && playing.Song == song ? playing : CompiledSong.Compile(song, _scale ?? song.Scale);
-		var section = compiled.Sections[placement.Section.Index];
-		var index = Array.FindIndex(section.Placements, p => p.Source == placement);
-		if (index < 0)
-			return;
-		var part = section.Placements[index];
-		var events = part.Events.Where(e => e.Tick < part.LoopTicks).ToArray();
-		var kit = compiled.Tracks[part.Track].Kit;
+		var pattern = Player.Pattern(placement, _scale);
+		var events = pattern.Events;
+		var kit = pattern.Kit;
 		List<float> rows;
 		string[] labels;
 		if (kit is not null)
@@ -352,7 +346,7 @@ public sealed class Workbench : IDisposable
 			labels = [.. rows.Select(Describe.NoteName)];
 		}
 		var notes = events.Select(e => new PatternNote(e.Tick, e.Length, rows.IndexOf(kit is not null ? e.Piece : MathF.Round(e.Note)), e.Velocity)).ToArray();
-		ViewModel.Pattern.Show($"{placement.Name} · {placement.Section.Name}", part.LoopTicks, compiled.TicksPerBar, notes, labels);
+		ViewModel.Pattern.Show($"{placement.Name} · {placement.Section.Name}", pattern.LoopTicks, pattern.TicksPerBar, notes, labels);
 	}
 
 	/// <summary>Chooses a patch for the bench, which the keyboard plays.</summary>
@@ -512,7 +506,7 @@ public sealed class Workbench : IDisposable
 			Velocity = ViewModel.Velocity,
 		};
 		foreach (var cue in ViewModel.Cues)
-			state.Cues[cue.Name] = Player.GetValue(cue.Cue);
+			state.Cues[cue.Name] = Player.Get(cue.Cue);
 		foreach (var name in _muted.Keys.Concat(_soloed.Keys).Concat(_gainDb.Keys).Distinct())
 			state.Tracks[name] = new TrackSetting
 			{
@@ -540,7 +534,7 @@ public sealed class Workbench : IDisposable
 		foreach (var cue in ViewModel.Cues)
 			if (state.Cues.TryGetValue(cue.Name, out var value))
 			{
-				Player.SetValue(cue.Cue, value);
+				Player.Set(cue.Cue, value);
 				if (cue.IsChoice)
 					cue.SelectedOption = CueViewModel.OptionIndex(cue.Cue, value);
 				else

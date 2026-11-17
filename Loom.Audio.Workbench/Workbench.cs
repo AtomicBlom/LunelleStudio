@@ -39,6 +39,13 @@ public sealed class Workbench : IDisposable
 	private DrumKit? _benchKit;
 	private int _benchPatch = -1;
 	private int _benchKitIndex = -1;
+	// The section a jump waits on until the next bar, or −1
+	private int _queued = -1;
+	// The patch and kit last chosen for their modes, kept while Arrange has the bench playing a track
+	private int _patchChoice = -1;
+	private int _kitChoice = -1;
+	// The track the keyboard plays in Arrange, by name, so a rebuild finds it again
+	private string? _dockTrack;
 
 	/// <summary>A workbench playing on <paramref name="bus"/> of <paramref name="audio"/>, over <paramref name="catalog"/>; its first song is chosen, not yet playing.</summary>
 	public Workbench(AudioEngine audio, AudioBus bus, WorkbenchCatalog catalog)
@@ -96,7 +103,9 @@ public sealed class Workbench : IDisposable
 		_soloed.Clear();
 		_gainDb.Clear();
 		_forced.Clear();
+		_queued = -1;
 		ViewModel.ShowSelectedSong(index);
+
 		Rebuild(swap: false);
 		if (playing && _song is not null)
 			Play();
@@ -155,10 +164,12 @@ public sealed class Workbench : IDisposable
 		catch (Exception ex)
 		{
 			ViewModel.Error = $"{name}: {ex.Message}";
+			ViewModel.BuildText = _song is null ? "didn't build" : "didn't build · the last that built plays on";
 			Console.WriteLine($"[workbench] {name} didn't build: {ex.Message}");
 			return;
 		}
 		ViewModel.Error = "";
+		ViewModel.BuildText = $"built {DateTime.Now:HH:mm:ss}";
 		_song = song;
 		if (swap && Player.IsPlaying)
 			Player.Swap(song);
@@ -166,32 +177,151 @@ public sealed class Workbench : IDisposable
 		Console.WriteLine($"[workbench] rebuilt {name}");
 	}
 
-	// The view model's song from a newly built one: its sections, tracks and their parts, its cues, each with what was
-	// set by name before
+	// The view model's song from a newly built one: its sections, its tracks with their parts by section, its cues and what
+	// reads them, each with what was set by name before
 	private void Fill(Song song)
 	{
+		ViewModel.SongName = song.Name;
 		ViewModel.TempoText = $"{song.Tempo:0} bpm";
 		ViewModel.ScaleText = Describe.Scale(_scale ?? song.Scale);
 		ViewModel.Sections.Clear();
 		foreach (var section in song.Sections)
-			ViewModel.Sections.Add(new SectionViewModel(this, section.Index, section.Name, section.Bars));
+			ViewModel.Sections.Add(new SectionViewModel(this, section.Index, section.Name, section.Bars, section.ChordText));
 		ViewModel.Tracks.Clear();
 		foreach (var track in song.Tracks)
 		{
 			var row = new TrackViewModel(this, track.Name, _muted.GetValueOrDefault(track.Name), _soloed.GetValueOrDefault(track.Name),
-				_gainDb.GetValueOrDefault(track.Name));
+				_gainDb.GetValueOrDefault(track.Name))
+			{
+				Instrument = track.Patch is { } patch ? $"patch {patch.Name}" : track.Kit is { } kit ? $"kit {kit.Name}" : "",
+			};
 			foreach (var section in song.Sections)
+			{
+				var cell = new LaneCellViewModel(section.Index, ArrangeLayout.SectionWidth(section.Bars));
 				foreach (var placement in section.Placements)
 					if (placement.Track == track)
-						row.Placements.Add(new PlacementViewModel(this, placement, Describe.Placement(placement),
-							_forced.GetValueOrDefault((section.Name, placement.Name))));
+					{
+						var clip = Clip(placement);
+						row.Placements.Add(clip);
+						cell.Placements.Add(clip);
+					}
+				row.Cells.Add(cell);
+			}
 			ViewModel.Tracks.Add(row);
 		}
 		foreach (var cue in song.Cues)
 			if (!ViewModel.Cues.Any(c => c.Cue == cue))
 				ViewModel.Cues.Add(new CueViewModel(this, cue, Player.Get(cue)));
+		var used = song.Cues;
+		foreach (var cue in ViewModel.Cues)
+		{
+			cue.IsUsed = used.Contains(cue.Cue);
+			cue.Readers.Clear();
+			foreach (var section in song.Sections)
+				foreach (var placement in section.Placements)
+					if (placement.Condition is { } condition)
+						foreach (var (level, above) in Levels(condition, cue.Cue))
+							cue.Readers.Add(new CueReaderViewModel(level, above, $"{section.Name} · {placement.Name}"));
+		}
 		if (_selected is { } selected && FindPlacement(selected) is { } again)
 			ShowPattern(again);
+		RefreshConditions();
+	}
+
+	// A part as a clip in Arrange: one pass of it drawn small, what it plays, whether it is the one chosen
+	private PlacementViewModel Clip(Placement placement)
+	{
+		PlacementPattern pattern;
+		try
+		{
+			pattern = Player.Pattern(placement, _scale);
+		}
+		catch (ArgumentException)
+		{
+			pattern = new PlacementPattern(0, 0, null, []);
+		}
+		var events = pattern.Events;
+		var kit = pattern.Kit;
+		List<float> rows = kit is not null
+			? [.. events.Select(e => (float)e.Piece).Distinct().Order()]
+			: [.. events.Select(e => MathF.Round(e.Note)).Distinct().OrderDescending()];
+		var key = (placement.Section.Name, placement.Name);
+		return new PlacementViewModel(this, placement, Describe.Placement(placement), _forced.GetValueOrDefault(key))
+		{
+			KindText = (kit is not null ? "hits" : "notes") + (placement.IsOnPhrase ? " · on its phrase" : ""),
+			Notes = [.. events.Select(e => new PatternNote(e.Tick, e.Length, rows.IndexOf(kit is not null ? e.Piece : MathF.Round(e.Note)), e.Velocity))],
+			LoopTicks = pattern.LoopTicks,
+			Rows = rows.Count,
+			IsSelected = _selected == key,
+		};
+	}
+
+	// Each level a condition compares a cue with, and whether it waits for the cue above it; a not turns the comparison over
+	private static IEnumerable<(float Level, bool Above)> Levels(Condition condition, CueBase cue) => condition switch
+	{
+		AboveCondition a when a.Cue == cue => [(a.Level, true)],
+		BelowCondition b when b.Cue == cue => [(b.Level, false)],
+		AndCondition both => [.. Levels(both.A, cue), .. Levels(both.B, cue)],
+		OrCondition either => [.. Levels(either.A, cue), .. Levels(either.B, cue)],
+		NotCondition n => [.. Levels(n.A, cue).Select(l => (l.Level, !l.Above))],
+		_ => [],
+	};
+
+	// Whether each part's condition holds, and each level a cue is waited on at, for the cues as they are now
+	private void RefreshConditions()
+	{
+		foreach (var row in ViewModel.Tracks)
+			foreach (var clip in row.Placements)
+				clip.ConditionMet = clip.Placement.Condition?.IsMet(Player.Get) ?? true;
+		foreach (var cue in ViewModel.Cues)
+		{
+			var value = Player.Get(cue.Cue);
+			foreach (var reader in cue.Readers)
+				reader.IsMet = reader.Above ? value > reader.Level : value < reader.Level;
+		}
+	}
+
+	// Where the song is in Arrange: how far through each section, which column the playhead crosses, a jump waiting, and
+	// what plays next
+	private void RefreshArrange(Song song, MusicPosition position)
+	{
+		var progress = Math.Clamp(Player.SectionTick / (float)Math.Max(1, song.Sections[position.SectionIndex].Bars * song.Meter.TicksPerBar), 0f, 1f);
+		if (_queued == position.SectionIndex)
+			_queued = -1;
+		foreach (var section in ViewModel.Sections)
+		{
+			var current = section.Index == position.SectionIndex;
+			section.Progress = current ? progress : 0f;
+			section.IsQueued = section.Index == _queued;
+		}
+		foreach (var row in ViewModel.Tracks)
+			foreach (var cell in row.Cells)
+			{
+				cell.IsCurrent = cell.Section == position.SectionIndex;
+				cell.Progress = cell.IsCurrent ? progress : 0f;
+			}
+		ViewModel.NextText = _queued >= 0 && _queued < song.Sections.Count
+			? $"Next: {song.Sections[_queued].Name}, at the next bar"
+			: _loop
+				? $"Next: {position.Section} again (looping)"
+				: Player.NextSection is { } next ? $"Next: {next.Name}" : "";
+	}
+
+	private void ClearArrange()
+	{
+		foreach (var section in ViewModel.Sections)
+		{
+			section.Progress = 0f;
+			section.IsQueued = false;
+		}
+		foreach (var row in ViewModel.Tracks)
+			foreach (var cell in row.Cells)
+			{
+				cell.IsCurrent = false;
+				cell.Progress = 0f;
+			}
+		ViewModel.NextText = "";
+		_queued = -1;
 	}
 
 	/// <summary>Once a frame: rebuilds after a code change, hears the player, and refreshes what the view model shows (at most 30 times a second).</summary>
@@ -225,6 +355,7 @@ public sealed class Workbench : IDisposable
 	{
 		var stats = Player.Stats;
 		ViewModel.StatsText = $"{stats.ActiveVoices} voices · {stats.ActiveOperators} operators · {_audio.Stats.RenderLoad * 100:0}% load";
+		RefreshConditions();
 		if (!Player.IsPlaying || Player.Song is not { } song)
 		{
 			foreach (var section in ViewModel.Sections)
@@ -232,6 +363,7 @@ public sealed class Workbench : IDisposable
 				section.ShowCurrent(false);
 				section.Loops = false;
 			}
+			ClearArrange();
 			ViewModel.Pattern.PlayheadTick = -1;
 			return;
 		}
@@ -242,6 +374,8 @@ public sealed class Workbench : IDisposable
 			section.ShowCurrent(section.Index == position.SectionIndex);
 			section.Loops = section.IsCurrent && _loop;
 		}
+		if (song == _song)
+			RefreshArrange(song, position);
 		foreach (var row in ViewModel.Tracks)
 		{
 			var track = TrackOf(row.Name);
@@ -318,13 +452,21 @@ public sealed class Workbench : IDisposable
 	internal void JumpTo(int section)
 	{
 		if (Player.IsPlaying && Player.Song is { } song && (uint)section < (uint)song.Sections.Count)
+		{
 			Player.Jump(song.Sections[section]);
+			_queued = section;
+		}
 	}
 
 	internal void SelectPlacement(PlacementViewModel row)
 	{
 		_selected = (row.Placement.Section.Name, row.Placement.Name);
+		foreach (var track in ViewModel.Tracks)
+			foreach (var clip in track.Placements)
+				clip.IsSelected = clip == row;
 		ShowPattern(row.Placement);
+		if (ViewModel.Mode == WorkbenchMode.Arrange)
+			DockTrack(row.Placement.Track);
 	}
 
 	// A placement's notes over one pass of its part: a row per pitch (highest first) or per drum piece
@@ -369,8 +511,11 @@ public sealed class Workbench : IDisposable
 		var chip = NewBench();
 		_benchInstrument = chip.AddInstrument(patch);
 		_benchKit = null;
-		_benchPatch = index;
+		_benchPatch = _patchChoice = index;
 		_benchKitIndex = -1;
+		_dockTrack = null;
+		ViewModel.DockLabel = $"patch {name}";
+
 		ViewModel.ShowBench(index, -1);
 		ViewModel.ShowPads([]);
 		foreach (var macro in ViewModel.Macros)
@@ -397,8 +542,11 @@ public sealed class Workbench : IDisposable
 		var chip = NewBench();
 		_benchInstrument = chip.AddKit(kit);
 		_benchKit = kit;
-		_benchKitIndex = index;
+		_benchKitIndex = _kitChoice = index;
 		_benchPatch = -1;
+		_dockTrack = null;
+		ViewModel.DockLabel = $"kit {name}";
+
 		ViewModel.ShowBench(-1, index);
 		ViewModel.ShowPads(kit.Pieces.Select(piece => piece.Piece.Id));
 	}
@@ -414,12 +562,118 @@ public sealed class Workbench : IDisposable
 		return chip;
 	}
 
+	// After a code change, the keyboard's instrument built again: the track it plays in Arrange, found again by name, or the
+	// patch or kit it plays
 	private void RebuildBench()
 	{
-		if (_benchPatch >= 0)
+		if (ViewModel.Mode == WorkbenchMode.Arrange && _dockTrack is { } name && _song?.Tracks.FirstOrDefault(t => t.Name == name) is { } track)
+			DockTrack(track);
+		else if (_benchPatch >= 0)
 			SelectPatch(_benchPatch);
 		else if (_benchKitIndex >= 0)
 			SelectKit(_benchKitIndex);
+	}
+
+	/// <summary>
+	/// Gives the middle to <paramref name="mode"/>, and the keyboard to what it has chosen: the part chosen's track in
+	/// Arrange, the patch last chosen in Patch, the kit in Kit (the catalog's first when none was).
+	/// </summary>
+	public void SetMode(WorkbenchMode mode)
+	{
+		ViewModel.ShowMode(mode);
+		switch (mode)
+		{
+			case WorkbenchMode.Arrange:
+				if (_selected is { } selected && FindPlacement(selected) is { } placement)
+					DockTrack(placement.Track);
+				break;
+			case WorkbenchMode.Patch when _catalog.Patches.Count > 0:
+				SelectPatch(Math.Max(0, _patchChoice));
+				break;
+			case WorkbenchMode.Kit when _catalog.Kits.Count > 0:
+				SelectKit(Math.Max(0, _kitChoice));
+				break;
+		}
+	}
+
+	/// <summary>A song chosen by hand (the library, the palette): it is built, and Arrange shows it.</summary>
+	public void ChooseSong(int index)
+	{
+		SelectSong(index);
+		SetMode(WorkbenchMode.Arrange);
+		ViewModel.Chose();
+	}
+
+	/// <summary>A patch chosen by hand: the keyboard plays it, and the patch bench shows it.</summary>
+	public void ChoosePatch(int index)
+	{
+		_patchChoice = index;
+		SetMode(WorkbenchMode.Patch);
+		ViewModel.Chose();
+	}
+
+	/// <summary>A kit chosen by hand: the keyboard and pads play it, and Kit shows it.</summary>
+	public void ChooseKit(int index)
+	{
+		_kitChoice = index;
+		SetMode(WorkbenchMode.Kit);
+		ViewModel.Chose();
+	}
+
+	// The keyboard plays a track of the song: its patch, or its kit's pieces
+	private void DockTrack(SongTrack track)
+	{
+		var chip = NewBench();
+		if (track.Kit is { } kit)
+		{
+			_benchInstrument = chip.AddKit(kit);
+			_benchKit = kit;
+		}
+		else if (track.Patch is { } patch)
+		{
+			_benchInstrument = chip.AddInstrument(patch);
+			_benchKit = null;
+		}
+		_dockTrack = track.Name;
+		ViewModel.DockLabel = $"{track.Name} · {track.Kit?.Name ?? track.Patch?.Name}";
+	}
+
+	// Everything the command palette offers, built when it opens: the catalog, the song's sections, and commands
+	internal IEnumerable<PaletteItemViewModel> PaletteCommands()
+	{
+		for (var i = 0; i < _catalog.Songs.Count; i++)
+		{
+			var index = i;
+			yield return new PaletteItemViewModel("Song", _catalog.Songs[i].Name, () => ChooseSong(index));
+		}
+		for (var i = 0; i < _catalog.Patches.Count; i++)
+		{
+			var index = i;
+			yield return new PaletteItemViewModel("Patch", _catalog.Patches[i].Name, () => ChoosePatch(index));
+		}
+		for (var i = 0; i < _catalog.Kits.Count; i++)
+		{
+			var index = i;
+			yield return new PaletteItemViewModel("Kit", _catalog.Kits[i].Name, () => ChooseKit(index));
+		}
+		if (_song is { } song)
+			foreach (var section in song.Sections)
+			{
+				var index = section.Index;
+				yield return new PaletteItemViewModel("Section", $"Jump to {section.Name}", () => JumpTo(index));
+			}
+		yield return new PaletteItemViewModel("Command", Player.IsPlaying ? "Stop" : "Play", () =>
+		{
+			if (Player.IsPlaying)
+				Stop();
+			else
+				Play();
+		});
+		yield return new PaletteItemViewModel("Command", _loop ? "Stop looping the section" : "Loop the section playing", () => ViewModel.LoopSection = !_loop);
+		yield return new PaletteItemViewModel("Command", ViewModel.LibraryPinned ? "Unpin the library" : "Pin the library", () => ViewModel.LibraryPinned = !ViewModel.LibraryPinned);
+		yield return new PaletteItemViewModel("Mode", "Arrange", () => SetMode(WorkbenchMode.Arrange));
+		yield return new PaletteItemViewModel("Mode", "Patch", () => SetMode(WorkbenchMode.Patch));
+		yield return new PaletteItemViewModel("Mode", "Kit", () => SetMode(WorkbenchMode.Kit));
 	}
 
 	/// <summary>Starts a note on the bench's patch (or hits the kit's piece the note falls on); returns it, to let go.</summary>
@@ -457,12 +711,35 @@ public sealed class Workbench : IDisposable
 	}
 
 	/// <summary>
-	/// Once a frame, the keys: Space plays or stops; A W S E D F T G Y H U J K are an octave of piano keys from C (Z and X
-	/// move it an octave); 1 to 9 jump to that section.
+	/// Once a frame, the keys: Ctrl K opens the command palette and Escape closes what is open (the palette, the library
+	/// over the view, a build's error). While a text field has the keys (the palette, the library's filter), nothing else is
+	/// taken. Otherwise Space plays or stops; A W S E D F T G Y H U J K are an octave of piano keys from C (Z and X move it
+	/// an octave); 1 to 9 jump to that section.
 	/// </summary>
 	public void HandleInput(InputSnapshot input)
 	{
 		ArgumentNullException.ThrowIfNull(input);
+		var control = input.Down(Key.LeftControl) || input.Down(Key.RightControl);
+		if (control && input.Pressed(Key.K))
+		{
+			ViewModel.PaletteOpen = !ViewModel.PaletteOpen;
+			return;
+		}
+		if (input.Pressed(Key.Escape))
+		{
+			if (ViewModel.PaletteOpen)
+				ViewModel.PaletteOpen = false;
+			else if (ViewModel.LibraryFlyout)
+				ViewModel.LibraryOpen = false;
+			else if (ViewModel.ErrorOpen)
+				ViewModel.ErrorOpen = false;
+			return;
+		}
+		if (ViewModel.IsTyping || ViewModel.PaletteOpen || control)
+		{
+			ReleaseHeld();
+			return;
+		}
 		if (input.Pressed(Key.Space))
 		{
 			if (Player.IsPlaying)
@@ -489,6 +766,17 @@ public sealed class Workbench : IDisposable
 				JumpTo(d);
 	}
 
+	// Lets every key held on the computer's keyboard go, as typing starts
+	private void ReleaseHeld()
+	{
+		for (var k = 0; k < _held.Length; k++)
+			if (_held[k].Id != 0)
+			{
+				AuditionOff(_held[k]);
+				_held[k] = default;
+			}
+	}
+
 	/// <summary>What the workbench is doing, to save.</summary>
 	public WorkbenchState CaptureState()
 	{
@@ -504,6 +792,9 @@ public sealed class Workbench : IDisposable
 			Kit = _benchKitIndex >= 0 ? _catalog.Kits[_benchKitIndex].Name : null,
 			Octave = ViewModel.Octave,
 			Velocity = ViewModel.Velocity,
+			Mode = ViewModel.Mode.ToString(),
+			LibraryPinned = ViewModel.LibraryPinned,
+			SelectedPart = _selected is { } selected ? $"{selected.Section}/{selected.Placement}" : null,
 		};
 		foreach (var cue in ViewModel.Cues)
 			state.Cues[cue.Name] = Player.Get(cue.Cue);
@@ -556,6 +847,8 @@ public sealed class Workbench : IDisposable
 		ViewModel.ShowLoop(_loop);
 		ViewModel.Octave = state.Octave;
 		ViewModel.Velocity = state.Velocity;
+		if (state.SelectedPart is { } part && part.IndexOf('/') is var slash && slash > 0)
+			_selected = (part[..slash], part[(slash + 1)..]);
 		if (_song is { } built)
 			Fill(built);
 		var patch = Index(_catalog.Patches, state.Patch);
@@ -564,6 +857,9 @@ public sealed class Workbench : IDisposable
 			SelectPatch(patch);
 		else if (kit >= 0)
 			SelectKit(kit);
+		ViewModel.LibraryPinned = state.LibraryPinned;
+		if (Enum.TryParse<WorkbenchMode>(state.Mode, out var mode))
+			SetMode(mode);
 		if (state.Playing)
 		{
 			Play();

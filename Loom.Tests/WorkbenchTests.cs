@@ -88,6 +88,142 @@ public class WorkbenchTests
 	}
 
 	[Test]
+	public void A_parts_condition_and_what_reads_the_cue_show_whether_they_hold()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		rig.Workbench.Play();
+		rig.Step(MusicRig.Bar);
+		var pad = model.Tracks[1].Placements[0];
+		var reader = model.Cues[0].Readers.ShouldHaveSingleItem();
+		(reader.Level, reader.Above, reader.Text, reader.Comparison).ShouldBe((0.5f, true, "verse · pad", "> 0.5"));
+		pad.ConditionMet.ShouldBeFalse();
+		reader.IsMet.ShouldBeFalse();
+
+		model.Cues[0].Value = 0.8f;
+		rig.Step(MusicRig.Bar);
+		pad.ConditionMet.ShouldBeTrue();
+		reader.IsMet.ShouldBeTrue();
+		// A part with no condition is always met
+		model.Tracks[0].Placements[0].ConditionMet.ShouldBeTrue();
+	}
+
+	[Test]
+	public void Arrange_lays_each_tracks_parts_out_by_section_as_wide_as_the_timeline()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		var lead = model.Tracks[0];
+		lead.Cells.Select(c => c.Placements.Select(p => p.Title).ToArray()).ShouldBe([["melody"], ["lead"]]);
+		model.Tracks[1].Cells.Select(c => c.Placements.Count).ShouldBe([1, 0]);
+		lead.Cells.Select(c => c.Width).ShouldBe(model.Sections.Select(s => s.Width));
+		lead.Instrument.ShouldStartWith("patch ");
+		// One pass of the melody drawn small: four quarter notes on three pitches
+		var melody = lead.Placements[0];
+		melody.Notes.Count.ShouldBe(4);
+		melody.Rows.ShouldBe(3);
+		melody.KindText.ShouldBe("notes");
+	}
+
+	[Test]
+	public void A_jump_waits_for_the_next_bar_and_says_what_comes_next()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		rig.Workbench.Play();
+		rig.Step(MusicRig.Bar / 4);
+		model.NextText.ShouldBe("Next: verse");
+		model.Sections[0].Progress.ShouldBeGreaterThan(0f);
+
+		rig.Workbench.JumpTo(1);
+		// Long enough for the view model's refresh (30 a second), short of the bar's end
+		rig.Step(MusicRig.Bar / 8);
+		model.Sections[1].IsQueued.ShouldBeTrue();
+		model.NextText.ShouldBe("Next: chorus, at the next bar");
+
+		rig.Step(MusicRig.Bar);
+		model.Sections[1].IsQueued.ShouldBeFalse();
+		model.Sections[1].IsCurrent.ShouldBeTrue();
+		model.Tracks[0].Cells[1].IsCurrent.ShouldBeTrue();
+	}
+
+	[Test]
+	public void A_choice_from_the_library_takes_the_middle_and_folds_the_library_unless_it_is_pinned()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		model.Mode.ShouldBe(WorkbenchMode.Arrange);
+
+		model.LibraryOpen = true;
+		model.LibraryFlyout.ShouldBeTrue();
+		model.Patches[0].IsSelected = true;
+		model.Mode.ShouldBe(WorkbenchMode.Patch);
+		model.IsPatch.ShouldBeTrue();
+		model.LibraryOpen.ShouldBeFalse();
+		model.DockLabel.ShouldBe("patch click");
+
+		model.LibraryPinned = true;
+		model.LibraryFlyout.ShouldBeFalse();
+		model.Songs[1].IsSelected = true;
+		model.Mode.ShouldBe(WorkbenchMode.Arrange);
+		model.LibraryOpen.ShouldBeTrue();
+	}
+
+	[Test]
+	public void The_librarys_filter_shows_only_what_has_every_word()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		model.LibraryQuery = "SEC";
+		model.Songs.Select(s => s.IsVisible).ShouldBe([false, true]);
+		model.Patches[0].IsVisible.ShouldBeFalse();
+		model.LibraryQuery = "";
+		model.Songs.Select(s => s.IsVisible).ShouldBe([true, true]);
+	}
+
+	[Test]
+	public void The_palette_finds_by_every_word_and_runs_its_choice()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		model.PaletteOpen = true;
+		model.PaletteItems.ShouldContain(i => i.Category == "Song" && i.Text == "second");
+		model.PaletteItems[0].IsSelected.ShouldBeTrue();
+
+		model.PaletteQuery = "song sec";
+		var only = model.PaletteItems.ShouldHaveSingleItem();
+		only.Text.ShouldBe("second");
+		model.RunPalette();
+		model.PaletteOpen.ShouldBeFalse();
+		model.SelectedSong.ShouldBe(1);
+		model.Mode.ShouldBe(WorkbenchMode.Arrange);
+	}
+
+	[Test]
+	public void A_choice_of_part_gives_the_keyboard_its_track_and_is_kept_with_the_mode_and_pin()
+	{
+		WorkbenchState saved;
+		using (var rig = new Rig())
+		{
+			var model = rig.Workbench.ViewModel;
+			var pad = model.Tracks[1].Placements[0];
+			pad.Select();
+			pad.IsSelected.ShouldBeTrue();
+			model.DockLabel.ShouldStartWith("pad · ");
+			model.LibraryPinned = true;
+			saved = rig.Workbench.CaptureState();
+		}
+		saved.SelectedPart.ShouldBe("verse/pad");
+		saved.Mode.ShouldBe("Arrange");
+
+		using var again = new Rig(saved);
+		again.Workbench.ViewModel.Tracks[1].Placements[0].IsSelected.ShouldBeTrue();
+		again.Workbench.ViewModel.LibraryPinned.ShouldBeTrue();
+		again.Workbench.ViewModel.Mode.ShouldBe(WorkbenchMode.Arrange);
+		again.Workbench.ViewModel.DockLabel.ShouldStartWith("pad · ");
+	}
+
+	[Test]
 	public void Its_view_models_steer_the_music()
 	{
 		using var rig = new Rig();

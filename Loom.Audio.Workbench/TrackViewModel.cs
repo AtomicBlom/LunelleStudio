@@ -66,4 +66,10 @@ public sealed class TrackViewModel : ViewModel
 
 	/// <summary>The parts it plays, in every section.</summary>
 	public ObservableCollection<PlacementViewModel> Placements { get; } = [];
+
+	/// <summary>What it plays on: "patch acoustic-guitar", "kit general".</summary>
+	public string Instrument { get; internal init; } = "";
+
+	/// <summary>Its row in Arrange: a cell per section, each with the parts it plays there.</summary>
+	public ObservableCollection<LaneCellViewModel> Cells { get; } = [];
 }

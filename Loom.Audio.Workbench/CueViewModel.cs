@@ -43,6 +43,16 @@ public sealed class CueViewModel : ViewModel
 	/// <summary>A choice's options, the one chosen lit.</summary>
 	public IReadOnlyList<ChoiceViewModel> Options { get; }
 
+	/// <summary>What waits on it in the song: each part comparing it with a level, the levels marked on its slider.</summary>
+	public System.Collections.ObjectModel.ObservableCollection<CueReaderViewModel> Readers { get; } = [];
+
+	/// <summary>Whether the song playing reads it at all; one it doesn't is shown dimmed.</summary>
+	public bool IsUsed
+	{
+		get;
+		internal set => Set(ref field, value);
+	} = true;
+
 	/// <summary>A level's value, 0 to 1. Setting it tells the music.</summary>
 	public float Value
 	{

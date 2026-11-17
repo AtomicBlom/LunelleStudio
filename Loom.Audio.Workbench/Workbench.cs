@@ -20,7 +20,7 @@ public sealed class Workbench : IDisposable
 
 	private readonly AudioEngine _audio;
 	private readonly AudioBus _bus;
-	private readonly WorkbenchCatalog _catalog;
+	private WorkbenchCatalog _catalog;
 	private readonly Dictionary<string, bool> _muted = [];
 	private readonly Dictionary<string, bool> _soloed = [];
 	private readonly Dictionary<string, float> _gainDb = [];
@@ -146,6 +146,65 @@ public sealed class Workbench : IDisposable
 
 	/// <summary>Any thread: code has changed (hot reload says so), so every workbench rebuilds what it plays at its next <see cref="Update"/>.</summary>
 	public static void CodeChanged() => Interlocked.Increment(ref _changes);
+
+	/// <summary>
+	/// Takes up a newly built catalog, a project compiled again: its songs, patches and kits replace the old by name, what
+	/// was chosen stays chosen where the new one has it, each cue keeps its value by name (a new build makes new cue
+	/// objects), and the song chosen is built again and swapped in at the next bar, as a code change does.
+	/// </summary>
+	public void UseCatalog(WorkbenchCatalog catalog)
+	{
+		ArgumentNullException.ThrowIfNull(catalog);
+		string? Name<T>(IReadOnlyList<(string Name, Func<T> Build)> list, int index) => (uint)index < (uint)list.Count ? list[index].Name : null;
+		var song = Name(_catalog.Songs, _songIndex);
+		var patch = Name(_catalog.Patches, _benchPatch);
+		var kit = Name(_catalog.Kits, _benchKitIndex);
+		var patchChoice = Name(_catalog.Patches, _patchChoice);
+		var kitChoice = Name(_catalog.Kits, _kitChoice);
+		var cues = ViewModel.Cues.ToDictionary(c => c.Name, c => Player.Get(c.Cue));
+
+		_catalog = catalog;
+		WorkbenchViewModel.ReplaceChoices(ViewModel.Songs, [.. catalog.Songs.Select(s => s.Name)], ViewModel.AddSong);
+		WorkbenchViewModel.ReplaceChoices(ViewModel.Patches, [.. catalog.Patches.Select(s => s.Name)], ViewModel.AddPatch);
+		WorkbenchViewModel.ReplaceChoices(ViewModel.Kits, [.. catalog.Kits.Select(s => s.Name)], ViewModel.AddKit);
+		ViewModel.FilterLibrary();
+		ViewModel.Cues.Clear();
+		foreach (var cue in catalog.Cues)
+		{
+			var value = cues.TryGetValue(cue.Name, out var was) ? was : Player.Get(cue);
+			Player.Set(cue, value);
+			ViewModel.Cues.Add(new CueViewModel(this, cue, value));
+		}
+
+		_songIndex = Index(catalog.Songs, song);
+		_benchPatch = Index(catalog.Patches, patch);
+		_benchKitIndex = Index(catalog.Kits, kit);
+		_patchChoice = Index(catalog.Patches, patchChoice);
+		_kitChoice = Index(catalog.Kits, kitChoice);
+		if (_songIndex < 0 && catalog.Songs.Count > 0)
+			_songIndex = 0;
+		ViewModel.ShowSelectedSong(_songIndex);
+		ViewModel.ShowBench(_benchPatch, _benchKitIndex);
+		Rebuild();
+		RebuildBench();
+	}
+
+	/// <summary>
+	/// Shows a project's compile in the build pill: how long a good one took, or a failed one's errors (the last that built
+	/// plays on).
+	/// </summary>
+	public void ReportBuild(IReadOnlyList<string> errors, TimeSpan took)
+	{
+		ArgumentNullException.ThrowIfNull(errors);
+		if (errors.Count == 0)
+		{
+			ViewModel.Error = "";
+			ViewModel.BuildText = $"compiled {DateTime.Now:HH:mm:ss} in {took.TotalMilliseconds:0} ms";
+			return;
+		}
+		ViewModel.Error = string.Join("\n", errors.Take(8)) + (errors.Count > 8 ? $"\n… and {errors.Count - 8} more" : "");
+		ViewModel.BuildText = "didn't compile · the last that built plays on";
+	}
 
 	/// <summary>Chooses a song and builds it; if one was playing, it plays.</summary>
 	public void SelectSong(int index)
@@ -966,5 +1025,13 @@ public sealed class Workbench : IDisposable
 		_sketchPlayer?.Dispose();
 		if (_bench is { } chip)
 			_audio.Stop(chip);
+	}
+
+	/// <summary>Puts <paramref name="text"/> on the build pill, as a host says what it is doing before its first build.</summary>
+	public void ReportStatus(string text)
+	{
+		ArgumentNullException.ThrowIfNull(text);
+		ViewModel.Error = "";
+		ViewModel.BuildText = text;
 	}
 }

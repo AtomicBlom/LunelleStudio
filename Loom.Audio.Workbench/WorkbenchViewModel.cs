@@ -351,14 +351,28 @@ public sealed class WorkbenchViewModel : ViewModel
 		get;
 		set
 		{
-			if (!Set(ref field, value ?? ""))
-				return;
-			var words = field.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-			foreach (var list in new[] { Songs, Patches, Kits })
-				foreach (var choice in list)
-					choice.IsVisible = words.All(w => choice.Name.Contains(w, StringComparison.OrdinalIgnoreCase));
+			if (Set(ref field, value ?? ""))
+				FilterLibrary();
 		}
 	} = "";
+
+	internal void FilterLibrary()
+	{
+		var words = LibraryQuery.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+		foreach (var list in new[] { Songs, Patches, Kits })
+			foreach (var choice in list)
+				choice.IsVisible = words.All(w => choice.Name.Contains(w, StringComparison.OrdinalIgnoreCase));
+	}
+
+	// The library's songs, patches or kits for a new catalog: left as they are when the names haven't changed
+	internal static void ReplaceChoices(ObservableCollection<ChoiceViewModel> list, IReadOnlyList<string> names, Action<string> add)
+	{
+		if (list.Select(c => c.Name).SequenceEqual(names))
+			return;
+		list.Clear();
+		foreach (var name in names)
+			add(name);
+	}
 
 	/// <summary>A choice was made in the library: a flyout folds away; a pinned library stays.</summary>
 	internal void Chose()

@@ -27,6 +27,7 @@ public sealed class MusicProject : IDisposable
 	private Solution _solution = null!;
 	private ProjectId _project = null!;
 	private Dictionary<string, string> _references = [];
+	private string[] _musicFiles = [];
 	private ProjectBuild? _pending;
 	private int _builds;
 	private bool _reloadArguments;
@@ -135,6 +136,7 @@ public sealed class MusicProject : IDisposable
 		DocumentInfo Document(string path) => DocumentInfo.Create(DocumentId.CreateNewId(id), Path.GetFileName(path),
 			loader: new FileTextLoader(path, Encoding.UTF8), filePath: path);
 		var references = parsed.MetadataReferences.Select(r => MetadataReference.CreateFromFile(r.Reference, r.Properties)).ToArray();
+		_musicFiles = [.. parsed.AdditionalFiles.Select(f => Path.GetFullPath(f.Path, Directory))];
 		_references = parsed.MetadataReferences
 			.GroupBy(r => Path.GetFileNameWithoutExtension(r.Reference), StringComparer.OrdinalIgnoreCase)
 			.ToDictionary(g => g.Key, g => g.First().Reference, StringComparer.OrdinalIgnoreCase);
@@ -217,7 +219,7 @@ public sealed class MusicProject : IDisposable
 		try
 		{
 			var assembly = context.LoadFromStream(pe, pdb);
-			var (catalog, problem) = CatalogReader.Read(assembly);
+			var (catalog, problem) = CatalogReader.Read(assembly, _musicFiles);
 			if (catalog is null)
 			{
 				context.Unload();

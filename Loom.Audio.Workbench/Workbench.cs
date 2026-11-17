@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Loom.Audio.Synth.Chip;
 using Loom.Audio.Synth.Music;
 using Loom.Input;
@@ -64,6 +65,9 @@ public sealed class Workbench : IDisposable
 	{
 		if (_bench is { } chip && _benchKit is null && _benchPatch >= 0)
 			chip.Replace(_benchInstrument, patch);
+		// An edit, not the patch opening: written to its file a moment after the edits pause
+		if (_patchFile is not null && ViewModel.Designer.IsDirty)
+			_patchSince = 0;
 	}
 
 	private void OnCopyRequested(string text) =>
@@ -215,6 +219,8 @@ public sealed class Workbench : IDisposable
 		_songIndex = index;
 		_song = null;
 		_selected = null;
+		_selectedIndex = -1;
+		ViewModel.Roll.ShowNone("Choose a part to edit it.");
 		_muted.Clear();
 		_soloed.Clear();
 		_gainDb.Clear();
@@ -275,7 +281,10 @@ public sealed class Workbench : IDisposable
 		Song song;
 		try
 		{
-			song = build() ?? throw new InvalidOperationException("Its factory returned no song.");
+			OpenEditor();
+			song = _editor is { } editor && _source is { } source
+				? editor.Build(source.Bindings)
+				: build() ?? throw new InvalidOperationException("Its factory returned no song.");
 		}
 		catch (Exception ex)
 		{
@@ -285,7 +294,8 @@ public sealed class Workbench : IDisposable
 			return;
 		}
 		ViewModel.Error = "";
-		ViewModel.BuildText = $"built {DateTime.Now:HH:mm:ss}";
+		ViewModel.BuildText = _editorNote ?? $"built {DateTime.Now:HH:mm:ss}";
+		_editorNote = null;
 		_song = song;
 		if (swap && Player.IsPlaying)
 			Player.Swap(song);
@@ -340,7 +350,10 @@ public sealed class Workbench : IDisposable
 							cue.Readers.Add(new CueReaderViewModel(level, above, $"{section.Name} · {placement.Name}"));
 		}
 		if (_selected is { } selected && FindPlacement(selected) is { } again)
+		{
 			ShowPattern(again);
+			ShowRoll(again);
+		}
 		RefreshConditions();
 	}
 
@@ -460,6 +473,10 @@ public sealed class Workbench : IDisposable
 			ViewModel.Error = ex.Message;
 			Console.WriteLine($"[workbench] {ex.Message}");
 		}
+		if (_patchSince >= 0 && (_patchSince += deltaSeconds) >= SongEditor.SaveAfterSeconds)
+			SavePatch();
+		if (_editor?.Update(deltaSeconds) == true)
+			ViewModel.BuildText = $"saved {Path.GetFileName(_editor.Path)} {DateTime.Now:HH:mm:ss}";
 		_sinceRefresh += deltaSeconds;
 		if (_sinceRefresh >= 1.0 / 30.0)
 		{
@@ -524,9 +541,14 @@ public sealed class Workbench : IDisposable
 			return null;
 		foreach (var section in song.Sections)
 			if (section.Name == key.Section)
+			{
+				// The one chosen by where it stands, where two share a name (a track's two parts in a section)
+				if ((uint)_selectedIndex < (uint)section.Placements.Count && section.Placements[_selectedIndex].Name == key.Placement)
+					return section.Placements[_selectedIndex];
 				foreach (var placement in section.Placements)
 					if (placement.Name == key.Placement)
 						return placement;
+			}
 		return null;
 	}
 
@@ -580,10 +602,12 @@ public sealed class Workbench : IDisposable
 	internal void SelectPlacement(PlacementViewModel row)
 	{
 		_selected = (row.Placement.Section.Name, row.Placement.Name);
+		_selectedIndex = IndexIn(row.Placement);
 		foreach (var track in ViewModel.Tracks)
 			foreach (var clip in track.Placements)
 				clip.IsSelected = clip == row;
 		ShowPattern(row.Placement);
+		ShowRoll(row.Placement);
 		if (ViewModel.Mode == WorkbenchMode.Arrange)
 			DockTrack(row.Placement.Track);
 	}
@@ -640,7 +664,7 @@ public sealed class Workbench : IDisposable
 		foreach (var macro in ViewModel.Macros)
 			chip.SetMacro(_benchInstrument, new Macro(macro.Index), macro.Value);
 		// The same patch built again after a code change keeps the designer's edits; another opens afresh
-		ViewModel.Designer.Load(patch, _catalog.MacroName, keepEdits: true);
+		ViewModel.Designer.Load(patch, _catalog.MacroName, keepEdits: true, names: OpenPatchFile(name));
 	}
 
 	/// <summary>Chooses a kit for the bench, whose pads (and keys) play its pieces.</summary>
@@ -857,6 +881,17 @@ public sealed class Workbench : IDisposable
 				ViewModel.ErrorOpen = false;
 			return;
 		}
+		if (control && !ViewModel.IsTyping && input.Pressed(Key.Z))
+		{
+			if (input.Down(Key.LeftShift) || input.Down(Key.RightShift))
+				RedoEdit();
+			else
+				UndoEdit();
+		}
+		if (control && !ViewModel.IsTyping && input.Pressed(Key.Y))
+			RedoEdit();
+		if (!control && !ViewModel.IsTyping && input.Pressed(Key.Delete))
+			ViewModel.Roll.DeleteCommand.Execute(null);
 		if (ViewModel.IsTyping || ViewModel.PaletteOpen || control)
 		{
 			ReleaseHeld();
@@ -1021,6 +1056,8 @@ public sealed class Workbench : IDisposable
 	/// <summary>Stops the song and the bench.</summary>
 	public void Dispose()
 	{
+		_editor?.Save();
+		SavePatch();
 		Player.Dispose();
 		_sketchPlayer?.Dispose();
 		if (_bench is { } chip)
@@ -1034,4 +1071,180 @@ public sealed class Workbench : IDisposable
 		ViewModel.Error = "";
 		ViewModel.BuildText = text;
 	}
+
+	private SongEditor? _editor;
+	private SongSource? _source;
+	private int _selectedIndex = -1;
+
+	// The song chosen's file, open for editing when it has one, and read again if something else changed it
+	private void OpenEditor()
+	{
+		var name = (uint)_songIndex < (uint)_catalog.Songs.Count ? _catalog.Songs[_songIndex].Name : null;
+		_source = name is null ? null : _catalog.SongSource(name);
+		if (_source is null)
+		{
+			_editor = null;
+			return;
+		}
+		if (_editor?.Path == _source.Path)
+		{
+			if (_editor.ReloadIfChanged())
+			{
+				_editorNote = $"{Path.GetFileName(_source.Path)} changed on disk: read again, undo cleared";
+				Console.WriteLine($"[workbench] {_source.Path} changed on disk: read again");
+			}
+			return;
+		}
+		try
+		{
+			_editor?.Save();
+			_editor = SongEditor.Open(_source.Path);
+		}
+		catch (Exception ex) when (ex is IOException or FormatException or UnauthorizedAccessException)
+		{
+			_editor = null;
+			Console.WriteLine($"[workbench] {_source.Path} couldn't be opened: {ex.Message}");
+		}
+	}
+
+	// Where a placement stands among its section's, as its file's parts are numbered
+	private static int IndexIn(Placement placement)
+	{
+		var placements = placement.Section.Placements;
+		for (var i = 0; i < placements.Count; i++)
+			if (placements[i] == placement)
+				return i;
+		return -1;
+	}
+
+	// The part chosen in the roll, when its song has a file and the part is data there
+	private void ShowRoll(Placement placement)
+	{
+		if (_editor is null)
+		{
+			ViewModel.Roll.ShowNone(_source is null
+				? "This song is code alone: a song with a .song.json is edited here."
+				: "The song's file couldn't be read.");
+			return;
+		}
+		var section = placement.Section.Index;
+		var index = IndexIn(placement);
+		if (_editor.Part(section, index) is not { } part)
+		{
+			ViewModel.Roll.ShowNone("This part is code (its notation, or the whole placement, or a hook's), so it is edited in its C#.");
+			return;
+		}
+		var step = (part["line"] ?? part["beat"] ?? part["strum"])?.GetValue<string>() switch
+		{
+			"quarters" => Ticks.Quarter,
+			"eighths" => Ticks.Eighth,
+			"sixteenths" => Ticks.Sixteenth,
+			_ => Ticks.Triplet,
+		};
+		var editor = _editor;
+		ViewModel.Roll.Show($"{placement.Name} · {placement.Section.Name}", (JsonObject)part.DeepClone(),
+			placement.Section.Song.Meter.TicksPerBar / step, editor.IsEdited(section, index), editor.CanUndo, editor.CanRedo,
+			change => EditPart(section, index, change),
+			gesture =>
+			{
+				if (gesture == 1)
+					editor.BeginGesture();
+				else
+					editor.EndGesture();
+			});
+	}
+
+	// An edit of a part in the song's file: the song built again from the file as edited, heard at the next bar
+	private void EditPart(int section, int index, Action<JsonObject> change)
+	{
+		if (_editor is null)
+			return;
+		_editor.Edit(root =>
+		{
+			if (root["sections"]?[section]?["parts"]?[index] is JsonObject part)
+				change(part);
+		});
+		Rebuild(swap: true);
+	}
+
+	/// <summary>Undoes the last edit of the song's file.</summary>
+	internal void UndoEdit()
+	{
+		if (_editor?.Undo() == true)
+			Rebuild(swap: true);
+	}
+
+	/// <summary>Does again the last edit undone.</summary>
+	internal void RedoEdit()
+	{
+		if (_editor?.Redo() == true)
+			Rebuild(swap: true);
+	}
+
+	/// <summary>Puts the part chosen back as its file had it when opened.</summary>
+	internal void RevertPart()
+	{
+		if (_editor is null || _selected is not { } selected || FindPlacement(selected) is not { } placement)
+			return;
+		if (_editor.RevertPart(placement.Section.Index, IndexIn(placement)))
+			Rebuild(swap: true);
+	}
+
+	/// <summary>The song's file being edited, or null when the song chosen has none.</summary>
+	public SongEditor? Editor => _editor;
+
+	// What happened to the song's file, said on the build pill once the song is built again
+	private string? _editorNote;
+
+	private string? _patchFile;
+	private string _patchAbout = "";
+	private double _patchSince = -1;
+
+	// The patch chosen's file, when it has one: its operators' names and its words, for the designer to save to
+	private IReadOnlyList<string>? OpenPatchFile(string name)
+	{
+		SavePatch();
+		_patchFile = _catalog.PatchFile(name);
+		_patchAbout = "";
+		if (_patchFile is null)
+			return null;
+		try
+		{
+			var spec = PatchFile.Read(File.ReadAllText(_patchFile), out var names);
+			_patchAbout = spec.About;
+			return names;
+		}
+		catch (Exception ex) when (ex is IOException or FormatException or UnauthorizedAccessException)
+		{
+			Console.WriteLine($"[workbench] {_patchFile} couldn't be read: {ex.Message}");
+			_patchFile = null;
+			return null;
+		}
+	}
+
+	// The designer's patch written to its file, once its edits have paused (or now, leaving it)
+	private void SavePatch()
+	{
+		if (_patchSince < 0 || _patchFile is null)
+			return;
+		_patchSince = -1;
+		var spec = ViewModel.Designer.Spec.Clone();
+		spec.About = _patchAbout;
+		var text = PatchFile.Write(spec, ViewModel.Designer.Names);
+		try
+		{
+			if (!File.Exists(_patchFile) || File.ReadAllText(_patchFile) != text)
+			{
+				File.WriteAllText(_patchFile, text);
+				ViewModel.BuildText = $"saved {Path.GetFileName(_patchFile)} {DateTime.Now:HH:mm:ss}";
+			}
+		}
+		catch (IOException ex)
+		{
+			Console.WriteLine($"[workbench] {_patchFile} couldn't be written: {ex.Message}");
+		}
+	}
+
+	/// <summary>The file the patch chosen is written to as the designer edits it, or null when it is code.</summary>
+	public string? PatchFilePath => _patchFile;
 }

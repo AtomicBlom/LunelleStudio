@@ -15,7 +15,7 @@
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
-            <RowDefinition Height="160" />
+            <RowDefinition Height="270" />
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="12,8,12,8">
@@ -154,8 +154,45 @@
             </StackPanel>
         </ScrollViewer>
 
+        <!-- The part chosen: the roll when its song has a file and the part is data, its notes drawn otherwise -->
         <Border Grid.Row="2" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="0,1,0,0" Padding="12,8,12,8">
-            <views:PatternView Pattern="{x:Bind ViewModel.Pattern, Mode=OneWay}" />
+            <Grid>
+                <StackPanel Visibility="{x:Bind views:Display.Not(ViewModel.Roll.IsEditable), Mode=OneWay}">
+                    <views:PatternView Pattern="{x:Bind ViewModel.Pattern, Mode=OneWay}" />
+                    <TextBlock Text="{x:Bind ViewModel.Roll.Status, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Faint}" Margin="0,4,0,0" />
+                </StackPanel>
+                <Grid Visibility="{x:Bind ViewModel.Roll.IsEditable, Mode=OneWay}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Margin="0,0,0,6">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <TextBlock Text="{x:Bind ViewModel.Roll.Title, Mode=OneWay}" FontSize="13" Foreground="{x:Static views:Theme.Ink}"
+                                       VerticalAlignment="Center" Margin="0,0,12,0" />
+                            <TextBlock Text="{x:Bind ViewModel.Roll.Status, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Accent}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <ScrollViewer HorizontalScrollMode="Enabled">
+                        <StackPanel Orientation="Horizontal">
+                        <Button Command="{x:Bind ViewModel.Roll.FlatCommand, Mode=OneWay}" Margin="0,0,2,0"><TextBlock Text="Flat" FontSize="12" Margin="8,2,8,3" /></Button>
+                        <Button Command="{x:Bind ViewModel.Roll.NaturalCommand, Mode=OneWay}" Margin="0,0,2,0"><TextBlock Text="Natural" FontSize="12" Margin="8,2,8,3" /></Button>
+                        <Button Command="{x:Bind ViewModel.Roll.SharpCommand, Mode=OneWay}" Margin="0,0,2,0"><TextBlock Text="Sharp" FontSize="12" Margin="8,2,8,3" /></Button>
+                        <Button Command="{x:Bind ViewModel.Roll.AccentCommand, Mode=OneWay}" Margin="0,0,2,0"><TextBlock Text="Accent" FontSize="12" Margin="8,2,8,3" /></Button>
+                        <Button Command="{x:Bind ViewModel.Roll.SlideCommand, Mode=OneWay}" Margin="0,0,2,0"><TextBlock Text="Slide" FontSize="12" Margin="8,2,8,3" /></Button>
+                        <Button Command="{x:Bind ViewModel.Roll.DeleteCommand, Mode=OneWay}" Margin="0,0,10,0"><TextBlock Text="Delete" FontSize="12" Margin="8,2,8,3" /></Button>
+                        <Button Command="{x:Bind ViewModel.Roll.AddBarCommand, Mode=OneWay}" Margin="0,0,2,0"><TextBlock Text="+ bar" FontSize="12" Margin="8,2,8,3" /></Button>
+                        <Button Command="{x:Bind ViewModel.Roll.RemoveBarCommand, Mode=OneWay}" Margin="0,0,10,0"><TextBlock Text="− bar" FontSize="12" Margin="8,2,8,3" /></Button>
+                        <Button Command="{x:Bind ViewModel.Roll.UndoCommand, Mode=OneWay}" IsEnabled="{x:Bind ViewModel.Roll.CanUndo, Mode=OneWay}" Margin="0,0,2,0"><TextBlock Text="Undo" FontSize="12" Margin="8,2,8,3" /></Button>
+                        <Button Command="{x:Bind ViewModel.Roll.RedoCommand, Mode=OneWay}" IsEnabled="{x:Bind ViewModel.Roll.CanRedo, Mode=OneWay}" Margin="0,0,2,0"><TextBlock Text="Redo" FontSize="12" Margin="8,2,8,3" /></Button>
+                        <Button Command="{x:Bind ViewModel.Roll.RevertCommand, Mode=OneWay}"><TextBlock Text="Revert part" FontSize="12" Margin="8,2,8,3" /></Button>
+                        </StackPanel>
+                        </ScrollViewer>
+                    </StackPanel>
+                    <ScrollViewer Grid.Row="1" HorizontalScrollMode="Enabled">
+                        <views:RollEditor Roll="{x:Bind ViewModel.Roll, Mode=OneWay}" HorizontalAlignment="Left" VerticalAlignment="Top" />
+                    </ScrollViewer>
+                </Grid>
+            </Grid>
         </Border>
     </Grid>
 </ContentControl>

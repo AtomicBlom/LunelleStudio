@@ -24,6 +24,7 @@ public sealed class WorkbenchViewModel : ViewModel
 	{
 		_workbench = workbench;
 		Macros = [.. Enumerable.Range(0, 8).Select(m => new MacroViewModel(m, (index, value) => _workbench.SetBenchMacro(index, value)))];
+		Roll = new RollViewModel(workbench);
 	}
 
 	/// <summary>The catalog's songs, one lit while it is the one chosen.</summary>
@@ -498,4 +499,7 @@ public sealed class WorkbenchViewModel : ViewModel
 		IsTyping = false;
 		item.Run();
 	}
+
+	/// <summary>The part chosen as the roll edits it, when its song has a file and the part is data.</summary>
+	public RollViewModel Roll { get; }
 }

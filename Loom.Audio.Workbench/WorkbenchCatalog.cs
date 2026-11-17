@@ -26,4 +26,14 @@ public sealed record WorkbenchCatalog
 	/// a macro, writes <c>new Macro(n)</c>.
 	/// </summary>
 	public Func<int, string?>? MacroName { get; init; }
+
+	/// <summary>
+	/// The file a song is built from (a <c>.song.json</c>) and what its names stand for, by the song's name; null for a
+	/// song that is code alone. A song with a file is edited in the workbench (its parts in the roll) and built from the file
+	/// as it is edited, with no compile.
+	/// </summary>
+	public Func<string, SongSource?> SongSource { get; init; } = _ => null;
+
+	/// <summary>The file a patch is built from (a <c>.patch.json</c>), by the patch's name in the catalog; null for code.</summary>
+	public Func<string, string?> PatchFile { get; init; } = _ => null;
 }

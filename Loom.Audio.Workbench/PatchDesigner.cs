@@ -230,10 +230,11 @@ public sealed class PatchDesigner : ViewModel
 	public PatchSpec Spec => _spec;
 
 	/// <summary>
-	/// Opens <paramref name="patch"/>. With <paramref name="keepEdits"/> an edited patch of the same name keeps its edits
-	/// (a rebuild after a code change), and only what "as its code has it" means is updated.
+	/// Opens <paramref name="patch"/>, its operators named by <paramref name="names"/> (its file's) or by kind. With
+	/// <paramref name="keepEdits"/> an edited patch of the same name keeps its edits (a rebuild after a code change), and
+	/// only what "as its code has it" means is updated.
 	/// </summary>
-	public void Load(Patch patch, Func<int, string?>? macroName = null, bool keepEdits = false)
+	public void Load(Patch patch, Func<int, string?>? macroName = null, bool keepEdits = false, IReadOnlyList<string>? names = null)
 	{
 		ArgumentNullException.ThrowIfNull(patch);
 		_macroName = macroName;
@@ -246,7 +247,7 @@ public sealed class PatchDesigner : ViewModel
 		}
 		_original = patch;
 		_spec = PatchSpec.From(patch);
-		_names = [.. PatchCode.OperatorNames(_spec.Operators)];
+		_names = [.. PatchCode.OperatorNames(_spec.Operators, names)];
 		_originalCode = PatchCode.Write(_spec, names: _names, macroName: _macroName);
 		ListenAlone = false;
 		HearOriginal = false;
@@ -780,4 +781,7 @@ public sealed class PatchDesigner : ViewModel
 		copy[at] = item;
 		return copy;
 	}
+
+	/// <summary>Each operator's name, by index, as the code and the file write them.</summary>
+	public IReadOnlyList<string> Names => _names;
 }

@@ -68,7 +68,36 @@ public sealed class Workbench : IDisposable
 
 	private void OnCopyRequested(string text) =>
 		ViewModel.CopyStatus = CopyText is null ? "This host has no clipboard: select the code to copy it."
-			: CopyText(text) ? $"C# copied at {DateTime.Now:HH:mm:ss}" : "The clipboard refused it.";
+			: CopyText(text) ? $"Copied at {DateTime.Now:HH:mm:ss}" : "The clipboard refused it.";
+
+	// The beat sketcher's own player, made when it first loops, so the song's player is left alone
+	private MusicPlayer? _sketchPlayer;
+
+	// The sketch changed or started or stopped: it plays from the start, or is swapped in at the bar, or stops
+	private void OnSketchEdited()
+	{
+		var sketch = ViewModel.Sketch;
+		if (!sketch.IsLooping || sketch.Song() is not { } song)
+		{
+			if (_sketchPlayer is { IsPlaying: true } playing)
+				playing.Stop(0.05f);
+			sketch.ShowStep(-1);
+			return;
+		}
+		_sketchPlayer ??= new MusicPlayer(_audio, _bus);
+		if (_sketchPlayer.IsPlaying)
+			_sketchPlayer.Swap(song);
+		else
+			_sketchPlayer.Play(song, fadeSeconds: 0f);
+	}
+
+	private void RefreshSketch()
+	{
+		if (_sketchPlayer is not { IsPlaying: true } player || player.Song is not { } song)
+			return;
+		var stepTicks = song.Meter.TicksPerBar / 16;
+		ViewModel.Sketch.ShowStep(player.SectionTick < 0 ? -1 : player.SectionTick / stepTicks % 16);
+	}
 
 	/// <summary>A workbench playing on <paramref name="bus"/> of <paramref name="audio"/>, over <paramref name="catalog"/>; its first song is chosen, not yet playing.</summary>
 	public Workbench(AudioEngine audio, AudioBus bus, WorkbenchCatalog catalog)
@@ -83,6 +112,8 @@ public sealed class Workbench : IDisposable
 		audio.AddEffect(bus, _tap);
 		ViewModel.Designer.Built += OnDesignerBuilt;
 		ViewModel.Designer.CopyRequested += OnCopyRequested;
+		ViewModel.Sketch.Edited += OnSketchEdited;
+		ViewModel.Sketch.CopyRequested += OnCopyRequested;
 		foreach (var (name, _) in catalog.Songs)
 			ViewModel.AddSong(name);
 		foreach (var (name, _) in catalog.Patches)
@@ -363,6 +394,7 @@ public sealed class Workbench : IDisposable
 		try
 		{
 			Player.Update();
+			_sketchPlayer?.Update();
 		}
 		catch (InvalidOperationException ex)
 		{
@@ -374,6 +406,7 @@ public sealed class Workbench : IDisposable
 		{
 			_sinceRefresh = 0;
 			Refresh();
+			RefreshSketch();
 			ViewModel.RaiseRefreshed();
 		}
 	}
@@ -578,6 +611,7 @@ public sealed class Workbench : IDisposable
 
 		ViewModel.ShowBench(-1, index);
 		ViewModel.ShowPads(kit.Pieces.Select(piece => piece.Piece.Id));
+		ViewModel.Sketch.Load(kit);
 	}
 
 	// A new chip for the bench on the workbench's bus, the old one let go
@@ -929,6 +963,7 @@ public sealed class Workbench : IDisposable
 	public void Dispose()
 	{
 		Player.Dispose();
+		_sketchPlayer?.Dispose();
 		if (_bench is { } chip)
 			_audio.Stop(chip);
 	}

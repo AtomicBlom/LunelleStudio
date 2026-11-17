@@ -25,6 +25,7 @@ public class WorkbenchTests
 				Songs = [("first", First), ("second", Second)],
 				Patches = [("click", () => MusicRig.Click), ("tone", () => ChipRig.Tone)],
 				MacroName = id => id == 0 ? "Macros.Bright" : null,
+				Kits = [("kit", () => DrumKit.FromPatches("kit", (Kit.Kick, MusicRig.Click, 0), (Kit.Snare, MusicRig.Click, 0), (new DrumPiece("cowbell"), MusicRig.Click, 0)))],
 				Cues = [Energy],
 			};
 			Workbench = new Workbench(Session.Engine, Session.Engine.Master, catalog);
@@ -351,7 +352,35 @@ public class WorkbenchTests
 		rig.Workbench.ChoosePatch(0);
 		rig.Workbench.ViewModel.Designer.CopyCommand.Execute(null);
 		copied.ShouldBe(rig.Workbench.ViewModel.Designer.Code);
-		rig.Workbench.ViewModel.CopyStatus.ShouldStartWith("C# copied");
+		rig.Workbench.ViewModel.CopyStatus.ShouldStartWith("Copied at");
+	}
+
+	[Test]
+	public void The_beat_sketcher_starts_from_a_groove_loops_through_the_sequencer_and_writes_Beat_notation()
+	{
+		using var rig = new Rig();
+		var sketch = rig.Workbench.ViewModel.Sketch;
+		rig.Workbench.ChooseKit(0);
+		sketch.Rows.Select(r => r.Name).ShouldBe(["kick", "snare", "cowbell"]);
+		sketch.Rows[0].Pattern.ShouldBe("x... .... x.x. ....");
+		sketch.Rows[2].IsEmpty.ShouldBeTrue();
+
+		sketch.Rows[2].Steps[0].Cycle.Execute(null);
+		sketch.Rows[2].Steps[0].Cycle.Execute(null);
+		sketch.Rows[2].Steps[0].Value.ShouldBe('X');
+		sketch.Code.ShouldBe("Beat.Sixteenths(\n\t(Kit.Kick, \"x... .... x.x. ....\"),\n\t(Kit.Snare, \".... x... .... x...\"),\n\t(new DrumPiece(\"cowbell\"), \"X... .... .... ....\"))");
+
+		sketch.IsLooping = true;
+		rig.Session.Clear();
+		rig.Step(MusicRig.Rate);
+		MusicRig.Onsets(rig.Session.Left()).ShouldNotBeEmpty();
+		sketch.Rows[0].Steps.Count(s => s.IsNow).ShouldBe(1);
+
+		sketch.ClearCommand.Execute(null);
+		rig.Step(MusicRig.Rate / 4);
+		rig.Session.Clear();
+		rig.Step(MusicRig.Rate / 2);
+		MusicRig.Onsets(rig.Session.Left()).ShouldBeEmpty();
 	}
 
 	[Test]

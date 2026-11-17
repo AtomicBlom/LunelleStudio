@@ -218,6 +218,9 @@ public sealed class WorkbenchViewModel : ViewModel
 	/// <summary>The patch designer, which Patch mode shows: the patch chosen, as data under the hands.</summary>
 	public PatchDesigner Designer { get; } = new();
 
+	/// <summary>The beat sketcher, which Kit mode shows under the pads.</summary>
+	public BeatSketch Sketch { get; } = new();
+
 	/// <summary>What the last copy did: "C# copied", or why it couldn't.</summary>
 	public string CopyStatus
 	{

@@ -88,4 +88,19 @@ internal static class Display
 
 	// The designer's problems, red
 	public static SolidColorBrush Problem(bool problems) => problems ? Theme.Error : Theme.Meter;
+
+	// A beat sketcher's step: dark when off, the accent's strength for a hit, an accent, a ghost
+	public static SolidColorBrush Step(char value) => value switch
+	{
+		'X' => Theme.Accent,
+		'x' => Theme.StepHit,
+		'o' => Theme.StepGhost,
+		_ => Theme.Sunk,
+	};
+
+	// The step playing, outlined
+	public static SolidColorBrush Now(bool now) => now ? Theme.Ink : Theme.Line;
+
+	// A beat's first step, set a little apart
+	public static SUIsei.Thickness StepGap(bool beat) => new(beat ? 6f : 1f, 0f, 1f, 0f);
 }

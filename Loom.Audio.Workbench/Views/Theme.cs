@@ -38,6 +38,8 @@ internal static class Theme
 	public static SolidColorBrush KindTube { get; } = Brush(132, 217, 126);
 	public static SolidColorBrush KindLevel { get; } = Brush(207, 212, 222);
 	public static SolidColorBrush KindSample { get; } = Brush(255, 143, 177);
+	public static SolidColorBrush StepHit { get; } = Brush(255, 196, 64, 170);
+	public static SolidColorBrush StepGhost { get; } = Brush(255, 196, 64, 80);
 
 	public static SolidColorBrush Brush(byte r, byte g, byte b, byte a = 255) => new(HdrColor.FromRgb(r, g, b, a));
 }

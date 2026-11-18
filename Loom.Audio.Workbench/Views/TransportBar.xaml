@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The transport: a button per song, the one chosen lit; play; where the song is, its tempo and scale; and room for an app's own controls. -->
+<ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:wb="using:Loom.Audio.Workbench"
+                xmlns:views="using:Loom.Audio.Workbench.Views"
+                x:Class="Loom.Audio.Workbench.Views.TransportBar"
+                IsTabStop="False">
+    <StackPanel Orientation="Horizontal">
+        <ItemsControl ItemsSource="{x:Bind ViewModel.Songs, Mode=OneWay}" VerticalAlignment="Center">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="wb:ChoiceViewModel">
+                    <ToggleButton IsChecked="{x:Bind IsSelected, Mode=TwoWay}" Margin="0,0,4,4">
+                        <TextBlock Text="{x:Bind Name}" FontSize="13" Margin="8,3,8,4" HorizontalAlignment="Center" />
+                    </ToggleButton>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        <ToggleButton IsChecked="{x:Bind ViewModel.IsPlaying, Mode=TwoWay}" Width="80" Margin="8,0,12,0" VerticalAlignment="Center">
+            <TextBlock Text="{x:Bind views:Display.PlayLabel(ViewModel.IsPlaying), Mode=OneWay}" FontSize="14" HorizontalAlignment="Center" />
+        </ToggleButton>
+        <TextBlock Text="{x:Bind ViewModel.PositionText, Mode=OneWay}" FontSize="15" Foreground="{x:Static views:Theme.Ink}"
+                   VerticalAlignment="Center" Margin="0,0,16,0" />
+        <TextBlock Text="{x:Bind ViewModel.TempoText, Mode=OneWay}" FontSize="15" Foreground="{x:Static views:Theme.Dim}"
+                   VerticalAlignment="Center" Margin="0,0,16,0" />
+        <TextBlock Text="{x:Bind ViewModel.ScaleText, Mode=OneWay}" FontSize="15" Foreground="{x:Static views:Theme.Dim}"
+                   VerticalAlignment="Center" Margin="0,0,16,0" />
+        <StackPanel x:Name="ExtrasPanel" Orientation="Horizontal" VerticalAlignment="Center" />
+    </StackPanel>
+</ContentControl>

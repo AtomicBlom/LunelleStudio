@@ -205,6 +205,7 @@ public class WorkbenchTests
 	}
 
 	[Test]
+	[NotInParallel] // Workbench.CodeChanged is process-wide: every workbench alive rebuilds, other tests' among them
 	public void Hot_reload_from_another_thread_rebuilds_on_the_next_update()
 	{
 		using var rig = new Rig();

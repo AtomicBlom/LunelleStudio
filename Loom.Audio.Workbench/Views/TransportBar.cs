@@ -25,7 +25,15 @@ internal sealed partial class TransportBar : ContentControl, INotifyPropertyChan
 	}
 
 	/// <summary>
-	/// A panel at the bar's end for an app's own controls (a toggle for a sound of its own under the music).
+	/// A panel for an app's own controls (a toggle for a sound of its own under the music), on a row of its own under the
+	/// bar's, shown once the panel is asked for.
 	/// </summary>
-	public StackPanel Extras => ExtrasPanel;
+	public StackPanel Extras
+	{
+		get
+		{
+			ExtrasRow.Visibility = SUIsei.Visibility.Visible;
+			return ExtrasPanel;
+		}
+	}
 }

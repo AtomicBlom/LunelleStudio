@@ -19,6 +19,71 @@ internal static class Theme
 	public static SolidColorBrush Note { get; } = Brush(120, 180, 255);
 	public static SolidColorBrush BarLine { get; } = Brush(70, 76, 92);
 	public static SolidColorBrush Playhead { get; } = Brush(255, 196, 64, 200);
+	public static SolidColorBrush Raised { get; } = Brush(37, 41, 54);
+	public static SolidColorBrush Sunk { get; } = Brush(22, 24, 31);
+	public static SolidColorBrush Line { get; } = Brush(226, 230, 238, 30);
+	public static SolidColorBrush LineStrong { get; } = Brush(226, 230, 238, 46);
+	public static SolidColorBrush RaisedOver { get; } = Brush(46, 51, 66);
+	public static SolidColorBrush AccentOver { get; } = Brush(255, 212, 112);
+	public static SolidColorBrush AccentPressed { get; } = Brush(255, 224, 150);
+	public static SolidColorBrush Rail { get; } = Brush(70, 74, 86);
+
+	/// <summary>
+	/// The built-in controls in the workbench's colours, under WinUI's lightweight-styling keys, for a view's resources: a
+	/// button raised off its panel, a toggle that is on filled with the accent and its text dark, a slider's fill and thumb
+	/// in the accent.
+	/// </summary>
+	public static ResourceDictionary Controls()
+	{
+		var resources = new ResourceDictionary();
+		resources.Add("ButtonBackground", Raised);
+		resources.Add("ButtonBackgroundPointerOver", RaisedOver);
+		resources.Add("ButtonBackgroundPressed", Sunk);
+		resources.Add("ButtonForeground", Ink);
+		resources.Add("ToggleButtonBackground", Raised);
+		resources.Add("ToggleButtonBackgroundPointerOver", RaisedOver);
+		resources.Add("ToggleButtonBackgroundPressed", Sunk);
+		resources.Add("ToggleButtonForeground", Ink);
+		resources.Add("ToggleButtonBackgroundChecked", Accent);
+		resources.Add("ToggleButtonForegroundChecked", AccentInk);
+		resources.Add("SliderTrackFill", Rail);
+		resources.Add("SliderTrackValueFill", Accent);
+		resources.Add("SliderThumbBackground", Accent);
+		resources.Add("SliderThumbBackgroundPointerOver", AccentOver);
+		resources.Add("SliderThumbBackgroundPressed", AccentPressed);
+		return resources;
+	}
+
+	/// <summary>Toggles that mark where you are rather than switch something on (the rail's modes, the section playing):
+	/// lit with the accent's tint and their text in the accent, on a clear ground, as the design's rail is.</summary>
+	public static ResourceDictionary Markers()
+	{
+		var resources = new ResourceDictionary();
+		resources.Add("ToggleButtonBackground", Clear);
+		resources.Add("ToggleButtonForeground", Dim);
+		resources.Add("ToggleButtonBackgroundChecked", AccentSoft);
+		resources.Add("ToggleButtonForegroundChecked", Accent);
+		return resources;
+	}
+
+	public static SolidColorBrush Faint { get; } = Brush(93, 100, 118);
+	public static SolidColorBrush AccentSoft { get; } = Brush(255, 196, 64, 40);
+	public static SolidColorBrush AccentInk { get; } = Brush(26, 20, 5);
+	public static SolidColorBrush ErrorSoft { get; } = Brush(224, 88, 93, 46);
+	public static SolidColorBrush Backdrop { get; } = Brush(0, 0, 0, 120);
+	public static SolidColorBrush Clear { get; } = Brush(0, 0, 0, 0);
+	// Driving edges, and the colours of the operator kinds in the patch designer's graph
+	public static SolidColorBrush Drive { get; } = Brush(79, 209, 197);
+	public static SolidColorBrush KindSine { get; } = Brush(120, 180, 255);
+	public static SolidColorBrush KindWave { get; } = Brush(183, 155, 255);
+	public static SolidColorBrush KindNoise { get; } = Brush(163, 171, 187);
+	public static SolidColorBrush KindString { get; } = Brush(240, 163, 94);
+	public static SolidColorBrush KindModes { get; } = Brush(79, 209, 197);
+	public static SolidColorBrush KindTube { get; } = Brush(132, 217, 126);
+	public static SolidColorBrush KindLevel { get; } = Brush(207, 212, 222);
+	public static SolidColorBrush KindSample { get; } = Brush(255, 143, 177);
+	public static SolidColorBrush StepHit { get; } = Brush(255, 196, 64, 170);
+	public static SolidColorBrush StepGhost { get; } = Brush(255, 196, 64, 80);
 
 	public static SolidColorBrush Brush(byte r, byte g, byte b, byte a = 255) => new(HdrColor.FromRgb(r, g, b, a));
 }

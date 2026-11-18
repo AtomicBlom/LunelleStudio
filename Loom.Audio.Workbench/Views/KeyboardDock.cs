@@ -1,0 +1,23 @@
+using System.ComponentModel;
+
+using SUIsei.Controls;
+
+namespace Loom.Audio.Workbench.Views;
+
+/// <summary>The keyboard docked along the bottom, and what it plays.</summary>
+internal sealed partial class KeyboardDock : ContentControl, INotifyPropertyChanged
+{
+	public KeyboardDock() => InitializeComponent();
+
+	public event PropertyChangedEventHandler? PropertyChanged;
+
+	public WorkbenchViewModel? ViewModel
+	{
+		get;
+		set
+		{
+			field = value;
+			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ViewModel)));
+		}
+	}
+}

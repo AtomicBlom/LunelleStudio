@@ -1,0 +1,47 @@
+<Project>
+
+	<!--
+		loom-workbench: the music workbench over any music project. Give it a .csproj (or the folder it is in) whose assembly
+		names its catalog with [assembly: MusicCatalog(typeof(...))]; it compiles the project with Roslyn, plays it, and
+		compiles it again on every save, the song swapped in at the next bar. "loom-workbench new <folder>" makes a project
+		to start from. docs/synth.md, section 10, has the rest.
+	-->
+
+	<PropertyGroup>
+		<UseVulkan>true</UseVulkan>
+		<UseDirectX12>false</UseDirectX12>
+		<UseWebGPU>false</UseWebGPU>
+		<UseSUIsei>true</UseSUIsei>
+		<UseImGui>false</UseImGui>
+	</PropertyGroup>
+
+	<Import Project="..\build\Loom.Sdk\Sdk\Sdk.props" />
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net11.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AssemblyName>loom-workbench</AssemblyName>
+		<RootNamespace>Loom.Audio.Workbench.App</RootNamespace>
+		<LoomShaderSourceDir>$(MSBuildProjectDirectory)\Shaders</LoomShaderSourceDir>
+		<!-- On the newest .NET installed, so it can load a project (and an extension) that targets a newer one than Loom -->
+		<RollForward>LatestMajor</RollForward>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Loom.Audio.Workbench.Projects\Loom.Audio.Workbench.Projects.csproj" />
+		<!-- Beside the app, for a project it makes ("new") to reference as its analyzer, as it references the app's Loom -->
+		<ProjectReference Include="..\Loom.Audio.Music.Generator\Loom.Audio.Music.Generator.csproj" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
+		<!-- SUIsei's diagnostics endpoint, which RoseMCP's live UI tools reach the window's tree through; Debug only: the
+				 switch, and the endpoint itself, which Program starts -->
+		<RuntimeHostConfigurationOption Include="SUIsei.Diagnostics.Enabled" Value="true" Trim="true" />
+		<ProjectReference Include="..\external\SUIsei\SUIsei.Diagnostics.Endpoint\SUIsei.Diagnostics.Endpoint.csproj" />
+	</ItemGroup>
+
+	<Import Project="..\build\Loom.Sdk\Sdk\Sdk.targets" />
+
+</Project>

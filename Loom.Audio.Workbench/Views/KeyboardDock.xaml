@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The keyboard, always docked along the bottom: what it plays (the part chosen's track in Arrange, the patch or kit
+    chosen otherwise), how hard, its octave, the chip's load, and two octaves of keys (and A W S E D F T G Y H U J K).
+-->
+<ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:views="using:Loom.Audio.Workbench.Views"
+                x:Class="Loom.Audio.Workbench.Views.KeyboardDock"
+                IsTabStop="False">
+    <Border Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1" CornerRadius="8">
+        <Grid Margin="12,8,12,8">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="230" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                <TextBlock Text="PLAYS" FontSize="10" Foreground="{x:Static views:Theme.Faint}" />
+                <TextBlock Text="{x:Bind ViewModel.DockLabel, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.Ink}"
+                           TextTrimming="CharacterEllipsis" Margin="0,2,0,6" />
+                <StackPanel Orientation="Horizontal">
+                    <TextBlock Text="velocity" FontSize="12" Foreground="{x:Static views:Theme.Dim}" Width="60" VerticalAlignment="Center" />
+                    <Slider Minimum="0.05" Maximum="1" StepFrequency="0.01" Width="150" Height="26" Value="{x:Bind ViewModel.Velocity, Mode=TwoWay}" />
+                </StackPanel>
+                <TextBlock Text="{x:Bind views:Display.Octave(ViewModel.Octave), Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Faint}"
+                           Margin="0,4,0,0" />
+                <TextBlock Text="{x:Bind ViewModel.StatsText, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Faint}"
+                           Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+            <views:Keyboard Grid.Column="1" ViewModel="{x:Bind ViewModel, Mode=OneWay}" VerticalAlignment="Center" />
+        </Grid>
+    </Border>
+</ContentControl>

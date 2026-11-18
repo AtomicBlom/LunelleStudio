@@ -1,0 +1,375 @@
+using System.Text.Json.Nodes;
+using System.Windows.Input;
+
+using Loom.Audio.Synth.Music;
+
+namespace Loom.Audio.Workbench;
+
+/// <summary>
+/// The roll: the part chosen in Arrange as an editor shows it, when the song has a file and the part is data. A line on
+/// rows by degree (click to add, drag to lengthen or move, right-click or a second click to delete; flat, natural, sharp,
+/// accent and slide on the note chosen), a beat's rows of hits (a click cycles x X o), a strum's strokes (D U d u x _).
+/// Bars are added and taken off whole, so an edit can't break the notation. Every edit is the workbench's to make, so it
+/// is heard at the next bar, undone, and written to the file.
+/// </summary>
+public sealed class RollViewModel : ViewModel
+{
+	private Action<Action<JsonObject>>? _edit;
+	private Action<int>? _gesture;
+	private JsonObject? _part;
+	private NotationText? _line;
+	private (int Start, int Grab, bool Resize)? _drag;
+
+	internal RollViewModel(Workbench workbench)
+	{
+		_workbench = workbench;
+		UndoCommand = new ActionCommand(() => workbench.UndoEdit());
+		RedoCommand = new ActionCommand(() => workbench.RedoEdit());
+		RevertCommand = new ActionCommand(() => workbench.RevertPart());
+		AddBarCommand = new ActionCommand(() => Bars(add: true));
+		RemoveBarCommand = new ActionCommand(() => Bars(add: false));
+		FlatCommand = new ActionCommand(() => ChangeNote(n => n with { Accidental = Math.Max(-2, n.Accidental - 1) }));
+		NaturalCommand = new ActionCommand(() => ChangeNote(n => n with { Accidental = 0 }));
+		SharpCommand = new ActionCommand(() => ChangeNote(n => n with { Accidental = Math.Min(2, n.Accidental + 1) }));
+		AccentCommand = new ActionCommand(() => ChangeNote(n => n with { Accent = !n.Accent }));
+		SlideCommand = new ActionCommand(() => ChangeNote(n => n with { Slide = !n.Slide }));
+		DeleteCommand = new ActionCommand(DeleteSelected);
+	}
+
+	/// <summary>What kind of part it shows, or none.</summary>
+	public RollKind Kind { get; private set => Set(ref field, value); }
+
+	/// <summary>Whether it shows a part it can edit.</summary>
+	public bool IsEditable => Kind != RollKind.None;
+
+	/// <summary>Whether it shows a line, whose notes take flats, sharps and slides as a beat's hits and a strum's strokes don't.</summary>
+	public bool IsLine => Kind == RollKind.Line;
+
+	/// <summary>How the roll is worked with the pointer, for the kind of part it shows.</summary>
+	public string Hint => Kind switch
+	{
+		RollKind.Line => "Click to add a note, drag to lengthen or move it; right-click or click it twice to delete. The glyphs mark the note chosen.",
+		RollKind.Beat => "Click a step: x a hit, X an accent, o a ghost note, then off.",
+		RollKind.Strum => "Click a step: D a down stroke, U up, d and u softer, x a mute, _ a hold, then off.",
+		_ => "",
+	};
+
+	/// <summary>The part's name and section, and how it is written.</summary>
+	public string Title { get; private set => Set(ref field, value); } = "";
+
+	/// <summary>Why the part can't be edited here, or that it has been.</summary>
+	public string Status { get; private set => Set(ref field, value); } = "";
+
+	/// <summary>How many steps the part has, and a bar.</summary>
+	public int Steps { get; private set; }
+
+	/// <inheritdoc cref="Steps"/>
+	public int StepsPerBar { get; private set; }
+
+	/// <summary>Each row's label, top first: a line's degrees ("5'", "1"), a beat's pieces.</summary>
+	public IReadOnlyList<string> Rows { get; private set; } = [];
+
+	/// <summary>A line's notes: where each starts, how long it is, its row from the top, its token.</summary>
+	public IReadOnlyList<(int Step, int Length, int Row, string Token)> Notes { get; private set; } = [];
+
+	/// <summary>A beat's or a strum's steps, by row from the top then step: "." for none.</summary>
+	public IReadOnlyList<IReadOnlyList<string>> Cells { get; private set; } = [];
+
+	/// <summary>Where the note chosen starts, or -1.</summary>
+	public int Selected { get; private set; } = -1;
+
+	/// <summary>Counts up each time what it shows changes, for the view to draw again.</summary>
+	public int Version { get; private set => Set(ref field, value); }
+
+	/// <summary>Whether an edit can be undone, or done again.</summary>
+	public bool CanUndo { get; private set => Set(ref field, value); }
+
+	/// <inheritdoc cref="CanUndo"/>
+	public bool CanRedo { get; private set => Set(ref field, value); }
+
+	/// <summary>The toolbar's commands.</summary>
+	public ICommand UndoCommand { get; }
+
+	/// <inheritdoc cref="UndoCommand"/>
+	public ICommand RedoCommand { get; }
+
+	/// <inheritdoc cref="UndoCommand"/>
+	public ICommand RevertCommand { get; }
+
+	/// <inheritdoc cref="UndoCommand"/>
+	public ICommand AddBarCommand { get; }
+
+	/// <inheritdoc cref="UndoCommand"/>
+	public ICommand RemoveBarCommand { get; }
+
+	/// <inheritdoc cref="UndoCommand"/>
+	public ICommand FlatCommand { get; }
+
+	/// <inheritdoc cref="UndoCommand"/>
+	public ICommand NaturalCommand { get; }
+
+	/// <inheritdoc cref="UndoCommand"/>
+	public ICommand SharpCommand { get; }
+
+	/// <inheritdoc cref="UndoCommand"/>
+	public ICommand AccentCommand { get; }
+
+	/// <inheritdoc cref="UndoCommand"/>
+	public ICommand SlideCommand { get; }
+
+	/// <inheritdoc cref="UndoCommand"/>
+	public ICommand DeleteCommand { get; }
+
+	private int _highRow;
+
+	/// <summary>Shows nothing to edit, saying why.</summary>
+	internal void ShowNone(string why)
+	{
+		_part = null;
+		_line = null;
+		_drag = null;
+		Kind = RollKind.None;
+		Status = why;
+		Bump();
+	}
+
+	/// <summary>
+	/// Shows a part, <paramref name="edit"/> making a change to it (in the song's file, heard at the next bar), and
+	/// <paramref name="gesture"/> grouping a drag's edits into one to undo (1 to start, 0 to end).
+	/// </summary>
+	internal void Show(string title, JsonObject part, int stepsPerBar, bool edited, bool canUndo, bool canRedo,
+		Action<Action<JsonObject>> edit, Action<int> gesture)
+	{
+		var same = _part is not null && Title == title;
+		_part = part;
+		_edit = edit;
+		_gesture = gesture;
+		Title = title;
+		StepsPerBar = stepsPerBar;
+		Status = edited ? "edited · undo with Ctrl Z" : "";
+		CanUndo = canUndo;
+		CanRedo = canRedo;
+		if (!same)
+		{
+			Selected = -1;
+			_drag = null;
+		}
+		if (part["line"] is not null)
+		{
+			Kind = RollKind.Line;
+			_line = NotationText.Line(part["notes"]?.GetValue<string>() ?? "");
+			Steps = _line.Count;
+			var notes = new List<(int, int, int, NoteToken)>();
+			for (var s = 0; s < _line.Count; s++)
+				if (NoteToken.Parse(_line[s]) is { } note)
+					notes.Add((s, RollEdits.LengthOf(_line, s), note.Row, note));
+			var low = Math.Min(0, notes.Count > 0 ? notes.Min(n => n.Item3) - 2 : 0);
+			_highRow = Math.Max(7, notes.Count > 0 ? notes.Max(n => n.Item3) + 2 : 7);
+			Rows = [.. Enumerable.Range(0, _highRow - low + 1).Select(r => NoteToken.OnRow(_highRow - r).ToString())];
+			Notes = [.. notes.Select(n => (n.Item1, n.Item2, _highRow - n.Item3, n.Item4.ToString()))];
+			Cells = [];
+		}
+		else if (part["beat"] is not null && part["rows"] is JsonObject rows)
+		{
+			Kind = RollKind.Beat;
+			_line = null;
+			Rows = [.. rows.Select(r => r.Key)];
+			Cells = [.. rows.Select(r => (IReadOnlyList<string>)[.. NotationText.Characters(r.Value?.GetValue<string>() ?? "").Steps])];
+			Steps = Cells.Count > 0 ? Cells[0].Count : 0;
+			Notes = [];
+		}
+		else if (part["strum"] is not null)
+		{
+			Kind = RollKind.Strum;
+			_line = null;
+			var strokes = NotationText.Characters(part["notes"]?.GetValue<string>() ?? "");
+			Rows = ["strokes"];
+			Cells = [[.. strokes.Steps]];
+			Steps = strokes.Count;
+			Notes = [];
+		}
+		else
+		{
+			ShowNone("a part of a kind the roll doesn't edit");
+			return;
+		}
+		Bump();
+	}
+
+	private void Bump()
+	{
+		Changed(nameof(IsEditable));
+		Changed(nameof(IsLine));
+		Changed(nameof(Hint));
+		Version++;
+	}
+
+	/// <summary>A press on <paramref name="step"/> and <paramref name="row"/> (from the top), as the view hit it.</summary>
+	public void Press(int step, int row, bool secondary, bool twice)
+	{
+		if ((uint)step >= (uint)Steps || (uint)row >= (uint)Rows.Count)
+			return;
+		switch (Kind)
+		{
+			case RollKind.Beat:
+				var piece = Rows[row];
+				EditRow(piece, text => text[step] = RollEdits.NextHit(text[step]));
+				return;
+			case RollKind.Strum:
+				EditNotes(text => text[step] = RollEdits.NextStroke(text[step]), characters: true);
+				return;
+			case RollKind.Line when _line is { } line:
+				var start = RollEdits.NoteAt(line, step);
+				if (start >= 0 && (secondary || (twice && start == Selected)))
+				{
+					Selected = -1;
+					EditNotes(text => RollEdits.Delete(text, start), characters: false);
+					return;
+				}
+				_gesture?.Invoke(1);
+				if (start >= 0)
+				{
+					Selected = start;
+					var last = start + RollEdits.LengthOf(line, start) - 1;
+					// The last step of a note grabs its end, to lengthen it; anywhere else grabs it to move
+					_drag = (start, step - start, step == last);
+					Bump();
+					return;
+				}
+				Selected = step;
+				_drag = (step, 0, true);
+				EditNotes(text => RollEdits.Place(text, step, _highRow - row), characters: false);
+				return;
+		}
+	}
+
+	/// <summary>
+	/// The pointer dragged to <paramref name="step"/> and <paramref name="row"/> with the button down: a note grabbed by its
+	/// end lengthens along its row, and moves once the drag leaves the row; grabbed elsewhere it moves.
+	/// </summary>
+	public void DragTo(int step, int row)
+	{
+		if (_drag is not { } drag || _line is null)
+			return;
+		step = Math.Clamp(step, 0, Steps - 1);
+		row = Math.Clamp(row, 0, Rows.Count - 1);
+		var toRow = _highRow - row;
+		var atRow = NoteToken.Parse(_line[drag.Start])?.Row;
+		if (drag.Resize && toRow == atRow)
+		{
+			if (step >= drag.Start)
+				EditNotes(text => RollEdits.Resize(text, drag.Start, step), characters: false);
+			return;
+		}
+		var to = Math.Clamp(step - drag.Grab, 0, Steps - 1);
+		if (to == drag.Start && atRow == toRow)
+			return;
+		EditNotes(text => RollEdits.Move(text, drag.Start, to, toRow), characters: false);
+		_drag = (to, drag.Grab, false);
+		Selected = to;
+		Bump();
+	}
+
+	/// <summary>The button let go: a drag's edits end, to undo as one.</summary>
+	public void Release()
+	{
+		if (_drag is null)
+			return;
+		_drag = null;
+		_gesture?.Invoke(0);
+	}
+
+	private void ChangeNote(Func<NoteToken, NoteToken> change)
+	{
+		if (Kind != RollKind.Line || _line is null || Selected < 0 || NoteToken.Parse(_line[Selected]) is null)
+			return;
+		var start = Selected;
+		EditNotes(text => RollEdits.Change(text, start, change), characters: false);
+	}
+
+	private void DeleteSelected()
+	{
+		if (Kind != RollKind.Line || _line is null || Selected < 0 || NoteToken.Parse(_line[Selected]) is null)
+			return;
+		var start = Selected;
+		Selected = -1;
+		EditNotes(text => RollEdits.Delete(text, start), characters: false);
+	}
+
+	private void Bars(bool add)
+	{
+		if (_part is null || StepsPerBar <= 0)
+			return;
+		if (Kind == RollKind.Beat)
+		{
+			_edit?.Invoke(part =>
+			{
+				var rows = (JsonObject)part["rows"]!;
+				foreach (var key in rows.Select(r => r.Key).ToArray())
+				{
+					var text = NotationText.Characters(rows[key]!.GetValue<string>());
+					if (add)
+						text.AddBar(StepsPerBar, ".");
+					else if (!text.RemoveBar(StepsPerBar))
+						return;
+					rows[key] = text.ToString();
+				}
+			});
+			return;
+		}
+		EditNotes(text =>
+		{
+			if (add)
+				text.AddBar(StepsPerBar, ".");
+			else
+				text.RemoveBar(StepsPerBar);
+		}, characters: Kind == RollKind.Strum);
+	}
+
+	private void EditNotes(Action<NotationText> change, bool characters) =>
+		_edit?.Invoke(part =>
+		{
+			var text = characters
+				? NotationText.Characters(part["notes"]!.GetValue<string>())
+				: NotationText.Line(part["notes"]!.GetValue<string>());
+			change(text);
+			part["notes"] = text.ToString();
+		});
+
+	private void EditRow(string piece, Action<NotationText> change) =>
+		_edit?.Invoke(part =>
+		{
+			var rows = (JsonObject)part["rows"]!;
+			var text = NotationText.Characters(rows[piece]!.GetValue<string>());
+			change(text);
+			rows[piece] = text.ToString();
+		});
+
+	/// <summary>Whether the part shown can be made code: data, in a song whose C# the host can write.</summary>
+	public bool CanEject { get; private set => Set(ref field, value); }
+
+	/// <summary>Whether the part shown is code that can be made data again.</summary>
+	public bool CanBringBack { get; private set => Set(ref field, value); }
+
+	/// <summary>Where the part's code is, when it is code: "in OpenRoad.cs, line 12".</summary>
+	public string CodeWhere { get; private set => Set(ref field, value); } = "";
+
+	/// <summary>Makes the part's notation code, its condition and name staying data.</summary>
+	public ICommand EjectNotationCommand => field ??= new ActionCommand(() => _workbench.EjectSelected(placement: false));
+
+	/// <summary>Makes the whole placement code.</summary>
+	public ICommand EjectPlacementCommand => field ??= new ActionCommand(() => _workbench.EjectSelected(placement: true));
+
+	/// <summary>Makes the code part data again, from what its code builds.</summary>
+	public ICommand BringBackCommand => field ??= new ActionCommand(() => _workbench.BringBackSelected());
+
+	private Workbench _workbench = null!;
+
+	/// <summary>Says what the part chosen can do between data and code.</summary>
+	internal void ShowCode(bool canEject, bool canBringBack, string where)
+	{
+		CanEject = canEject;
+		CanBringBack = canBringBack;
+		CodeWhere = where;
+	}
+}

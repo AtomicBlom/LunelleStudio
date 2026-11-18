@@ -16,6 +16,10 @@ internal sealed partial class WorkbenchLayout : SUIsei.Controls.ContentControl
 		ArgumentNullException.ThrowIfNull(viewModel);
 		ViewModel = viewModel;
 		InitializeComponent();
+		// The built-in controls in the workbench's colours, everywhere under the page, and the rail's as markers of the mode.
+		// Set before the page joins a tree, so every control's template reads them as it is built.
+		(Resources ??= new ResourceDictionary()).MergedDictionaries.Add(Theme.Controls());
+		RailModes.Resources = Theme.Markers();
 	}
 
 	/// <summary>What it shows.</summary>

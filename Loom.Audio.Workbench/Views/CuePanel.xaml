@@ -1,45 +1,65 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The cues: a row each, its name, then a slider from 0 to 1 and its value for a level, or a button per option for a choice. -->
+<!--
+    The cues, what the game tells the music. A level: its slider, the levels parts wait on marked over it, and what waits
+    on each, lit while it holds. A choice: a button per option. A cue the song never reads is dimmed and says so.
+-->
 <ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                 xmlns:wb="using:Loom.Audio.Workbench"
                 xmlns:views="using:Loom.Audio.Workbench.Views"
                 x:Class="Loom.Audio.Workbench.Views.CuePanel"
                 IsTabStop="False">
-    <StackPanel>
-        <TextBlock Text="Cues" FontSize="13" Foreground="{x:Static views:Theme.Dim}" Margin="0,0,0,6" />
-        <ItemsControl ItemsSource="{x:Bind ViewModel.Cues, Mode=OneWay}">
-            <ItemsControl.ItemTemplate>
-                <DataTemplate x:DataType="wb:CueViewModel">
-                    <Grid Margin="0,0,0,6">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="110" />
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="48" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="0" Text="{x:Bind Name}" FontSize="14" Foreground="{x:Static views:Theme.Ink}"
-                                   VerticalAlignment="Center" />
-                        <Slider Grid.Column="1" Visibility="{x:Bind IsLevel}" Minimum="0" Maximum="1" StepFrequency="0.01" Height="32"
-                                Value="{x:Bind Value, Mode=TwoWay}" />
-                        <TextBlock Grid.Column="2" Visibility="{x:Bind IsLevel}" Text="{x:Bind views:Display.Fixed(Value), Mode=OneWay}"
-                                   FontSize="13" Foreground="{x:Static views:Theme.Dim}" VerticalAlignment="Center" Margin="8,0,0,0" />
-                        <ItemsControl Grid.Column="1" Grid.ColumnSpan="2" Visibility="{x:Bind IsChoice}" ItemsSource="{x:Bind Options}">
-                            <ItemsControl.ItemsPanel>
-                                <ItemsPanelTemplate>
-                                    <StackPanel Orientation="Horizontal" />
-                                </ItemsPanelTemplate>
-                            </ItemsControl.ItemsPanel>
-                            <ItemsControl.ItemTemplate>
-                                <DataTemplate x:DataType="wb:ChoiceViewModel">
-                                    <ToggleButton IsChecked="{x:Bind IsSelected, Mode=TwoWay}" Margin="0,0,4,4">
-                                        <TextBlock Text="{x:Bind Name}" FontSize="13" Margin="8,3,8,4" HorizontalAlignment="Center" />
-                                    </ToggleButton>
-                                </DataTemplate>
-                            </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </Grid>
-                </DataTemplate>
-            </ItemsControl.ItemTemplate>
-        </ItemsControl>
-    </StackPanel>
+    <ScrollViewer>
+        <StackPanel Margin="12,8,16,12">
+            <TextBlock Text="CUES" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Margin="0,0,0,8" />
+            <ItemsControl ItemsSource="{x:Bind ViewModel.Cues, Mode=OneWay}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate x:DataType="wb:CueViewModel">
+                        <Border BorderBrush="{x:Static views:Theme.Line}" BorderThickness="0,0,0,1" Margin="0,0,0,10"
+                                Opacity="{x:Bind views:Display.Used(IsUsed), Mode=OneWay}">
+                            <StackPanel Margin="0,0,0,10">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Grid.Column="0" Text="{x:Bind Name}" FontSize="14" Foreground="{x:Static views:Theme.Ink}" />
+                                    <TextBlock Grid.Column="1" Visibility="{x:Bind IsLevel}" Text="{x:Bind views:Display.Fixed(Value), Mode=OneWay}"
+                                               FontSize="13" Foreground="{x:Static views:Theme.Dim}" />
+                                </Grid>
+                                <StackPanel Visibility="{x:Bind IsLevel}">
+                                    <views:CueTicks Cue="{x:Bind Self}" HorizontalAlignment="Left" Margin="0,4,0,0" />
+                                    <Slider Minimum="0" Maximum="1" StepFrequency="0.01" Height="30" Width="250" HorizontalAlignment="Left"
+                                            Value="{x:Bind Value, Mode=TwoWay}" />
+                                    <ItemsControl ItemsSource="{x:Bind Readers}" Margin="0,4,0,0">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="wb:CueReaderViewModel">
+                                                <StackPanel Orientation="Horizontal" Margin="0,1,0,1">
+                                                    <TextBlock Text="{x:Bind Comparison}" Width="48" FontSize="12"
+                                                               Foreground="{x:Bind views:Display.Met(IsMet), Mode=OneWay}" />
+                                                    <TextBlock Text="{x:Bind Text}" FontSize="12"
+                                                               Foreground="{x:Bind views:Display.Met(IsMet), Mode=OneWay}" />
+                                                </StackPanel>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                                <ItemsControl Visibility="{x:Bind IsChoice}" ItemsSource="{x:Bind Options}" Margin="0,6,0,0">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="wb:ChoiceViewModel">
+                                            <ToggleButton IsChecked="{x:Bind IsSelected, Mode=TwoWay}" Margin="0,0,0,3" HorizontalAlignment="Left" Padding="8,2,8,3">
+                                                <TextBlock Text="{x:Bind Name}" FontSize="12" />
+                                            </ToggleButton>
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="The song playing doesn't read it." FontSize="11" Foreground="{x:Static views:Theme.Faint}"
+                                           Margin="0,6,0,0" Visibility="{x:Bind views:Display.Not(IsUsed), Mode=OneWay}" />
+                            </StackPanel>
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
 </ContentControl>

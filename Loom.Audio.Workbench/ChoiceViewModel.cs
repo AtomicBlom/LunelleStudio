@@ -36,5 +36,12 @@ public sealed class ChoiceViewModel : ViewModel
 		}
 	}
 
+	/// <summary>Whether the library's filter lets it show.</summary>
+	public bool IsVisible
+	{
+		get;
+		internal set => Set(ref field, value);
+	} = true;
+
 	internal void Show(bool selected) => Set(ref _isSelected, selected, nameof(IsSelected));
 }

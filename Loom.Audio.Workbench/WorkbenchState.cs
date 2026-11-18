@@ -45,4 +45,13 @@ public sealed class WorkbenchState
 
 	/// <summary>The keyboard's velocity.</summary>
 	public float Velocity { get; set; } = 0.8f;
+
+	/// <summary>What the middle was given to: "Arrange", "Patch" or "Kit".</summary>
+	public string? Mode { get; set; }
+
+	/// <summary>Whether the library was pinned open as a column.</summary>
+	public bool LibraryPinned { get; set; }
+
+	/// <summary>The part chosen, as "section/part", shown in the roll.</summary>
+	public string? SelectedPart { get; set; }
 }

@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!-- A music project opened from its .csproj and compiled in-process with Roslyn: its compiler command line from a
+	     design-time build, a compilation that a save updates, the result loaded into a collectible context that shares
+	     Loom with the host, and its catalog found by MusicCatalogAttribute. What the workbench reloads by, in place of
+	     dotnet watch. No window: tests drive it as the workbench apps do. -->
+	<PropertyGroup>
+		<TargetFramework>net11.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="Loom.Tests" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\Loom.Audio.Workbench\Loom.Audio.Workbench.csproj" />
+		<ProjectReference Include="..\Loom.Audio.Synth\Loom.Audio.Synth.csproj" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" />
+	</ItemGroup>
+
+	<!-- The new project's template: samples/HelloSynth's C# and music files, its namespace renamed as they are written -->
+	<ItemGroup>
+		<EmbeddedResource Include="..\samples\HelloSynth\*.cs" LogicalName="template/%(Filename)%(Extension)" />
+		<EmbeddedResource Include="..\samples\HelloSynth\Patches\*.patch.json" LogicalName="template/Patches/%(Filename)%(Extension)" />
+		<EmbeddedResource Include="..\samples\HelloSynth\Songs\*.song.json" LogicalName="template/Songs/%(Filename)%(Extension)" />
+	</ItemGroup>
+
+</Project>

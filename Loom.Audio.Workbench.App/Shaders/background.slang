@@ -1,5 +1,4 @@
-// The sample's backdrop: one triangle covering the screen, shaded from a deep blue at the top to violet at the bottom.
-// The app's own shader, compiled offline like the engine's; on Android it travels embedded in the app's assembly.
+// The workbench's backdrop: one triangle covering the screen, shaded from a deep blue at the top to violet at the bottom.
 
 #include "loom_platform.module.slang"
 

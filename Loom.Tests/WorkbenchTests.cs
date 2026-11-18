@@ -23,7 +23,9 @@ public class WorkbenchTests
 			var catalog = new WorkbenchCatalog
 			{
 				Songs = [("first", First), ("second", Second)],
-				Patches = [("click", () => MusicRig.Click)],
+				Patches = [("click", () => MusicRig.Click), ("tone", () => ChipRig.Tone)],
+				MacroName = id => id == 0 ? "Macros.Bright" : null,
+				Kits = [("kit", () => DrumKit.FromPatches("kit", (Kit.Kick, MusicRig.Click, 0), (Kit.Snare, MusicRig.Click, 0), (new DrumPiece("cowbell"), MusicRig.Click, 0)))],
 				Cues = [Energy],
 			};
 			Workbench = new Workbench(Session.Engine, Session.Engine.Master, catalog);
@@ -85,6 +87,324 @@ public class WorkbenchTests
 		model.Tracks[0].Placements.Select(p => p.Name).ShouldBe(["melody (verse)", "lead (chorus)"]);
 		model.Tracks[1].Placements[0].ConditionText.ShouldBe("when energy above 0.5");
 		model.Cues.Select(c => c.Name).ShouldBe(["energy"]);
+	}
+
+	[Test]
+	public void A_parts_condition_and_what_reads_the_cue_show_whether_they_hold()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		rig.Workbench.Play();
+		rig.Step(MusicRig.Bar);
+		var pad = model.Tracks[1].Placements[0];
+		var reader = model.Cues[0].Readers.ShouldHaveSingleItem();
+		(reader.Level, reader.Above, reader.Text, reader.Comparison).ShouldBe((0.5f, true, "verse · pad", "> 0.5"));
+		pad.ConditionMet.ShouldBeFalse();
+		reader.IsMet.ShouldBeFalse();
+
+		model.Cues[0].Value = 0.8f;
+		rig.Step(MusicRig.Bar);
+		pad.ConditionMet.ShouldBeTrue();
+		reader.IsMet.ShouldBeTrue();
+		// A part with no condition is always met
+		model.Tracks[0].Placements[0].ConditionMet.ShouldBeTrue();
+	}
+
+	[Test]
+	public void Arrange_lays_each_tracks_parts_out_by_section_as_wide_as_the_timeline()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		var lead = model.Tracks[0];
+		lead.Cells.Select(c => c.Placements.Select(p => p.Title).ToArray()).ShouldBe([["melody"], ["lead"]]);
+		model.Tracks[1].Cells.Select(c => c.Placements.Count).ShouldBe([1, 0]);
+		lead.Cells.Select(c => c.Width).ShouldBe(model.Sections.Select(s => s.Width));
+		lead.Instrument.ShouldStartWith("patch ");
+		// One pass of the melody drawn small: four quarter notes on three pitches
+		var melody = lead.Placements[0];
+		melody.Notes.Count.ShouldBe(4);
+		melody.Rows.ShouldBe(3);
+		melody.KindText.ShouldBe("notes");
+	}
+
+	[Test]
+	public void A_jump_waits_for_the_next_bar_and_says_what_comes_next()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		rig.Workbench.Play();
+		rig.Step(MusicRig.Bar / 4);
+		model.NextText.ShouldBe("Next: verse");
+		model.Sections[0].Progress.ShouldBeGreaterThan(0f);
+
+		rig.Workbench.JumpTo(1);
+		// Long enough for the view model's refresh (30 a second), short of the bar's end
+		rig.Step(MusicRig.Bar / 8);
+		model.Sections[1].IsQueued.ShouldBeTrue();
+		model.NextText.ShouldBe("Next: chorus, at the next bar");
+
+		rig.Step(MusicRig.Bar);
+		model.Sections[1].IsQueued.ShouldBeFalse();
+		model.Sections[1].IsCurrent.ShouldBeTrue();
+		model.Tracks[0].Cells[1].IsCurrent.ShouldBeTrue();
+	}
+
+	[Test]
+	public void A_choice_from_the_library_takes_the_middle_and_folds_the_library_unless_it_is_pinned()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		model.Mode.ShouldBe(WorkbenchMode.Arrange);
+
+		model.LibraryOpen = true;
+		model.LibraryFlyout.ShouldBeTrue();
+		model.Patches[0].IsSelected = true;
+		model.Mode.ShouldBe(WorkbenchMode.Patch);
+		model.IsPatch.ShouldBeTrue();
+		model.LibraryOpen.ShouldBeFalse();
+		model.DockLabel.ShouldBe("patch click");
+
+		model.LibraryPinned = true;
+		model.LibraryFlyout.ShouldBeFalse();
+		model.Songs[1].IsSelected = true;
+		model.Mode.ShouldBe(WorkbenchMode.Arrange);
+		model.LibraryOpen.ShouldBeTrue();
+	}
+
+	[Test]
+	public void The_librarys_filter_shows_only_what_has_every_word()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		model.LibraryQuery = "SEC";
+		model.Songs.Select(s => s.IsVisible).ShouldBe([false, true]);
+		model.Patches[0].IsVisible.ShouldBeFalse();
+		model.LibraryQuery = "";
+		model.Songs.Select(s => s.IsVisible).ShouldBe([true, true]);
+	}
+
+	[Test]
+	public void The_palette_finds_by_every_word_and_runs_its_choice()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		model.PaletteOpen = true;
+		model.PaletteItems.ShouldContain(i => i.Category == "Song" && i.Text == "second");
+		model.PaletteItems[0].IsSelected.ShouldBeTrue();
+
+		model.PaletteQuery = "song sec";
+		var only = model.PaletteItems.ShouldHaveSingleItem();
+		only.Text.ShouldBe("second");
+		model.RunPalette();
+		model.PaletteOpen.ShouldBeFalse();
+		model.SelectedSong.ShouldBe(1);
+		model.Mode.ShouldBe(WorkbenchMode.Arrange);
+	}
+
+	[Test]
+	public void A_choice_of_part_gives_the_keyboard_its_track_and_is_kept_with_the_mode_and_pin()
+	{
+		WorkbenchState saved;
+		using (var rig = new Rig())
+		{
+			var model = rig.Workbench.ViewModel;
+			var pad = model.Tracks[1].Placements[0];
+			pad.Select();
+			pad.IsSelected.ShouldBeTrue();
+			model.DockLabel.ShouldStartWith("pad · ");
+			model.LibraryPinned = true;
+			saved = rig.Workbench.CaptureState();
+		}
+		saved.SelectedPart.ShouldBe("verse/pad");
+		saved.Mode.ShouldBe("Arrange");
+
+		using var again = new Rig(saved);
+		again.Workbench.ViewModel.Tracks[1].Placements[0].IsSelected.ShouldBeTrue();
+		again.Workbench.ViewModel.LibraryPinned.ShouldBeTrue();
+		again.Workbench.ViewModel.Mode.ShouldBe(WorkbenchMode.Arrange);
+		again.Workbench.ViewModel.DockLabel.ShouldStartWith("pad · ");
+	}
+
+	[Test]
+	public void The_window_lays_out_over_a_playing_song_in_every_mode_with_the_library_and_palette()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		var host = new SUIsei.UIHost();
+		var view = new WorkbenchView(model);
+		host.CreateRoot(SUIsei.UILayer.Default).Root.Content = view;
+		var size = new System.Numerics.Vector2(1280f, 800f);
+		void Frame()
+		{
+			rig.Step(MusicRig.Bar / 16);
+			host.Tick(1.0 / 60.0, 1f, size);
+			host.Render();
+		}
+
+		rig.Workbench.Play();
+		Frame();
+		model.Tracks[1].Placements[0].Select();
+		Frame();
+		model.LibraryOpen = true;
+		Frame();
+		model.LibraryPinned = true;
+		Frame();
+		model.PaletteOpen = true;
+		Frame();
+		model.PaletteQuery = "sec";
+		Frame();
+		model.PaletteOpen = false;
+		model.Mode = WorkbenchMode.Patch;
+		Frame();
+		model.Mode = WorkbenchMode.Kit;
+		Frame();
+		view.LayoutRect.Width.ShouldBe(1280f);
+		view.LayoutRect.Height.ShouldBe(800f);
+	}
+
+	[Test]
+	public void Choosing_a_patch_opens_it_in_the_designer_as_a_graph_its_voice_and_its_code()
+	{
+		using var rig = new Rig();
+		var designer = rig.Workbench.ViewModel.Designer;
+		rig.Workbench.ChoosePatch(0);
+
+		designer.Name.ShouldBe("click");
+		designer.Nodes.ShouldHaveSingleItem().Summary.ShouldBe("SINE 1 kHz");
+		designer.Selected.ShouldBe(0);
+		designer.Inspector.ShouldContain(i => i.Label == "frequency" && i.IsSlider);
+		designer.Code.ShouldContain("Patch.Build(\"click\"");
+		designer.IsDirty.ShouldBeFalse();
+		designer.HasProblems.ShouldBeFalse();
+		designer.Stages.Select(s => s.Name).ShouldContain("Filter");
+	}
+
+	[Test]
+	public void The_designer_marks_its_nodes_before_it_says_the_choice_changed_and_describes_them_before_it_says_so()
+	{
+		using var rig = new Rig();
+		var designer = rig.Workbench.ViewModel.Designer;
+		var described = new List<string>();
+		designer.NodesDescribed += (_, _) => described.AddRange(designer.Nodes.Select(n => n.Summary));
+		rig.Workbench.ChoosePatch(0);
+		described.ShouldNotBeEmpty();
+		described.ShouldAllBe(summary => summary.Length > 0); // what a graph redrawn then shows
+
+		// Whatever redraws on the choice reads which node is chosen from the nodes, as the graph does
+		var marked = new List<bool>();
+		designer.PropertyChanged += (_, e) =>
+		{
+			if (e.PropertyName == nameof(PatchDesigner.Selected))
+				marked.Add(designer.Nodes[0].IsSelected);
+		};
+		designer.Select(-1);
+		designer.Select(0);
+		marked.ShouldBe([false, true]);
+	}
+
+	[Test]
+	public void An_edit_is_heard_at_the_next_note_and_the_code_follows_it()
+	{
+		using var rig = new Rig();
+		var designer = rig.Workbench.ViewModel.Designer;
+		rig.Workbench.ChoosePatch(1);
+		var ratio = designer.Inspector.First(i => i.Label == "ratio");
+		ratio.Position = 2f;
+		designer.Spec.Operators[0].Ratio.ShouldBe(2f);
+		designer.IsDirty.ShouldBeTrue();
+		designer.Code.ShouldContain("p.Sine(2f, Env.Gate)");
+
+		rig.Session.Clear();
+		var note = rig.Workbench.AuditionOn(57f, 0.8f);
+		rig.Step(MusicRig.Rate / 4);
+		rig.Workbench.AuditionOff(note);
+		AudioAnalysis.PeakFrequency(rig.Session.Left(), MusicRig.Rate, 100, 2000).ShouldBe(440, 4);
+
+		designer.RevertCommand.Execute(null);
+		designer.IsDirty.ShouldBeFalse();
+		designer.Spec.Operators[0].Ratio.ShouldBe(1f);
+	}
+
+	[Test]
+	public void What_the_builder_refuses_is_shown_and_the_last_patch_that_built_plays_on()
+	{
+		using var rig = new Rig();
+		var designer = rig.Workbench.ViewModel.Designer;
+		rig.Workbench.ChoosePatch(1);
+		designer.AddButtons.First(b => b.Label == "Modes").Command!.Execute(null);
+		designer.Nodes.Count.ShouldBe(2);
+		designer.HasProblems.ShouldBeFalse();   // a Modes is driven by the operator before it
+
+		designer.Inspector.First(i => i.IsToggle && i.Label == "sine1").IsOn = false;
+		designer.HasProblems.ShouldBeTrue();
+		designer.Problems.ShouldContain("nothing ringing them");
+		designer.Current.ShouldBeNull();
+
+		designer.Inspector.First(i => i.IsToggle && i.Label == "sine1").IsOn = true;
+		designer.HasProblems.ShouldBeFalse();
+		designer.Inspector.First(i => i.IsAction && i.Label == "Delete").Command!.Execute(null);
+		designer.Nodes.Count.ShouldBe(1);
+	}
+
+	[Test]
+	[NotInParallel] // Workbench.CodeChanged is process-wide: every workbench alive rebuilds, other tests' among them
+	public void A_rebuild_after_a_code_change_keeps_the_designers_edits_and_the_code_names_the_games_macros()
+	{
+		using var rig = new Rig();
+		var designer = rig.Workbench.ViewModel.Designer;
+		rig.Workbench.ChoosePatch(1);
+		designer.Tab = DesignerTab.Macros;
+		designer.Inspector.First(i => i.Label == "+ Macro").Command!.Execute(null);
+		designer.Code.ShouldContain("p.Macro(Macros.Bright, MacroTarget.FilterOctaves, -1f, 1f);");
+
+		Workbench.CodeChanged();
+		rig.Step(256);
+		designer.IsDirty.ShouldBeTrue();
+		designer.Spec.Macros.Count.ShouldBe(1);
+	}
+
+	[Test]
+	public void The_code_is_copied_through_the_host_and_says_so()
+	{
+		using var rig = new Rig();
+		var copied = "";
+		rig.Workbench.CopyText = text =>
+		{
+			copied = text;
+			return true;
+		};
+		rig.Workbench.ChoosePatch(0);
+		rig.Workbench.ViewModel.Designer.CopyCommand.Execute(null);
+		copied.ShouldBe(rig.Workbench.ViewModel.Designer.Code);
+		rig.Workbench.ViewModel.CopyStatus.ShouldStartWith("Copied at");
+	}
+
+	[Test]
+	public void The_beat_sketcher_starts_from_a_groove_loops_through_the_sequencer_and_writes_Beat_notation()
+	{
+		using var rig = new Rig();
+		var sketch = rig.Workbench.ViewModel.Sketch;
+		rig.Workbench.ChooseKit(0);
+		sketch.Rows.Select(r => r.Name).ShouldBe(["kick", "snare", "cowbell"]);
+		sketch.Rows[0].Pattern.ShouldBe("x... .... x.x. ....");
+		sketch.Rows[2].IsEmpty.ShouldBeTrue();
+
+		sketch.Rows[2].Steps[0].Cycle.Execute(null);
+		sketch.Rows[2].Steps[0].Cycle.Execute(null);
+		sketch.Rows[2].Steps[0].Value.ShouldBe('X');
+		sketch.Code.ShouldBe("Beat.Sixteenths(\n\t(Kit.Kick, \"x... .... x.x. ....\"),\n\t(Kit.Snare, \".... x... .... x...\"),\n\t(new DrumPiece(\"cowbell\"), \"X... .... .... ....\"))");
+
+		sketch.IsLooping = true;
+		rig.Session.Clear();
+		rig.Step(MusicRig.Rate);
+		MusicRig.Onsets(rig.Session.Left()).ShouldNotBeEmpty();
+		sketch.Rows[0].Steps.Count(s => s.IsNow).ShouldBe(1);
+
+		sketch.ClearCommand.Execute(null);
+		rig.Step(MusicRig.Rate / 4);
+		rig.Session.Clear();
+		rig.Step(MusicRig.Rate / 2);
+		MusicRig.Onsets(rig.Session.Left()).ShouldBeEmpty();
 	}
 
 	[Test]

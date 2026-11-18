@@ -1,0 +1,250 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Arrange: the song's sections as a timeline, each as wide as its bars, lit while it plays with how far through it is,
+    marked while a jump to it waits for the next bar; what plays next, and why. Under it the tracks as lanes, a column per
+    section: each track's mute, solo, gain and meter, and its parts as clips in the sections they play in, drawn small,
+    their conditions green while they hold, each held on, off or left to its condition. The part chosen is drawn below.
+-->
+<ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:wb="using:Loom.Audio.Workbench"
+                xmlns:views="using:Loom.Audio.Workbench.Views"
+                x:Class="Loom.Audio.Workbench.Views.ArrangeView"
+                IsTabStop="False">
+    <ContentControl.Resources>
+        <ResourceDictionary>
+            <!-- A tool's glyph: drawn in a 16 square with round ends, as the rail's icons are -->
+            <Style x:Key="Glyph" TargetType="Path">
+                <Setter Property="Width" Value="16" />
+                <Setter Property="Height" Value="16" />
+                <Setter Property="Stroke" Value="{x:Static views:Theme.Ink}" />
+                <Setter Property="StrokeThickness" Value="1.6" />
+                <Setter Property="StrokeStartLineCap" Value="Round" />
+                <Setter Property="StrokeEndLineCap" Value="Round" />
+                <Setter Property="StrokeLineJoin" Value="Round" />
+            </Style>
+        </ResourceDictionary>
+    </ContentControl.Resources>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="290" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="12,8,12,8">
+            <TextBlock Text="{x:Bind ViewModel.SongName, Mode=OneWay}" FontSize="16" Foreground="{x:Static views:Theme.Ink}" VerticalAlignment="Center" />
+            <TextBlock Text="{x:Bind ViewModel.NextText, Mode=OneWay}" FontSize="13" Foreground="{x:Static views:Theme.Dim}"
+                       Margin="16,0,0,0" VerticalAlignment="Center" />
+        </StackPanel>
+
+        <ScrollViewer Grid.Row="1" HorizontalScrollBarVisibility="Auto">
+            <StackPanel Margin="0,0,14,14">
+                <!-- The timeline, its columns as wide as the lanes' -->
+                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                    <TextBlock Text="SECTIONS" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Width="216" Margin="12,6,0,0" />
+                    <ItemsControl x:Name="SectionStrip" ItemsSource="{x:Bind ViewModel.Sections, Mode=OneWay}">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate x:DataType="wb:SectionViewModel">
+                                <ToggleButton IsChecked="{x:Bind IsCurrent, Mode=TwoWay}" Width="{x:Bind Width}" Margin="0,0,0,0">
+                                    <Grid>
+                                        <StackPanel Margin="8,4,8,8">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{x:Bind Name}" FontSize="13" />
+                                                <TextBlock Text="{x:Bind Detail}" FontSize="11" Foreground="{x:Static views:Theme.Faint}"
+                                                           Margin="8,1,0,0" />
+                                                <TextBlock Text="at the next bar" FontSize="11" Foreground="{x:Static views:Theme.Accent}"
+                                                           Margin="8,1,0,0" Visibility="{x:Bind IsQueued, Mode=OneWay}" />
+                                            </StackPanel>
+                                            <TextBlock Text="{x:Bind ChordText}" FontSize="11" Foreground="{x:Static views:Theme.Dim}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                        </StackPanel>
+                                        <Border Height="3" VerticalAlignment="Bottom" HorizontalAlignment="Left"
+                                                Width="{x:Bind ProgressWidth, Mode=OneWay}" Background="{x:Static views:Theme.Accent}" />
+                                    </Grid>
+                                </ToggleButton>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+
+                <!-- The lanes: a track's header, then a column per section with the parts it plays there -->
+                <ItemsControl ItemsSource="{x:Bind ViewModel.Tracks, Mode=OneWay}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="wb:TrackViewModel">
+                            <Border BorderBrush="{x:Static views:Theme.Line}" BorderThickness="0,0,0,1">
+                                <StackPanel Orientation="Horizontal">
+                                    <StackPanel Width="208" Margin="12,8,8,8">
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <TextBlock Grid.Column="0" Text="{x:Bind Name}" FontSize="14" Foreground="{x:Static views:Theme.Ink}"
+                                                       VerticalAlignment="Center" />
+                                            <ToggleButton Grid.Column="1" IsChecked="{x:Bind Muted, Mode=TwoWay}" Width="28" Margin="0,0,4,0">
+                                                <TextBlock Text="M" FontSize="12" HorizontalAlignment="Center" />
+                                            </ToggleButton>
+                                            <ToggleButton Grid.Column="2" IsChecked="{x:Bind Solo, Mode=TwoWay}" Width="28">
+                                                <TextBlock Text="S" FontSize="12" HorizontalAlignment="Center" />
+                                            </ToggleButton>
+                                        </Grid>
+                                        <TextBlock Text="{x:Bind Instrument}" FontSize="11" Foreground="{x:Static views:Theme.Dim}" Margin="0,3,0,2"
+                                                   TextTrimming="CharacterEllipsis" />
+                                        <Slider Minimum="-24" Maximum="6" StepFrequency="0.5" Height="26" Value="{x:Bind GainDb, Mode=TwoWay}" />
+                                        <Border Height="5" CornerRadius="2" Background="{x:Static views:Theme.Sunk}">
+                                            <Border HorizontalAlignment="Left" CornerRadius="2" Background="{x:Static views:Theme.Meter}"
+                                                    Width="{x:Bind views:Display.Meter(Peak), Mode=OneWay}" />
+                                        </Border>
+                                    </StackPanel>
+                                    <ItemsControl ItemsSource="{x:Bind Cells}">
+                                        <ItemsControl.ItemsPanel>
+                                            <ItemsPanelTemplate>
+                                                <StackPanel Orientation="Horizontal" />
+                                            </ItemsPanelTemplate>
+                                        </ItemsControl.ItemsPanel>
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="wb:LaneCellViewModel">
+                                                <Grid Width="{x:Bind Width}" Background="{x:Bind views:Display.Column(IsCurrent), Mode=OneWay}">
+                                                    <Border BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1,0,0,0" />
+                                                    <ItemsControl ItemsSource="{x:Bind Placements}" Margin="6,6,6,0">
+                                                        <ItemsControl.ItemTemplate>
+                                                            <DataTemplate x:DataType="wb:PlacementViewModel">
+                                                                <Border Background="{x:Static views:Theme.Raised}" BorderBrush="{x:Bind views:Display.Chosen(IsSelected), Mode=OneWay}"
+                                                                        BorderThickness="1" CornerRadius="6" Margin="0,0,0,6">
+                                                                    <StackPanel Margin="6,4,6,5">
+                                                                        <Grid>
+                                                                            <Grid.ColumnDefinitions>
+                                                                                <ColumnDefinition Width="12" />
+                                                                                <ColumnDefinition Width="*" />
+                                                                                <ColumnDefinition Width="Auto" />
+                                                                            </Grid.ColumnDefinitions>
+                                                                            <Ellipse Grid.Column="0" Width="8" Height="8" VerticalAlignment="Center"
+                                                                                     Fill="{x:Bind views:Display.Lit(IsActive), Mode=OneWay}" />
+                                                                            <Button Grid.Column="1" Command="{x:Bind SelectCommand}" HorizontalAlignment="Stretch" Padding="4,1,4,2">
+                                                                                <TextBlock Text="{x:Bind Title}" FontSize="13" TextTrimming="CharacterEllipsis" />
+                                                                            </Button>
+                                                                            <!-- Auto, on and off: one control, the choice lit -->
+                                                                            <Border Grid.Column="2" Margin="4,0,0,0" VerticalAlignment="Center" CornerRadius="5"
+                                                                                    BorderBrush="{x:Static views:Theme.LineStrong}" BorderThickness="1">
+                                                                                <StackPanel Orientation="Horizontal">
+                                                                                    <ToggleButton IsChecked="{x:Bind IsAuto, Mode=TwoWay}" Padding="6,1,6,2" Background="{x:Static views:Theme.Clear}">
+                                                                                        <TextBlock Text="auto" FontSize="10.5" />
+                                                                                    </ToggleButton>
+                                                                                    <ToggleButton IsChecked="{x:Bind IsOn, Mode=TwoWay}" Padding="6,1,6,2" Background="{x:Static views:Theme.Clear}">
+                                                                                        <TextBlock Text="on" FontSize="10.5" />
+                                                                                    </ToggleButton>
+                                                                                    <ToggleButton IsChecked="{x:Bind IsOff, Mode=TwoWay}" Padding="6,1,6,2" Background="{x:Static views:Theme.Clear}">
+                                                                                        <TextBlock Text="off" FontSize="10.5" />
+                                                                                    </ToggleButton>
+                                                                                </StackPanel>
+                                                                            </Border>
+                                                                        </Grid>
+                                                                        <StackPanel Orientation="Horizontal" Margin="2,3,0,0">
+                                                                            <TextBlock Text="{x:Bind KindText}" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Margin="0,0,8,0" />
+                                                                            <TextBlock Text="{x:Bind ConditionText}" Visibility="{x:Bind HasCondition}" FontSize="11"
+                                                                                       Foreground="{x:Bind views:Display.Met(ConditionMet), Mode=OneWay}" TextTrimming="CharacterEllipsis" />
+                                                                        </StackPanel>
+                                                                        <views:ClipPattern Part="{x:Bind Self}" Margin="0,4,0,0" HorizontalAlignment="Left" />
+                                                                    </StackPanel>
+                                                                </Border>
+                                                            </DataTemplate>
+                                                        </ItemsControl.ItemTemplate>
+                                                    </ItemsControl>
+                                                    <Border Width="2" HorizontalAlignment="Left" Background="{x:Static views:Theme.Playhead}"
+                                                            Margin="{x:Bind views:Display.Playhead(PlayheadX), Mode=OneWay}"
+                                                            Visibility="{x:Bind IsCurrent, Mode=OneWay}" IsHitTestVisible="False" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </StackPanel>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </StackPanel>
+        </ScrollViewer>
+
+        <!-- The part chosen: the roll when its song has a file and the part is data, its notes drawn otherwise -->
+        <Border Grid.Row="2" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="0,1,0,0" Padding="12,8,12,8">
+            <Grid>
+                <StackPanel Visibility="{x:Bind views:Display.Not(ViewModel.Roll.IsEditable), Mode=OneWay}">
+                    <views:PatternView Pattern="{x:Bind ViewModel.Pattern, Mode=OneWay}" />
+                    <TextBlock Text="{x:Bind ViewModel.Roll.Status, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Faint}" Margin="0,4,0,0" />
+                    <Button Command="{x:Bind ViewModel.Roll.BringBackCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Roll.CanBringBack, Mode=OneWay}"
+                            HorizontalAlignment="Left" Margin="0,6,0,0" Padding="8,2,8,3">
+                        <TextBlock Text="Bring back as data" FontSize="12" />
+                    </Button>
+                </StackPanel>
+                <Grid Visibility="{x:Bind ViewModel.Roll.IsEditable, Mode=OneWay}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                    </Grid.RowDefinitions>
+                    <StackPanel Grid.Row="0" Margin="0,0,0,6">
+                        <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                            <TextBlock Text="{x:Bind ViewModel.Roll.Title, Mode=OneWay}" FontSize="13" Foreground="{x:Static views:Theme.Ink}"
+                                       VerticalAlignment="Center" Margin="0,0,12,0" />
+                            <TextBlock Text="{x:Bind ViewModel.Roll.Status, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Accent}" VerticalAlignment="Center" />
+                        </StackPanel>
+                        <!-- The roll's tools as glyphs: a line's flat, natural, sharp and slide; accent and delete; a bar more or
+                             fewer; undo, redo and revert; then ejecting, in words -->
+                        <StackPanel Orientation="Horizontal">
+                            <StackPanel Orientation="Horizontal" Margin="0,0,8,0" Visibility="{x:Bind ViewModel.Roll.IsLine, Mode=OneWay}">
+                                <Button Command="{x:Bind ViewModel.Roll.FlatCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0">
+                                    <Path Data="M6,2 L6,14 C9,13 12,11 11,9 C10.2,7.4 7.8,7.8 6,9.5" Style="{StaticResource Glyph}" />
+                                </Button>
+                                <Button Command="{x:Bind ViewModel.Roll.NaturalCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0">
+                                    <Path Data="M5,2 L5,11 M11,5 L11,14 M5,7 L11,5 M5,11 L11,9" Style="{StaticResource Glyph}" />
+                                </Button>
+                                <Button Command="{x:Bind ViewModel.Roll.SharpCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0">
+                                    <Path Data="M6,2 L6,14 M10,2 L10,14 M3,7 L13,5.5 M3,11 L13,9.5" Style="{StaticResource Glyph}" />
+                                </Button>
+                                <Button Command="{x:Bind ViewModel.Roll.SlideCommand, Mode=OneWay}" Padding="6,4,6,4">
+                                    <Path Data="M2,12 C5,12 6,5 9,5 L14,5 M11.5,2.5 L14,5 L11.5,7.5" Style="{StaticResource Glyph}" />
+                                </Button>
+                            </StackPanel>
+                            <Button Command="{x:Bind ViewModel.Roll.AccentCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0">
+                                <Path Data="M4,4 L12,8 L4,12" Style="{StaticResource Glyph}" />
+                            </Button>
+                            <Button Command="{x:Bind ViewModel.Roll.DeleteCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,8,0">
+                                <Path Data="M4,4 L12,12 M12,4 L4,12" Style="{StaticResource Glyph}" />
+                            </Button>
+                            <Button Command="{x:Bind ViewModel.Roll.AddBarCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0">
+                                <Path Data="M3,2 L3,14 M7,8 L14,8 M10.5,4.5 L10.5,11.5" Style="{StaticResource Glyph}" />
+                            </Button>
+                            <Button Command="{x:Bind ViewModel.Roll.RemoveBarCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,8,0">
+                                <Path Data="M3,2 L3,14 M7,8 L14,8" Style="{StaticResource Glyph}" />
+                            </Button>
+                            <Button Command="{x:Bind ViewModel.Roll.UndoCommand, Mode=OneWay}" IsEnabled="{x:Bind ViewModel.Roll.CanUndo, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0">
+                                <Path Data="M5,3.5 L2,6.5 L5,9.5 M2,6.5 L10,6.5 C12.5,6.5 14,8 14,10.25 C14,12.5 12.5,14 10,14 L7,14" Style="{StaticResource Glyph}"
+                                      Opacity="{x:Bind views:Display.Used(ViewModel.Roll.CanUndo), Mode=OneWay}" />
+                            </Button>
+                            <Button Command="{x:Bind ViewModel.Roll.RedoCommand, Mode=OneWay}" IsEnabled="{x:Bind ViewModel.Roll.CanRedo, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0">
+                                <Path Data="M11,3.5 L14,6.5 L11,9.5 M14,6.5 L6,6.5 C3.5,6.5 2,8 2,10.25 C2,12.5 3.5,14 6,14 L9,14" Style="{StaticResource Glyph}"
+                                      Opacity="{x:Bind views:Display.Used(ViewModel.Roll.CanRedo), Mode=OneWay}" />
+                            </Button>
+                            <Button Command="{x:Bind ViewModel.Roll.RevertCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,8,0">
+                                <Path Data="M2.5,2.5 L2.5,6.5 L6.5,6.5 M3,6.5 C4,4 6,2.5 8.75,2.5 C11.75,2.5 14,5 14,8.25 C14,11.5 11.5,14 8.5,14 C6.5,14 4.75,13 3.75,11.5"
+                                      Style="{StaticResource Glyph}" />
+                            </Button>
+                            <StackPanel Orientation="Horizontal" Visibility="{x:Bind ViewModel.Roll.CanEject, Mode=OneWay}">
+                                <Button Command="{x:Bind ViewModel.Roll.EjectNotationCommand, Mode=OneWay}" Padding="9,4,9,5" Margin="0,0,2,0"><TextBlock Text="Eject notation" FontSize="12" /></Button>
+                                <Button Command="{x:Bind ViewModel.Roll.EjectPlacementCommand, Mode=OneWay}" Padding="9,4,9,5"><TextBlock Text="Eject placement" FontSize="12" /></Button>
+                            </StackPanel>
+                        </StackPanel>
+                        <TextBlock Text="{x:Bind ViewModel.Roll.Hint, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Faint}" Margin="0,5,0,0" />
+                    </StackPanel>
+                    <views:RollEditor Grid.Row="1" Roll="{x:Bind ViewModel.Roll, Mode=OneWay}" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" />
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</ContentControl>

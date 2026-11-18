@@ -85,6 +85,38 @@ public sealed class PlacementViewModel : ViewModel
 	/// <summary>Whether it has a condition to show.</summary>
 	public bool HasCondition => ConditionText.Length > 0;
 
+	/// <summary>Its own name, as a clip shows it: "the tune".</summary>
+	public string Title => Placement.Name;
+
+	/// <summary>What it plays: "notes" or "hits", and "on its phrase" when it waits for one.</summary>
+	public string KindText { get; internal init; } = "";
+
+	/// <summary>Whether its condition holds for the cues as they are now; true when it has none.</summary>
+	public bool ConditionMet
+	{
+		get;
+		internal set => Set(ref field, value);
+	} = true;
+
+	/// <summary>Whether it is the part chosen, shown in the roll.</summary>
+	public bool IsSelected
+	{
+		get;
+		internal set => Set(ref field, value);
+	}
+
+	/// <summary>One pass of its part, drawn small on its clip: notes by row, over <see cref="LoopTicks"/>.</summary>
+	public IReadOnlyList<PatternNote> Notes { get; internal init; } = [];
+
+	/// <summary>How long one pass of its part is, in ticks.</summary>
+	public int LoopTicks { get; internal init; }
+
+	/// <summary>How many rows its notes lie on: pitches or pieces.</summary>
+	public int Rows { get; internal init; }
+
+	/// <summary>It, for a view drawing the clip from all of it at once.</summary>
+	public PlacementViewModel Self => this;
+
 	/// <summary>Shows it in the pattern view, for a button.</summary>
 	public ICommand SelectCommand => field ??= new ActionCommand(Select);
 

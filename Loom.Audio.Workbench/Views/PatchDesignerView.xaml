@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    Patch: the patch designer. Its name, whether it builds and is edited, the patch as its code has it to hear against,
+    + Operator, Revert, Copy C#; what the builder refuses; the operators as a graph in render order; the voice after them
+    as a chain; and a scope and spectrum of what is heard. The inspector beside it changes what is chosen.
+-->
+<ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:wb="using:Loom.Audio.Workbench"
+                xmlns:views="using:Loom.Audio.Workbench.Views"
+                x:Class="Loom.Audio.Workbench.Views.PatchDesignerView"
+                IsTabStop="False">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="12,8,12,6">
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                <TextBlock Text="{x:Bind ViewModel.Designer.Name, Mode=OneWay}" FontSize="16" Foreground="{x:Static views:Theme.Ink}" VerticalAlignment="Center" />
+                <TextBlock Text="{x:Bind ViewModel.Designer.Status, Mode=OneWay}" FontSize="12" VerticalAlignment="Center" Margin="12,0,0,0"
+                           Foreground="{x:Bind views:Display.Problem(ViewModel.Designer.HasProblems), Mode=OneWay}" />
+            </StackPanel>
+            <StackPanel Orientation="Horizontal">
+                <ToggleButton IsChecked="{x:Bind ViewModel.Designer.HearOriginal, Mode=TwoWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <TextBlock Text="Hear its code" FontSize="12" />
+                </ToggleButton>
+                <ToggleButton IsChecked="{x:Bind ViewModel.Designer.AddOpen, Mode=TwoWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <TextBlock Text="+ Operator" FontSize="12" />
+                </ToggleButton>
+                <Button Command="{x:Bind ViewModel.Designer.RevertCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <TextBlock Text="Revert" FontSize="12" />
+                </Button>
+                <Button Command="{x:Bind ViewModel.Designer.CopyCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <TextBlock Text="Copy C#" FontSize="12" />
+                </Button>
+                <Button Command="{x:Bind ViewModel.Designer.EjectCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Designer.CanEject, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <TextBlock Text="Eject to code" FontSize="12" />
+                </Button>
+                <Button Command="{x:Bind ViewModel.Designer.BringBackCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Designer.IsCode, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <TextBlock Text="Bring back as data" FontSize="12" />
+                </Button>
+                <TextBlock Text="code: edits are heard, not saved" Visibility="{x:Bind ViewModel.Designer.IsCode, Mode=OneWay}" FontSize="11"
+                           Foreground="{x:Static views:Theme.Accent}" VerticalAlignment="Center" Margin="4,0,0,0" />
+                <TextBlock Text="{x:Bind ViewModel.CopyStatus, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Dim}"
+                           VerticalAlignment="Center" Margin="10,0,0,0" />
+            </StackPanel>
+        </StackPanel>
+
+        <ItemsControl Grid.Row="1" ItemsSource="{x:Bind ViewModel.Designer.AddButtons, Mode=OneWay}" Margin="12,0,12,6"
+                      Visibility="{x:Bind ViewModel.Designer.AddOpen, Mode=OneWay}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="wb:InspectorItemViewModel">
+                    <Button Command="{x:Bind Command}" Margin="0,0,4,0" Padding="8,3,8,4">
+                        <TextBlock Text="{x:Bind Label}" FontSize="12" />
+                    </Button>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+
+        <Border Grid.Row="2" Margin="12,0,12,6" Padding="10,6,10,7" CornerRadius="6" Background="{x:Static views:Theme.ErrorSoft}"
+                BorderBrush="{x:Static views:Theme.Error}" BorderThickness="1" Visibility="{x:Bind ViewModel.Designer.HasProblems, Mode=OneWay}">
+            <TextBlock Text="{x:Bind ViewModel.Designer.Problems, Mode=OneWay}" FontSize="12" Foreground="{x:Static views:Theme.Ink}" TextWrapping="Wrap" />
+        </Border>
+
+        <Grid Grid.Row="3" Margin="12,0,12,6">
+            <TextBlock Text="Choose a patch from the library." FontSize="13" Foreground="{x:Static views:Theme.Dim}"
+                       Visibility="{x:Bind views:Display.Not(ViewModel.Designer.IsLoaded), Mode=OneWay}" />
+            <views:OperatorGraph Designer="{x:Bind ViewModel.Designer, Mode=OneWay}" />
+        </Grid>
+
+        <ScrollViewer Grid.Row="4" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Margin="12,0,12,6">
+        <ItemsControl ItemsSource="{x:Bind ViewModel.Designer.Stages, Mode=OneWay}" Margin="0,0,0,10">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <StackPanel Orientation="Horizontal" />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate x:DataType="wb:StageViewModel">
+                    <Button Command="{x:Bind Choose}" Margin="0,0,4,0">
+                        <StackPanel Margin="6,2,6,3">
+                            <TextBlock Text="{x:Bind Name}" FontSize="10" Foreground="{x:Static views:Theme.Faint}" />
+                            <TextBlock Text="{x:Bind Value}" FontSize="12" Foreground="{x:Bind views:Display.StageInk(IsOff)}" />
+                        </StackPanel>
+                    </Button>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
+        </ScrollViewer>
+
+        <views:ScopeView Grid.Row="5" Margin="12,0,12,10" ViewModel="{x:Bind ViewModel, Mode=OneWay}" HorizontalAlignment="Left" />
+    </Grid>
+</ContentControl>

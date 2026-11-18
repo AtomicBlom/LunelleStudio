@@ -62,7 +62,7 @@ public class WorkbenchExtensionTests
 	public async Task An_extension_stays_the_same_while_the_music_compiles_again_and_hears_of_each_build()
 	{
 		var path = await MusicProjectTests.MakeProjectAsync();
-		using var project = await MusicProject.OpenAsync(path);
+		using var project = await MusicProject.OpenAsync(path, MusicProjectTests.Configured);
 		var extension = new TestExtension();
 		using var session = new OfflineSession();
 		var first = project.TakeBuild().ShouldNotBeNull();

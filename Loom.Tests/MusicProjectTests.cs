@@ -18,6 +18,18 @@ public class MusicProjectTests
 	private static string SynthProject([CallerFilePath] string here = "") =>
 		Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "Loom.Audio.Synth", "Loom.Audio.Synth.csproj"));
 
+	// The configuration these tests were built in, for a project's design-time build: left to itself it is Debug, whose
+	// references a Release run never built
+	internal static IReadOnlyDictionary<string, string> Configured { get; } = new Dictionary<string, string>
+	{
+		["Configuration"] =
+#if DEBUG
+			"Debug",
+#else
+			"Release",
+#endif
+	};
+
 	internal static string Music(string notes, string extra = "") => $$"""
 		using Loom.Audio.Synth.Chip;
 		using Loom.Audio.Synth.Music;
@@ -84,7 +96,7 @@ public class MusicProjectTests
 	public async Task A_project_is_compiled_reloaded_on_a_save_and_its_old_build_unloads()
 	{
 		var path = await MakeProjectAsync();
-		using var project = await MusicProject.OpenAsync(path);
+		using var project = await MusicProject.OpenAsync(path, MusicProjectTests.Configured);
 		var first = WeakFirstBuild(project);
 
 		// A change to a type's shape: a new record, which hot reload would call a rude edit
@@ -125,7 +137,7 @@ public class MusicProjectTests
 	public async Task A_workbench_on_a_project_plays_its_song_and_takes_up_a_save()
 	{
 		var path = await MakeProjectAsync();
-		using var project = await MusicProject.OpenAsync(path);
+		using var project = await MusicProject.OpenAsync(path, MusicProjectTests.Configured);
 
 		// The engine belongs to the thread that made it: from here on, no awaits
 		using var session = new OfflineSession();
@@ -161,6 +173,16 @@ public class MusicProjectTests
 	}
 
 	[Test]
+	public async Task A_project_whose_references_are_not_built_says_which_and_in_what_configuration()
+	{
+		var path = await MakeProjectAsync();
+		var error = await Should.ThrowAsync<InvalidOperationException>(() =>
+			MusicProject.OpenAsync(path, new Dictionary<string, string> { ["Configuration"] = "Unbuilt" }));
+		error.Message.ShouldStartWith("Tunes references ");
+		error.Message.ShouldContain(".dll, which isn't built: build the project once in Unbuilt.");
+	}
+
+	[Test]
 	public async Task A_new_project_from_the_template_builds_and_offers_its_song()
 	{
 		var folder = Path.Combine(Path.GetTempPath(), "loom-new-" + Guid.NewGuid().ToString("N")[..8], "My Tunes");
@@ -171,7 +193,7 @@ public class MusicProjectTests
 		File.Exists(Path.Combine(folder, "Songs", "demo.song.json")).ShouldBeTrue();
 
 		// HelloSynth's music, built by the generator the template references from beside Loom
-		using var project = await MusicProject.OpenAsync(path);
+		using var project = await MusicProject.OpenAsync(path, MusicProjectTests.Configured);
 		var build = project.TakeBuild().ShouldNotBeNull();
 		build.Errors.ShouldBeEmpty();
 		build.Catalog!.Songs.ShouldHaveSingleItem().Name.ShouldBe("demo");

@@ -132,6 +132,7 @@ public sealed class MusicProject : IDisposable
 	{
 		var arguments = await DesignTimeBuild.CompilerArgumentsAsync(ProjectPath, _properties, cancellation);
 		var parsed = CSharpCommandLineParser.Default.Parse(arguments, Directory, sdkDirectory: null);
+		RequireBuilt(parsed.MetadataReferences);
 		_resources = [.. parsed.ManifestResources];
 		var id = ProjectId.CreateNewId(Name);
 		DocumentInfo Document(string path) => DocumentInfo.Create(DocumentId.CreateNewId(id), Path.GetFileName(path),
@@ -154,6 +155,16 @@ public sealed class MusicProject : IDisposable
 		using var workspace = new AdhocWorkspace();
 		_solution = workspace.AddProject(info).Solution;
 		_project = id;
+	}
+
+	// A design-time build names the references a build would make without making them: one not built yet is said, with
+	// the configuration it was asked for, rather than left for the compiler to fail to open
+	private void RequireBuilt(IEnumerable<CommandLineReference> references)
+	{
+		if (references.Select(r => r.Reference).FirstOrDefault(path => !File.Exists(path)) is not { } missing)
+			return;
+		var configuration = _properties.TryGetValue("Configuration", out var named) ? $" in {named}" : "";
+		throw new InvalidOperationException($"{Name} references {missing}, which isn't built: build the project once{configuration}.");
 	}
 
 	// One file changed on disk: its text in the project read afresh; a file the project doesn't have means the set of

@@ -347,6 +347,7 @@ public class WorkbenchTests
 	}
 
 	[Test]
+	[NotInParallel] // Workbench.CodeChanged is process-wide: every workbench alive rebuilds, other tests' among them
 	public void A_rebuild_after_a_code_change_keeps_the_designers_edits_and_the_code_names_the_games_macros()
 	{
 		using var rig = new Rig();

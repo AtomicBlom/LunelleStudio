@@ -1550,6 +1550,7 @@ public sealed partial class Workbench : IDisposable
 		foreach (var other in ViewModel.Files.Files)
 			if (other != entry)
 				other.IsSelected = false;
+		ViewModel.Files.Shown(entry);
 		string text;
 		try
 		{

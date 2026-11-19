@@ -12,29 +12,34 @@
                 IsTabStop="False">
     <Grid Margin="12,10,12,10">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="230" />
+            <ColumnDefinition Width="260" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <ScrollViewer Grid.Column="0" Margin="0,0,10,0">
-            <ItemsControl ItemsSource="{x:Bind ViewModel.Files.Files, Mode=OneWay}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate x:DataType="wb:FileEntryViewModel">
-                        <ToggleButton IsChecked="{x:Bind IsSelected, Mode=TwoWay}" HorizontalAlignment="Stretch" Margin="0,0,0,3" Padding="8,4,8,6">
-                            <StackPanel Orientation="Horizontal">
+        <Border Grid.Column="0" Margin="0,0,10,0" Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1" CornerRadius="8">
+            <ScrollViewer>
+                <ListView x:Name="FileList" Margin="4,6,12,6" ItemsSource="{x:Bind ViewModel.Files.Files, Mode=OneWay}" IsItemClickEnabled="True"
+                          SelectedIndex="{x:Bind ViewModel.Files.ShownIndex, Mode=TwoWay}">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="wb:FileEntryViewModel">
+                            <Grid ToolTipService.ToolTip="{x:Bind Path}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
                                 <Path Data="{x:Bind views:Display.FileIcon(Name)}" Width="14" Height="14" Stretch="Uniform" Stroke="{x:Static views:Theme.Dim}"
                                       StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
                                       VerticalAlignment="Center" Margin="0,0,8,0" />
-                                <StackPanel>
+                                <StackPanel Grid.Column="1">
                                     <TextBlock Text="{x:Bind Name}" FontSize="12" TextTrimming="CharacterEllipsis" />
-                                    <TextBlock Text="{x:Bind Kind}" FontSize="10" Foreground="{x:Static views:Theme.Faint}" />
+                                    <TextBlock Text="{x:Bind Kind}" FontSize="10" Foreground="{x:Static views:Theme.Dim}" />
                                 </StackPanel>
-                            </StackPanel>
-                        </ToggleButton>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </ScrollViewer>
+        </Border>
 
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>

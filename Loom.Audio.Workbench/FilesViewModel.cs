@@ -9,8 +9,24 @@ namespace Loom.Audio.Workbench;
 /// </summary>
 public sealed class FilesViewModel : ViewModel
 {
+	private int _shown = -1;
+
 	/// <summary>The files, songs' first, then patches', then C#.</summary>
 	public ObservableCollection<FileEntryViewModel> Files { get; } = [];
+
+	/// <summary>Where in <see cref="Files"/> the file shown is, or -1; set, it shows that file.</summary>
+	public int ShownIndex
+	{
+		get => _shown;
+		set
+		{
+			if (value >= 0 && value < Files.Count)
+				Files[value].IsSelected = true;
+		}
+	}
+
+	/// <summary>Raised as <see cref="ShownIndex"/> changes, so a list binds it TwoWay.</summary>
+	public event EventHandler? ShownIndexChanged;
 
 	/// <summary>The file shown's name and folder.</summary>
 	public string Title { get; private set => Set(ref field, value); } = "Choose a file.";
@@ -25,6 +41,13 @@ public sealed class FilesViewModel : ViewModel
 	public ICommand CopyFileCommand => field ??= new ActionCommand(() => CopyRequested?.Invoke(Text));
 
 	internal event Action<string>? CopyRequested;
+
+	internal void Shown(FileEntryViewModel entry)
+	{
+		var at = Files.IndexOf(entry);
+		if (Set(ref _shown, at, nameof(ShownIndex)))
+			ShownIndexChanged?.Invoke(this, EventArgs.Empty);
+	}
 
 	internal void Show(string title, string text, IEnumerable<(string Name, string Text)> pieces)
 	{

@@ -25,7 +25,7 @@ internal static class Display
 	public static string PlayLabel(bool playing) => playing ? "Stop" : "Play";
 
 	/// <summary>The keyboard's octave, and the keys that move it.</summary>
-	public static string Octave(int octave) => $"octave {octave} (Z and X move it)";
+	public static string Octave(int octave) => $"octaves {octave - 1} to {octave + 1}";
 
 	/// <summary>A kit's button.</summary>
 	public static string Kit(string name) => $"kit: {name}";
@@ -62,6 +62,31 @@ internal static class Display
 
 	// A cue the song never reads, dimmed
 	public static float Used(bool used) => used ? 1f : 0.45f;
+
+	/// <summary>A kit's pad, pointed at.</summary>
+	public static string PadTip(string piece) => $"Play the {piece}";
+
+	/// <summary>A labelled action or setting, pointed at.</summary>
+	public static string ItemTip(string? label) => label ?? "";
+
+	/// <summary>A stage of a patch's voice, pointed at.</summary>
+	public static string StageTip(string name) => $"Show the voice's {name.ToLowerInvariant()} in the inspector";
+
+	/// <summary>One of a choice's options, pointed at.</summary>
+	public static string OptionTip(string name) => $"Choose {name}";
+
+	/// <summary>A file's icon by its kind: a song, a patch, a kit's map, code, or any other file.</summary>
+	public static SUIsei.Media.Geometry FileIcon(string name) => SUIsei.Media.Geometry.Parse(
+		name.EndsWith(".song.json", StringComparison.OrdinalIgnoreCase) ? Glyphs.SongData
+		: name.EndsWith(".patch.json", StringComparison.OrdinalIgnoreCase) ? Glyphs.PatchData
+		: name.EndsWith("map.json", StringComparison.OrdinalIgnoreCase) ? Glyphs.KitData
+		: name.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) ? Glyphs.CodeData
+		: Glyphs.FileData);
+
+	/// <summary>What a cue's row says when pointed at: what reads it, or that nothing does.</summary>
+	public static string CueTip(bool used) => used
+		? "The song reads it: a part's condition or level, an exit, or a macro follows it"
+		: "Nothing in this song reads this cue, so it is left as it is";
 
 	// A rail icon, in the accent while its mode is the one showing
 	public static SolidColorBrush RailInk(bool on) => on ? Theme.Accent : Theme.Dim;

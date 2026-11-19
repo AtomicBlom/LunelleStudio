@@ -271,6 +271,107 @@ public sealed partial class Workbench
 						SelectPlacement(clip);
 	}
 
+	/// <summary>
+	/// What the track the keyboard plays is sounding in the song now: its notes (for a kit, its pieces by index), whether it
+	/// is a kit, and its place in the song for its hue; or nothing, while no song plays or the keyboard plays the bench.
+	/// </summary>
+	internal (UInt128 Notes, bool IsKit, int Index)? FocusedSounding()
+	{
+		if (!Player.IsPlaying || _dockTrack is not { } name || Player.Song is not { } song)
+			return null;
+		for (var i = 0; i < song.Tracks.Count; i++)
+			if (song.Tracks[i].Name == name)
+				return (Player.Sounding(song.Tracks[i]), song.Tracks[i].Kit is not null, i);
+		return null;
+	}
+
+	/// <summary>Which of the twelve pitch classes, from C, the song's scale (or the one it is played in) has.</summary>
+	internal bool[] ScaleClasses()
+	{
+		var scale = _scale ?? _song?.Scale ?? Scale.Major(Note.C);
+		var classes = new bool[12];
+		for (var pc = 0; pc < 12; pc++)
+			classes[pc] = scale.Contains(pc);
+		return classes;
+	}
+
+	/// <summary>Whether a new patch file can be made: the project has patch files, whose folder it goes in.</summary>
+	public bool CanMakePatch => PatchFolder() is not null;
+
+	/// <summary>Whether a new song file can be made: the project has song files, whose folder it goes in.</summary>
+	public bool CanMakeSong => SongFolder() is not null;
+
+	/// <summary>
+	/// Makes a patch file beside the project's others: a copy of <paramref name="copyOf"/>'s file, or a plain sine held while
+	/// a key is down. The project builds again as it sees the file, and the library lists it. Why it can't, or null.
+	/// </summary>
+	internal string? NewPatch(string name, string? copyOf)
+	{
+		if (FileName(name) is not { } stem)
+			return "A patch's name is letters, digits and hyphens: electric-piano.";
+		if (PatchFolder() is not { } folder)
+			return "This project has no patch files to put one beside.";
+		var path = Path.Combine(folder, stem + ".patch.json");
+		if (File.Exists(path))
+			return $"{Path.GetFileName(path)} is there already.";
+		JsonObject file;
+		if (copyOf is not null && _catalog.PatchFile(copyOf) is { } source && File.Exists(source))
+		{
+			file = JsonNode.Parse(File.ReadAllText(source))!.AsObject();
+			file["name"] = stem;
+		}
+		else
+			file = new JsonObject
+			{
+				["format"] = "loom-patch/1",
+				["name"] = stem,
+				["operators"] = new JsonArray(new JsonObject { ["name"] = "sine1", ["kind"] = "sine", ["envelope"] = "adsr 0.01 0.1 0.8 0.2", ["level"] = 0.5 }),
+				["out"] = new JsonArray(new JsonObject { ["op"] = "sine1" }),
+			};
+		File.WriteAllText(path, Synth.Music.SongFile.Write(file));
+		return null;
+	}
+
+	/// <summary>
+	/// Makes a song file beside the project's others: one section of four bars, one track on the first patch, nothing played
+	/// yet. The project builds again as it sees the file, and the library lists it. Why it can't, or null.
+	/// </summary>
+	internal string? NewSong(string name)
+	{
+		if (FileName(name) is not { } stem)
+			return "A song's name is letters, digits and hyphens: open-road.";
+		if (SongFolder() is not { } folder)
+			return "This project has no song files to put one beside.";
+		var path = Path.Combine(folder, stem + ".song.json");
+		if (File.Exists(path))
+			return $"{Path.GetFileName(path)} is there already.";
+		var patch = _catalog.Patches.Count > 0 ? _catalog.Patches[0].Name : null;
+		var file = new JsonObject
+		{
+			["format"] = Synth.Music.SongFile.Format,
+			["name"] = stem,
+			["tempo"] = 110,
+			["scale"] = "C major",
+			["tracks"] = patch is null ? new JsonArray() : new JsonArray(new JsonObject { ["name"] = "lead", ["patch"] = patch }),
+			["sections"] = new JsonArray(new JsonObject { ["name"] = "a", ["bars"] = 4, ["chords"] = "I | IV | V | I", ["parts"] = new JsonArray() }),
+		};
+		File.WriteAllText(path, Synth.Music.SongFile.Write(file));
+		return null;
+	}
+
+	private string? PatchFolder() =>
+		_catalog.Patches.Select(p => _catalog.PatchFile(p.Name)).FirstOrDefault(f => f is not null && File.Exists(f)) is { } file ? Path.GetDirectoryName(file) : null;
+
+	private string? SongFolder() =>
+		_catalog.Songs.Select(s => _catalog.SongSource(s.Name)?.Path).FirstOrDefault(f => f is not null && File.Exists(f)) is { } file ? Path.GetDirectoryName(file) : null;
+
+	// A name as a file's stem: lower case letters, digits and hyphens, or null
+	private static string? FileName(string name)
+	{
+		var stem = name.Trim().ToLowerInvariant().Replace(' ', '-');
+		return stem.Length > 0 && stem.All(c => char.IsAsciiLetterOrDigit(c) || c == '-') ? stem : null;
+	}
+
 	private static IEnumerable<JsonObject> Parts(JsonObject root) =>
 		(root["sections"] as JsonArray ?? []).OfType<JsonObject>().SelectMany(s => (s["parts"] as JsonArray ?? []).OfType<JsonObject>());
 }

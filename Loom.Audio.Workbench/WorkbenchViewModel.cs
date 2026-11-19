@@ -189,6 +189,9 @@ public sealed class WorkbenchViewModel : ViewModel
 		}
 	}
 
+	/// <summary>Whether Shift is held on the computer's keyboard, as the last frame's keys said.</summary>
+	internal bool ShiftHeld { get; set; }
+
 	/// <summary>How tall Arrange's part panel is, in DIPs: where its splitter was left.</summary>
 	public float PartPanelHeight
 	{
@@ -213,7 +216,7 @@ public sealed class WorkbenchViewModel : ViewModel
 	public int Octave
 	{
 		get => _octave;
-		set => Set(ref _octave, Math.Clamp(value, 0, 8));
+		set => Set(ref _octave, Math.Clamp(value, 1, 7));
 	}
 
 	/// <summary>How hard the keyboard plays, 0 to 1.</summary>

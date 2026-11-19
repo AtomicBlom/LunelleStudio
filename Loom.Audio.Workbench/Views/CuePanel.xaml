@@ -16,7 +16,8 @@
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="wb:CueViewModel">
                         <Border BorderBrush="{x:Static views:Theme.Line}" BorderThickness="0,0,0,1" Margin="0,0,0,10"
-                                Opacity="{x:Bind views:Display.Used(IsUsed), Mode=OneWay}">
+                                Opacity="{x:Bind views:Display.Used(IsUsed), Mode=OneWay}"
+                                ToolTipService.ToolTip="{x:Bind views:Display.CueTip(IsUsed), Mode=OneWay}">
                             <StackPanel Margin="0,0,0,10">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
@@ -30,7 +31,7 @@
                                 <StackPanel Visibility="{x:Bind IsLevel}">
                                     <views:CueTicks Cue="{x:Bind Self}" HorizontalAlignment="Left" Margin="0,4,0,0" />
                                     <Slider Minimum="0" Maximum="1" StepFrequency="0.01" Height="30" Width="250" HorizontalAlignment="Left"
-                                            Value="{x:Bind Value, Mode=TwoWay}" />
+                                            Value="{x:Bind Value, Mode=TwoWay}" IsEnabled="{x:Bind IsUsed, Mode=OneWay}" />
                                     <ItemsControl ItemsSource="{x:Bind Readers}" Margin="0,4,0,0">
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="wb:CueReaderViewModel">
@@ -44,16 +45,17 @@
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                 </StackPanel>
-                                <ItemsControl Visibility="{x:Bind IsChoice}" ItemsSource="{x:Bind Options}" Margin="0,6,0,0">
+                                <ItemsControl Visibility="{x:Bind IsChoice}" ItemsSource="{x:Bind Options}" Margin="0,6,0,0"
+                                              IsEnabled="{x:Bind IsUsed, Mode=OneWay}">
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="wb:ChoiceViewModel">
-                                            <ToggleButton IsChecked="{x:Bind IsSelected, Mode=TwoWay}" Margin="0,0,0,3" HorizontalAlignment="Left" Padding="8,2,8,3">
+                                            <ToggleButton ToolTipService.ToolTip="{x:Bind views:Display.OptionTip(Name)}" IsChecked="{x:Bind IsSelected, Mode=TwoWay}" Margin="0,0,0,3" HorizontalAlignment="Left" Padding="8,2,8,3">
                                                 <TextBlock Text="{x:Bind Name}" FontSize="12" />
                                             </ToggleButton>
                                         </DataTemplate>
                                     </ItemsControl.ItemTemplate>
                                 </ItemsControl>
-                                <TextBlock Text="The song playing doesn't read it." FontSize="11" Foreground="{x:Static views:Theme.Faint}"
+                                <TextBlock Text="Not read by this song" FontSize="11" Foreground="{x:Static views:Theme.Faint}"
                                            Margin="0,6,0,0" Visibility="{x:Bind views:Display.Not(IsUsed), Mode=OneWay}" />
                             </StackPanel>
                         </Border>

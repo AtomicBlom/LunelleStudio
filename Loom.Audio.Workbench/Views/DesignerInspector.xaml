@@ -16,16 +16,16 @@
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="8,8,8,6">
-            <ToggleButton IsChecked="{x:Bind ViewModel.Designer.IsOperatorTab, Mode=TwoWay}" Margin="0,0,3,0" Padding="8,3,8,4">
+            <ToggleButton ToolTipService.ToolTip="The chosen operator's settings" IsChecked="{x:Bind ViewModel.Designer.IsOperatorTab, Mode=TwoWay}" Margin="0,0,3,0" Padding="8,3,8,4">
                 <TextBlock Text="Operator" FontSize="12" />
             </ToggleButton>
-            <ToggleButton IsChecked="{x:Bind ViewModel.Designer.IsVoiceTab, Mode=TwoWay}" Margin="0,0,3,0" Padding="8,3,8,4">
+            <ToggleButton ToolTipService.ToolTip="The voice: its filter, its pitch's movement, its level" IsChecked="{x:Bind ViewModel.Designer.IsVoiceTab, Mode=TwoWay}" Margin="0,0,3,0" Padding="8,3,8,4">
                 <TextBlock Text="Voice" FontSize="12" />
             </ToggleButton>
-            <ToggleButton IsChecked="{x:Bind ViewModel.Designer.IsMacrosTab, Mode=TwoWay}" Margin="0,0,3,0" Padding="8,3,8,4">
+            <ToggleButton ToolTipService.ToolTip="The macros, and what each moves" IsChecked="{x:Bind ViewModel.Designer.IsMacrosTab, Mode=TwoWay}" Margin="0,0,3,0" Padding="8,3,8,4">
                 <TextBlock Text="Macros" FontSize="12" />
             </ToggleButton>
-            <ToggleButton IsChecked="{x:Bind ViewModel.Designer.IsCodeTab, Mode=TwoWay}" Padding="8,3,8,4">
+            <ToggleButton ToolTipService.ToolTip="The patch as C#" IsChecked="{x:Bind ViewModel.Designer.IsCodeTab, Mode=TwoWay}" Padding="8,3,8,4">
                 <TextBlock Text="C#" FontSize="12" />
             </ToggleButton>
         </StackPanel>
@@ -60,17 +60,17 @@
                                         </ItemsControl.ItemsPanel>
                                         <ItemsControl.ItemTemplate>
                                             <DataTemplate x:DataType="wb:ChoiceViewModel">
-                                                <ToggleButton IsChecked="{x:Bind IsSelected, Mode=TwoWay}" Margin="0,0,3,3" Padding="6,2,6,3">
+                                                <ToggleButton ToolTipService.ToolTip="{x:Bind views:Display.OptionTip(Name)}" IsChecked="{x:Bind IsSelected, Mode=TwoWay}" Margin="0,0,3,3" Padding="6,2,6,3">
                                                     <TextBlock Text="{x:Bind Name}" FontSize="11" />
                                                 </ToggleButton>
                                             </DataTemplate>
                                         </ItemsControl.ItemTemplate>
                                     </ItemsControl>
                                 </StackPanel>
-                                <ToggleButton Visibility="{x:Bind IsToggle}" IsChecked="{x:Bind IsOn, Mode=TwoWay}" HorizontalAlignment="Left" Margin="0,2,0,2" Padding="8,3,8,4">
+                                <ToggleButton ToolTipService.ToolTip="{x:Bind views:Display.ItemTip(Label)}" Visibility="{x:Bind IsToggle}" IsChecked="{x:Bind IsOn, Mode=TwoWay}" HorizontalAlignment="Left" Margin="0,2,0,2" Padding="8,3,8,4">
                                     <TextBlock Text="{x:Bind Label}" FontSize="12" />
                                 </ToggleButton>
-                                <Button Visibility="{x:Bind IsAction}" Command="{x:Bind Command}" HorizontalAlignment="Left" Margin="0,2,0,2" Padding="8,3,8,4">
+                                <Button ToolTipService.ToolTip="{x:Bind views:Display.ItemTip(Label)}" Visibility="{x:Bind IsAction}" Command="{x:Bind Command}" HorizontalAlignment="Left" Margin="0,2,0,2" Padding="8,3,8,4">
                                     <TextBlock Text="{x:Bind Label}" FontSize="12" />
                                 </Button>
                             </StackPanel>
@@ -100,7 +100,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="12,0,12,6">
-                <Button Command="{x:Bind ViewModel.Designer.CopyCommand, Mode=OneWay}" Padding="8,3,8,4">
+                <Button ToolTipService.ToolTip="Copy the patch's C#" Command="{x:Bind ViewModel.Designer.CopyCommand, Mode=OneWay}" Padding="8,3,8,4">
                     <TextBlock Text="Copy" FontSize="12" />
                 </Button>
                 <TextBlock Text="{x:Bind ViewModel.CopyStatus, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Dim}" Margin="10,0,0,0"

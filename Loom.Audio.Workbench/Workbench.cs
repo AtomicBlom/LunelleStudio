@@ -362,10 +362,16 @@ public sealed partial class Workbench : IDisposable
 			cue.IsUsed = used.Contains(cue.Cue);
 			cue.Readers.Clear();
 			foreach (var section in song.Sections)
+			{
 				foreach (var placement in section.Placements)
 					if (placement.Condition is { } condition)
 						foreach (var (level, above) in Levels(condition, cue.Cue))
 							cue.Readers.Add(new CueReaderViewModel(level, above, $"{section.Name} · {placement.Name}"));
+				foreach (var exit in section.Exits)
+					if (exit.When is { } when)
+						foreach (var (level, above) in Levels(when, cue.Cue))
+							cue.Readers.Add(new CueReaderViewModel(level, above, $"{section.Name} → {exit.To.Name}"));
+			}
 		}
 		if (_selected is { } selected && FindPlacement(selected) is { } again)
 		{
@@ -459,7 +465,7 @@ public sealed partial class Workbench : IDisposable
 		{
 			var value = Player.Get(cue.Cue);
 			foreach (var reader in cue.Readers)
-				reader.IsMet = reader.Above ? value > reader.Level : value < reader.Level;
+				reader.IsMet = reader.Above ? value >= reader.Level : value <= reader.Level;
 		}
 	}
 
@@ -940,6 +946,7 @@ public sealed partial class Workbench : IDisposable
 	{
 		ArgumentNullException.ThrowIfNull(input);
 		var control = input.Down(Key.LeftControl) || input.Down(Key.RightControl);
+		ViewModel.ShiftHeld = input.Down(Key.LeftShift) || input.Down(Key.RightShift);
 		if (control && input.Pressed(Key.K))
 		{
 			ViewModel.PaletteOpen = !ViewModel.PaletteOpen;
@@ -1228,6 +1235,7 @@ public sealed partial class Workbench : IDisposable
 			_ => Ticks.Triplet,
 		};
 		var editor = _editor;
+		roll.KitPieces = placement.Track.Kit is { } kit ? [.. kit.Pieces.Select(p => p.Piece.Id)] : [];
 		roll.Show($"{placement.Name} · {placement.Section.Name}", (JsonObject)part.DeepClone(),
 			placement.Section.Song.Meter.TicksPerBar / step, editor.IsEdited(section, index), editor.CanUndo, editor.CanRedo,
 			change => EditPart(section, index, change),

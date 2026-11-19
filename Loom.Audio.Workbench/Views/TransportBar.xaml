@@ -21,7 +21,7 @@
             <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
                 <TextBlock Text="{x:Bind ViewModel.SongName, Mode=OneWay}" FontSize="15" Foreground="{x:Static views:Theme.Ink}"
                            VerticalAlignment="Center" Margin="2,0,14,0" />
-                <ToggleButton IsChecked="{x:Bind ViewModel.IsPlaying, Mode=TwoWay}" Width="72" Margin="0,0,14,0" VerticalAlignment="Center">
+                <ToggleButton ToolTipService.ToolTip="Play or stop the song (Space)" IsChecked="{x:Bind ViewModel.IsPlaying, Mode=TwoWay}" Width="72" Margin="0,0,14,0" VerticalAlignment="Center">
                     <TextBlock Text="{x:Bind views:Display.PlayLabel(ViewModel.IsPlaying), Mode=OneWay}" FontSize="14" HorizontalAlignment="Center" />
                 </ToggleButton>
                 <!-- As wide as a long position, so nothing after it moves as the song plays -->
@@ -31,14 +31,14 @@
                            VerticalAlignment="Center" Margin="0,0,14,0" />
                 <TextBlock Text="{x:Bind ViewModel.ScaleText, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.Dim}"
                            VerticalAlignment="Center" Margin="0,0,14,0" />
-                <ToggleButton IsChecked="{x:Bind ViewModel.LoopSection, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,14,0" Padding="8,3,8,4">
+                <ToggleButton ToolTipService.ToolTip="Hold the section playing, looping it" IsChecked="{x:Bind ViewModel.LoopSection, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,14,0" Padding="8,3,8,4">
                     <TextBlock Text="Loop section" FontSize="12" />
                 </ToggleButton>
             </StackPanel>
             <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
                 <TextBlock Text="{x:Bind ViewModel.Notice, Mode=OneWay}" Visibility="{x:Bind views:Display.Any(ViewModel.Notice), Mode=OneWay}"
                            FontSize="12" Foreground="{x:Static views:Theme.Accent}" VerticalAlignment="Center" Margin="0,0,10,0" />
-                <ToggleButton IsChecked="{x:Bind ViewModel.ErrorOpen, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,12,0" Padding="0">
+                <ToggleButton ToolTipService.ToolTip="The project's last build: open it to see why it didn't build" IsChecked="{x:Bind ViewModel.ErrorOpen, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,12,0" Padding="0">
                     <Border Background="{x:Bind views:Display.Pill(ViewModel.HasError), Mode=OneWay}" CornerRadius="10">
                         <StackPanel Orientation="Horizontal" Margin="8,3,10,4">
                             <Ellipse Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,6,0"
@@ -48,7 +48,7 @@
                         </StackPanel>
                     </Border>
                 </ToggleButton>
-                <ToggleButton IsChecked="{x:Bind ViewModel.PaletteOpen, Mode=TwoWay}" VerticalAlignment="Center" Padding="8,3,8,4">
+                <ToggleButton ToolTipService.ToolTip="Find a song, patch, kit or command (Ctrl K)" IsChecked="{x:Bind ViewModel.PaletteOpen, Mode=TwoWay}" VerticalAlignment="Center" Padding="8,3,8,4">
                     <TextBlock Text="Find  Ctrl K" FontSize="12" />
                 </ToggleButton>
             </StackPanel>

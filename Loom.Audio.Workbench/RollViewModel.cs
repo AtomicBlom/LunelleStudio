@@ -57,6 +57,9 @@ public sealed class RollViewModel : ViewModel
 	/// <summary>The part's name and section, and how it is written.</summary>
 	public string Title { get; private set => Set(ref field, value); } = "";
 
+	/// <summary>Whether Shift is held on the computer's keyboard: the wheel then scrolls the roll across.</summary>
+	internal bool ShiftHeld => _workbench.ViewModel.ShiftHeld;
+
 	/// <summary>Why the part can't be edited here, or that it has been.</summary>
 	public string Status { get; private set => Set(ref field, value); } = "";
 
@@ -133,6 +136,9 @@ public sealed class RollViewModel : ViewModel
 		Bump();
 	}
 
+	/// <summary>The pieces of the kit a beat's track plays, each a row though the part doesn't play it yet.</summary>
+	internal IReadOnlyList<string> KitPieces { get; set; } = [];
+
 	/// <summary>
 	/// Shows a part, <paramref name="edit"/> making a change to it (in the song's file, heard at the next bar), and
 	/// <paramref name="gesture"/> grouping a drag's edits into one to undo (1 to start, 0 to end).
@@ -163,8 +169,9 @@ public sealed class RollViewModel : ViewModel
 			for (var s = 0; s < _line.Count; s++)
 				if (NoteToken.Parse(_line[s]) is { } note)
 					notes.Add((s, RollEdits.LengthOf(_line, s), note.Row, note));
-			var low = Math.Min(0, notes.Count > 0 ? notes.Min(n => n.Item3) - 2 : 0);
-			_highRow = Math.Max(7, notes.Count > 0 ? notes.Max(n => n.Item3) + 2 : 7);
+			// Three octaves of degrees, the part's own in the middle, widened to hold any note past them: room to scroll to
+			var low = Math.Min(-7, notes.Count > 0 ? notes.Min(n => n.Item3) - 2 : -7);
+			_highRow = Math.Max(20, notes.Count > 0 ? notes.Max(n => n.Item3) + 2 : 20);
 			Rows = [.. Enumerable.Range(0, _highRow - low + 1).Select(r => NoteToken.OnRow(_highRow - r).ToString())];
 			Notes = [.. notes.Select(n => (n.Item1, n.Item2, _highRow - n.Item3, n.Item4.ToString()))];
 			Cells = [];
@@ -173,9 +180,12 @@ public sealed class RollViewModel : ViewModel
 		{
 			Kind = RollKind.Beat;
 			_line = null;
-			Rows = [.. rows.Select(r => r.Key)];
-			Cells = [.. rows.Select(r => (IReadOnlyList<string>)[.. NotationText.Characters(r.Value?.GetValue<string>() ?? "").Steps])];
-			Steps = Cells.Count > 0 ? Cells[0].Count : 0;
+			// The kit's every piece, those the part doesn't play yet empty, so a hit on one is a click away
+			var written = rows.Select(r => (IReadOnlyList<string>)[.. NotationText.Characters(r.Value?.GetValue<string>() ?? "").Steps]).ToList();
+			var steps = written.Count > 0 ? written[0].Count : 0;
+			Rows = [.. rows.Select(r => r.Key), .. KitPieces.Where(p => !rows.ContainsKey(p))];
+			Cells = [.. written, .. KitPieces.Where(p => !rows.ContainsKey(p)).Select(_ => (IReadOnlyList<string>)[.. Enumerable.Repeat(".", steps)])];
+			Steps = steps;
 			Notes = [];
 		}
 		else if (part["strum"] is not null)
@@ -340,7 +350,8 @@ public sealed class RollViewModel : ViewModel
 		_edit?.Invoke(part =>
 		{
 			var rows = (JsonObject)part["rows"]!;
-			var text = NotationText.Characters(rows[piece]!.GetValue<string>());
+			// A piece the part doesn't play yet comes in empty, as long as the others
+			var text = NotationText.Characters(rows[piece]?.GetValue<string>() ?? new string('.', Steps));
 			change(text);
 			rows[piece] = text.ToString();
 		});

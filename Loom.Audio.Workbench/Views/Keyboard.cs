@@ -20,13 +20,18 @@ internal sealed partial class Keyboard : ContentControl
 	private const float BlackWidth = 18f;
 	private const float BlackHeight = 68f;
 	private const int Octaves = 3;
+	// The gap left between neighbouring keys, white or black
+	private const float Gap = 2f;
 
 	// Which semitones of an octave are white keys
 	private static readonly bool[] IsWhite = [true, false, true, false, true, true, false, true, false, true, false, true];
 
 	private readonly Dictionary<int, NoteHandle> _held = [];
-	// Each key drawn by its note, the first's note, and what each was last lit with (so a refresh changes only what moved)
+	// Each key drawn by its note: its top (a white key's stem between the black keys beside it) and, for a white key, the
+	// full-width foot below them, so a faded key shows nothing of another through it; the first's note, and what each
+	// was last lit with (so a refresh changes only what moved)
 	private readonly Border[] _keys = new Border[Octaves * 12];
+	private readonly Border?[] _feet = new Border?[Octaves * 12];
 	private readonly SUIsei.Media.Brush?[] _lit = new SUIsei.Media.Brush?[Octaves * 12];
 	private int _low;
 	private bool[] _scale = new bool[12];
@@ -79,42 +84,48 @@ internal sealed partial class Keyboard : ContentControl
 		ReleaseAll();
 		Keys.Children.Clear();
 		Array.Clear(_lit);
+		Array.Clear(_feet);
 		if (ViewModel is not { } model)
 			return;
 		_low = 12 * model.Octave;
 		_scale = model.Workbench.ScaleClasses();
-		// White keys first, so the black ones lie over them
 		var white = 0;
 		for (var k = 0; k < Octaves * 12; k++)
-			if (IsWhite[k % 12])
-				Add(k, white++ * WhiteWidth, WhiteWidth - 2f, WhiteHeight, Theme.WhiteKey);
-		white = 0;
-		for (var k = 0; k < Octaves * 12; k++)
 		{
-			if (IsWhite[k % 12])
+			if (!IsWhite[k % 12])
 			{
-				white++;
+				Add(k, BlackLeft(white), BlackWidth, BlackHeight, Theme.BlackKey);
 				continue;
 			}
-			Add(k, white * WhiteWidth - BlackWidth / 2f - 1f, BlackWidth, BlackHeight, Theme.BlackKey);
+			// A white key's stem is cut back from the black keys either side of it, a gap short of them
+			var left = white * WhiteWidth;
+			var right = left + WhiteWidth - Gap;
+			var stemLeft = k % 12 > 0 && !IsWhite[k % 12 - 1] ? BlackLeft(white) + BlackWidth + Gap : left;
+			var stemRight = k % 12 < 11 && k + 1 < Octaves * 12 && !IsWhite[k % 12 + 1] ? BlackLeft(white + 1) - Gap : right;
+			Add(k, stemLeft, stemRight - stemLeft, BlackHeight + Gap, Theme.WhiteKey);
+			_keys[k].CornerRadius = new CornerRadius(0f);
+			_feet[k] = Foot(k, left, right - left);
+			white++;
 		}
 		Light();
 	}
 
+	// Where the black key after the given number of white keys starts
+	private static float BlackLeft(int whites) => whites * WhiteWidth - BlackWidth / 2f - Gap / 2f;
+
 	private void Add(int k, float x, float width, float height, SUIsei.Media.Brush brush)
 	{
+		var key = Part(k, x, 0f, width, height, brush);
+		_keys[k] = key;
+	}
+
+	// A white key's foot, under the black keys' ends, named C where it is one
+	private Border Foot(int k, float x, float width)
+	{
 		var note = _low + k;
-		var key = new Border
-		{
-			Width = width,
-			Height = height,
-			Background = brush,
-			CornerRadius = new CornerRadius(0, 0, 3, 3),
-			Name = $"Key{note}",
-			Opacity = _scale[note % 12] ? 1f : 0.45f,
-		};
+		var foot = Part(k, x, BlackHeight + Gap, width, WhiteHeight - BlackHeight - Gap, Theme.WhiteKey);
 		if (k % 12 == 0)
-			key.Child = new TextBlock
+			foot.Child = new TextBlock
 			{
 				Text = $"C{note / 12 - 1}",
 				FontSize = 9f,
@@ -123,13 +134,28 @@ internal sealed partial class Keyboard : ContentControl
 				HorizontalAlignment = HorizontalAlignment.Center,
 				Margin = new Thickness(0f, 0f, 0f, 4f),
 			};
-		key.PreviewPointerPressed += (_, _) => Press(note);
-		key.PreviewPointerReleased += (_, _) => Release(note);
-		key.PointerExited += (_, _) => Release(note);
-		Canvas.SetLeft(key, x);
-		Canvas.SetTop(key, 0f);
-		_keys[k] = key;
-		Keys.Children.Add(key);
+		return foot;
+	}
+
+	// One piece of key k, pressing it playing the key's note
+	private Border Part(int k, float x, float y, float width, float height, SUIsei.Media.Brush brush)
+	{
+		var note = _low + k;
+		var part = new Border
+		{
+			Width = width,
+			Height = height,
+			Background = brush,
+			CornerRadius = new CornerRadius(0, 0, 3, 3),
+			Opacity = _scale[note % 12] ? 1f : 0.45f,
+		};
+		part.PreviewPointerPressed += (_, _) => Press(note);
+		part.PreviewPointerReleased += (_, _) => Release(note);
+		part.PointerExited += (_, _) => Release(note);
+		Canvas.SetLeft(part, x);
+		Canvas.SetTop(part, y);
+		Keys.Children.Add(part);
+		return part;
 	}
 
 	// The keys the focused track sounds, and those held, lit in its hue; the rest as they rest
@@ -151,6 +177,8 @@ internal sealed partial class Keyboard : ContentControl
 			{
 				_lit[k] = brush;
 				_keys[k].Background = brush;
+				if (_feet[k] is { } foot)
+					foot.Background = brush;
 			}
 		}
 	}

@@ -393,6 +393,15 @@ public sealed partial class Workbench : IDisposable
 	// What the inspector shows, by what survives a rebuild: a section's index, or a placement's section and name
 	private object? _inspected;
 
+	/// <summary>Puts the inspector away until something is chosen again.</summary>
+	internal void CloseInspector()
+	{
+		_inspected = null;
+		foreach (var section in ViewModel.Sections)
+			section.IsInspected = false;
+		ViewModel.Inspected = null;
+	}
+
 	/// <summary>Shows a section in the inspector.</summary>
 	internal void Inspect(SectionViewModel section)
 	{
@@ -1208,7 +1217,7 @@ public sealed partial class Workbench : IDisposable
 		{
 			roll.ShowNone(_source is null
 				? "This song is code alone: a song with a .song.json is edited here."
-				: "The song's file couldn't be read.");
+				: "The song's file couldn't be read.", $"{placement.Name} · {placement.Section.Name}");
 			roll.ShowCode(false, false, "");
 			return;
 		}
@@ -1223,7 +1232,8 @@ public sealed partial class Workbench : IDisposable
 				: member ?? "";
 			roll.ShowNone(member is null
 				? "A hook adds this part, so it is edited in its C#."
-				: $"This part is code ({where}), so it is edited there: bring it back to edit it here.");
+				: $"This part is code ({where}), so it is edited there: bring it back to edit it here.",
+				$"{placement.Name} · {placement.Section.Name}");
 			roll.ShowCode(false, member is not null, where);
 			return;
 		}

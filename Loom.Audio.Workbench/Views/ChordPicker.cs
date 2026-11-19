@@ -84,7 +84,7 @@ internal sealed class ChordPicker : ContentControl
 		_column.Children.Add(degrees);
 
 		var accidentals = Row();
-		foreach (var (shift, text, tip) in new[] { (-1, "♭", "Its root a semitone lower"), (0, "♮", "Its root on the scale"), (1, "♯", "Its root a semitone higher") })
+		foreach (var (shift, text, tip) in new[] { (-1, "flat", "Its root a semitone lower"), (0, "natural", "Its root on the scale"), (1, "sharp", "Its root a semitone higher") })
 		{
 			var button = Toggle(text, chord.Accidental == shift, tip);
 			button.Click += (_, _) => Set(chord with { Accidental = shift });

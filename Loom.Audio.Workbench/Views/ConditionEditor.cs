@@ -58,7 +58,8 @@ internal sealed class ConditionEditor : ContentControl
 		tools.Children.Add(add);
 		tools.Children.Add(_asText);
 
-		var column = new StackPanel { Orientation = Orientation.Vertical, MinWidth = 300f };
+		// As wide as a row needs and no wider: in a flyout it is offered all the width there is
+		var column = new StackPanel { Orientation = Orientation.Vertical, MinWidth = 280f, MaxWidth = 380f };
 		column.Children.Add(_join);
 		column.Children.Add(_rows);
 		column.Children.Add(_text);
@@ -122,9 +123,10 @@ internal sealed class ConditionEditor : ContentControl
 	{
 		var (subject, op, value) = _model[index];
 		var grid = new Grid { Margin = new Thickness(0f, 0f, 0f, 4f) };
-		grid.ColumnDefinitions.Add(GridLength.Pixels(120f));
-		grid.ColumnDefinitions.Add(GridLength.Pixels(54f));
-		grid.ColumnDefinitions.Add(GridLength.Star);
+		// The cue and the value share what the comparison and the remove button leave, the cue a little more
+		grid.ColumnDefinitions.Add(GridLength.Stars(1.2f));
+		grid.ColumnDefinitions.Add(GridLength.Pixels(50f));
+		grid.ColumnDefinitions.Add(GridLength.Stars(1f));
 		grid.ColumnDefinitions.Add(GridLength.Auto);
 
 		var names = new List<object?> { PassName };
@@ -176,6 +178,7 @@ internal sealed class ConditionEditor : ContentControl
 				SmallChange = pass ? 1 : 0.05,
 				Value = double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : 0,
 				SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline,
+				MinWidth = 76f,
 			};
 			ToolTipService.SetToolTip(number, pass ? "How many passes: 1 is the first time through" : "The level: the cue is usually 0 to 1");
 			number.ValueChanged += (_, _) =>

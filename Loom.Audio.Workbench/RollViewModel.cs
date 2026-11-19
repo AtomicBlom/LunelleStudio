@@ -126,12 +126,13 @@ public sealed class RollViewModel : ViewModel
 	private int _highRow;
 
 	/// <summary>Shows nothing to edit, saying why.</summary>
-	internal void ShowNone(string why)
+	internal void ShowNone(string why, string title = "")
 	{
 		_part = null;
 		_line = null;
 		_drag = null;
 		Kind = RollKind.None;
+		Title = title;
 		Status = why;
 		Bump();
 	}

@@ -329,14 +329,22 @@ internal sealed class Inspector : ContentControl
 		}
 	}
 
-	private static StackPanel Title(UIElement icon, string name, string detail)
+	// Its title: what it shows, and a button that puts it away, giving the board its room back
+	private Grid Title(UIElement icon, string name, string detail)
 	{
-		var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0f, 0f, 0f, 10f) };
+		var row = new Grid { Margin = new Thickness(0f, 0f, 0f, 10f) };
+		row.ColumnDefinitions.Add(GridLength.Auto);
+		row.ColumnDefinitions.Add(GridLength.Star);
+		row.ColumnDefinitions.Add(GridLength.Auto);
 		row.Children.Add(icon);
 		var words = new StackPanel { Orientation = Orientation.Vertical, Margin = new Thickness(8f, 0f, 0f, 0f) };
-		words.Children.Add(new TextBlock { Text = name, FontSize = 15f, Foreground = Theme.Ink });
-		words.Children.Add(new TextBlock { Text = detail, FontSize = 11f, Foreground = Theme.Faint });
+		words.Children.Add(new TextBlock { Text = name, FontSize = 15f, Foreground = Theme.Ink, TextTrimming = TextTrimming.CharacterEllipsis });
+		words.Children.Add(new TextBlock { Text = detail, FontSize = 11f, Foreground = Theme.Faint, TextTrimming = TextTrimming.CharacterEllipsis });
+		Grid.SetColumn(words, 1);
 		row.Children.Add(words);
+		var close = Tool(Glyphs.Close(11f), "Put the inspector away", true, () => Workbench?.CloseInspector());
+		Grid.SetColumn(close, 2);
+		row.Children.Add(close);
 		return row;
 	}
 

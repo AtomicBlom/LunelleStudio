@@ -66,7 +66,9 @@ internal sealed class CueTicks : ContentControl
 		_marks.Children.Clear();
 		if (Cue is not { } cue)
 			return;
-		foreach (var level in cue.Readers.GroupBy(r => r.Level))
+		// A label too near the last one drawn is left off (its tick still shows, and the readers below list it), so none overlap
+		var lastLabel = float.NegativeInfinity;
+		foreach (var level in cue.Readers.GroupBy(r => r.Level).OrderBy(g => g.Key))
 		{
 			var met = level.All(r => r.IsMet);
 			var x = level.Key * (DrawnWidth - 12f) + 6f;
@@ -74,6 +76,9 @@ internal sealed class CueTicks : ContentControl
 			Canvas.SetLeft(tick, x);
 			Canvas.SetTop(tick, 11f);
 			_marks.Children.Add(tick);
+			if (x - lastLabel < 26f)
+				continue;
+			lastLabel = x;
 			var label = new TextBlock { Text = level.Key.ToString("0.##", CultureInfo.InvariantCulture), FontSize = 10f, Foreground = Display.Met(met) };
 			Canvas.SetLeft(label, x - 9f);
 			Canvas.SetTop(label, -2f);

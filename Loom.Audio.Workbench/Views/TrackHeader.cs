@@ -13,7 +13,7 @@ namespace Loom.Audio.Workbench.Views;
 /// </summary>
 internal sealed class TrackHeader : ContentControl
 {
-	public const float HeaderWidth = 216f;
+	public const float HeaderWidth = 176f;
 
 	private readonly SUIsei.Media.TranslateTransform _stay = new();
 	private ArrangeScroll? _scroll;

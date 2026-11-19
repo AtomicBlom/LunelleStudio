@@ -63,6 +63,9 @@ internal static class Display
 	// A cue the song never reads, dimmed
 	public static float Used(bool used) => used ? 1f : 0.45f;
 
+	/// <summary>Shown while there is something to show.</summary>
+	public static SUIsei.Visibility Shown(object? something) => something is null ? SUIsei.Visibility.Collapsed : SUIsei.Visibility.Visible;
+
 	/// <summary>A kit's pad, pointed at.</summary>
 	public static string PadTip(string piece) => $"Play the {piece}";
 

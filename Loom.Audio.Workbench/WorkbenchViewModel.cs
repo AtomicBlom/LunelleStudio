@@ -189,6 +189,26 @@ public sealed class WorkbenchViewModel : ViewModel
 		}
 	}
 
+	/// <summary>How tall Arrange's part panel is, in DIPs: where its splitter was left.</summary>
+	public float PartPanelHeight
+	{
+		get;
+		set => Set(ref field, Math.Clamp(value, 120f, 900f));
+	} = 300f;
+
+	/// <summary>How far Arrange's lanes are scrolled, which its headers follow to stay put.</summary>
+	public ArrangeScroll ArrangeScroll { get; } = new();
+
+	/// <summary>The workbench this models, for the views that change the song through it.</summary>
+	internal Workbench Workbench => _workbench;
+
+	/// <summary>What the inspector shows: a <see cref="SectionViewModel"/>, a <see cref="PlacementViewModel"/>, or null.</summary>
+	public object? Inspected
+	{
+		get;
+		internal set => Set(ref field, value);
+	}
+
 	/// <summary>The keyboard's octave: its lowest C is in it.</summary>
 	public int Octave
 	{

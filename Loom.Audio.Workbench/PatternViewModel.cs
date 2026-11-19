@@ -35,8 +35,15 @@ public sealed class PatternViewModel : ViewModel
 	public IReadOnlyList<PatternNote> Notes
 	{
 		get => _notes;
-		private set => Set(ref _notes, value);
+		private set
+		{
+			if (Set(ref _notes, value))
+				Changed(nameof(HasNotes));
+		}
 	}
+
+	/// <summary>Whether it has a part's notes to show.</summary>
+	public bool HasNotes => _notes.Count > 0;
 
 	/// <summary>Each row's label: a note's name (C4), or a piece's id.</summary>
 	public IReadOnlyList<string> RowLabels
@@ -51,6 +58,9 @@ public sealed class PatternViewModel : ViewModel
 		get => _playheadTick;
 		internal set => Set(ref _playheadTick, value);
 	}
+
+	/// <summary>Shows nothing: no part is chosen.</summary>
+	internal void Clear() => Show("", 0, 0, [], []);
 
 	internal void Show(string title, int lengthTicks, int ticksPerBar, IReadOnlyList<PatternNote> notes, IReadOnlyList<string> rowLabels)
 	{

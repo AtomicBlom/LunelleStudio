@@ -3,7 +3,10 @@ using Loom.Audio.Synth.Music;
 
 namespace Loom.Audio.Workbench;
 
-/// <summary>A part a track plays in a section: its condition, whether it is on now, and whether it is forced on or off.</summary>
+/// <summary>
+/// A part a track plays in a section: what it plays through the section (every pass of it, and its fill), its condition,
+/// whether it is on now, where it is (which pass, the tick in it), and whether it is forced on or off.
+/// </summary>
 public sealed class PlacementViewModel : ViewModel
 {
 	private readonly Workbench _workbench;
@@ -20,6 +23,9 @@ public sealed class PlacementViewModel : ViewModel
 	}
 
 	internal Placement Placement { get; }
+
+	/// <summary>The workbench it belongs to, for a view that changes it.</summary>
+	internal Workbench Workbench => _workbench;
 
 	/// <summary>Its name, and its section's.</summary>
 	public string Name { get; }
@@ -105,11 +111,43 @@ public sealed class PlacementViewModel : ViewModel
 		internal set => Set(ref field, value);
 	}
 
-	/// <summary>One pass of its part, drawn small on its clip: notes by row, over <see cref="LoopTicks"/>.</summary>
+	/// <summary>What it plays through its whole section, every pass and its fill: notes by row, over <see cref="LengthTicks"/>.</summary>
 	public IReadOnlyList<PatternNote> Notes { get; internal init; } = [];
 
-	/// <summary>How long one pass of its part is, in ticks.</summary>
+	/// <summary>How long one pass of its part is, in ticks: whole bars.</summary>
 	public int LoopTicks { get; internal init; }
+
+	/// <summary>How long its section is, in ticks.</summary>
+	public int LengthTicks { get; internal init; }
+
+	/// <summary>Where its fill starts in the section, in ticks, or -1 for none.</summary>
+	public int FillTick { get; internal init; } = -1;
+
+	/// <summary>Its track's place in the song, which gives it its hue.</summary>
+	public int TrackIndex { get; internal init; }
+
+	/// <summary>Its condition as a song file writes it ("intensity &gt; 0.5 and pass &lt; 2"), or null for none.</summary>
+	public string? When { get; internal init; }
+
+	/// <summary>Its condition as its chip shows it: as written, or "always".</summary>
+	public string WhenShown => When ?? "always";
+
+	/// <summary>Which pass of it is playing, from 0, or -1 while its section isn't.</summary>
+	public int PassPlaying
+	{
+		get;
+		internal set => Set(ref field, value);
+	} = -1;
+
+	/// <summary>The tick in its section the song is at, or -1 while its section isn't playing.</summary>
+	public int SectionTick
+	{
+		get;
+		internal set => Set(ref field, value);
+	} = -1;
+
+	/// <summary>Sets when it plays, as a song file writes a condition (null: always); the reason it can't be, or null.</summary>
+	public string? SetWhen(string? when) => _workbench.SetCondition(Placement, when);
 
 	/// <summary>How many rows its notes lie on: pitches or pieces.</summary>
 	public int Rows { get; internal init; }

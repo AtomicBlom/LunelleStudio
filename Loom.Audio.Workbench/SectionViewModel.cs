@@ -1,8 +1,9 @@
 namespace Loom.Audio.Workbench;
 
 /// <summary>
-/// One of the song's sections on Arrange's timeline: its name, bars and chords, lit while it plays with how far through
-/// it is, marked while a jump to it waits for the next bar. Choosing it jumps there at the next bar.
+/// One of the song's sections on Arrange's timeline: its name, bars and chords bar by bar, its exits, lit while it plays
+/// with the bar playing and how far through it is, marked while a jump to it waits for the next bar. Choosing it shows it
+/// in the inspector; <see cref="Jump"/> plays it from the next bar.
 /// </summary>
 public sealed class SectionViewModel : ViewModel
 {
@@ -21,6 +22,72 @@ public sealed class SectionViewModel : ViewModel
 		ChordText = chordText;
 		Width = ArrangeLayout.SectionWidth(bars);
 	}
+
+	/// <summary>How far Arrange's lanes are scrolled, which its header follows down.</summary>
+	public ArrangeScroll Scroll => _workbench.ViewModel.ArrangeScroll;
+
+	/// <summary>It, for a view built from all of it at once.</summary>
+	public SectionViewModel Self => this;
+
+	/// <summary>Its chords bar by bar as written; fewer than its bars repeat to fill it.</summary>
+	public IReadOnlyList<Loom.Audio.Synth.Music.ChordBar> Progression { get; internal init; } = [];
+
+	/// <summary>The scale the song plays in, which spells its chords.</summary>
+	public Loom.Audio.Synth.Music.Scale Scale { get; internal init; } = Loom.Audio.Synth.Music.Scale.Major(Loom.Audio.Synth.Music.Note.C);
+
+	/// <summary>Its exits as a song file writes them, in the order they are tried: a condition (null for always) and where to.</summary>
+	public IReadOnlyList<(string? When, string Then)> Exits { get; internal init; } = [];
+
+	/// <summary>Its exits in a line: "→ open when intensity &gt; 0.7 · → cruise"; "plays again" with none.</summary>
+	public string ExitsText => Exits.Count == 0
+		? "↻ plays again"
+		: string.Join("  ·  ", Exits.Select(e => e.When is { } when ? $"→ {e.Then} when {when}" : $"→ {e.Then}"));
+
+	/// <summary>The width of one of its bars on the ruler.</summary>
+	public float BarWidth => Width / Bars;
+
+	/// <summary>Which of its exits would be taken were it ending now, or -1; while it plays.</summary>
+	public int NextExit
+	{
+		get;
+		internal set
+		{
+			if (Set(ref field, value))
+				Changed(nameof(NextText));
+		}
+	} = -1;
+
+	/// <summary>Where it goes next, as it stands: "→ open (exit 1)"; empty while it isn't playing.</summary>
+	public string NextText => !_isCurrent ? "" : NextExit >= 0 && NextExit < Exits.Count ? $"next → {Exits[NextExit].Then}" : "next ↻ again";
+
+	/// <summary>The bar of it playing, from 0, or -1 while it isn't.</summary>
+	public int PlayingBar
+	{
+		get;
+		internal set => Set(ref field, value);
+	} = -1;
+
+	/// <summary>Whether it is what the inspector shows.</summary>
+	public bool IsInspected
+	{
+		get;
+		internal set => Set(ref field, value);
+	}
+
+	/// <summary>Shows it in the inspector.</summary>
+	public void Inspect() => _workbench.Inspect(this);
+
+	/// <summary>Sets its chords; why they can't be taken, or null.</summary>
+	public string? SetChords(string chords) => _workbench.SetChords(Index, chords);
+
+	/// <summary>Sets how many bars it is.</summary>
+	public void SetBars(int bars) => _workbench.SetBars(Index, bars);
+
+	/// <summary>Renames it; why it can't be, or null.</summary>
+	public string? Rename(string name) => _workbench.RenameSection(Index, name);
+
+	/// <summary>Sets its exits; why they can't be taken, or null.</summary>
+	public string? SetExits(IReadOnlyList<(string? When, string Then)> exits) => _workbench.SetExits(Index, exits);
 
 	/// <summary>Its name.</summary>
 	public string Name { get; }
@@ -51,7 +118,11 @@ public sealed class SectionViewModel : ViewModel
 		}
 	}
 
-	internal void ShowCurrent(bool current) => Set(ref _isCurrent, current, nameof(IsCurrent));
+	internal void ShowCurrent(bool current)
+	{
+		if (Set(ref _isCurrent, current, nameof(IsCurrent)))
+			Changed(nameof(NextText));
+	}
 
 	/// <summary>A label: "verse (8)".</summary>
 	public string Label => $"{Name} ({Bars})";

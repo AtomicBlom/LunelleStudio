@@ -53,12 +53,14 @@ public class RollTests
 		public readonly Workbench Workbench;
 		public readonly WorkbenchCatalog Catalog;
 
-		public Rig()
+		// The song file written from code (Code() where none is given), and the catalog's song built from it too
+		public Rig(Func<Song>? code = null)
 		{
-			File.WriteAllText(Path, SongFile.Write(Code(), new SongNames { Patch = p => p.Name }));
+			code ??= Code;
+			File.WriteAllText(Path, SongFile.Write(code(), new SongNames { Patch = p => p.Name }));
 			Catalog = new WorkbenchCatalog
 			{
-				Songs = [("first", Code)],
+				Songs = [("first", code)],
 				Patches = [("click", () => MusicRig.Click)],
 				Cues = [Energy],
 				SongSource = name => name == "first"
@@ -289,5 +291,31 @@ public class RollTests
 		{
 			File.Delete(own);
 		}
+	}
+
+	[Test]
+	public void A_track_renamed_takes_its_parts_and_sweeps_with_it()
+	{
+		using var rig = new Rig(() =>
+		{
+			var song = new Song("first");
+			var lead = song.Track("lead", MusicRig.Click);
+			var verse = song.Section("verse", 1);
+			verse.Play(lead, Line.Quarters("1 3 5 3")).Named("melody");
+			verse.Sweep(lead, new Macro(0), 0f, 1f);
+			return song;
+		});
+		var model = rig.Workbench.ViewModel;
+
+		model.Tracks[0].Rename("bass").ShouldBeNull();
+		rig.Step(SongEditor.SaveAfterSeconds + 0.1);
+
+		var json = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(rig.Path))!;
+		var section = json["sections"]![0]!;
+		section["parts"]![0]!["track"]!.GetValue<string>().ShouldBe("bass");
+		section["sweeps"]![0]!["track"]!.GetValue<string>().ShouldBe("bass");
+		// The file still reads: a sweep left naming the old track would be refused
+		var song = SongFile.Load(File.ReadAllText(rig.Path), new SongBindings { Patch = n => n == MusicRig.Click.Name ? MusicRig.Click : null });
+		song.Sections[0].Sweeps.Single().Track.Name.ShouldBe("bass");
 	}
 }

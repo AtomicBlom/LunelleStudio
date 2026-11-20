@@ -163,7 +163,7 @@ internal sealed class TrackHeader : ContentControl
 			MaxHeight = 320f,
 			SelectedIndex = instruments.FindIndex(i => i.Name == track.InstrumentName && i.IsKit == track.IsKit),
 		};
-		var flyout = new Flyout { Content = new ScrollViewer { Content = list, MaxHeight = 320f }, Placement = FlyoutPlacementMode.RightEdgeAlignedTop };
+		var flyout = new Flyout { Content = list, Placement = FlyoutPlacementMode.RightEdgeAlignedTop };
 		list.ItemClick += (_, e) =>
 		{
 			var at = list.ItemsSource is List<object?> items ? items.IndexOf(e.ClickedItem) : -1;

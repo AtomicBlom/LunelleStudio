@@ -2,6 +2,8 @@ using System.ComponentModel;
 using SUIsei;
 using SUIsei.Controls;
 using SUIsei.Controls.Primitives;
+using SUIsei.Input;
+using SUIsei.RoutedEvents;
 
 namespace Loom.Audio.Workbench.Views;
 
@@ -24,6 +26,9 @@ internal sealed class SectionHeader : ContentControl
 	private readonly TextBlock _next = new() { FontSize = 11f, Foreground = Theme.Accent, Margin = new Thickness(8f, 0f, 0f, 0f) };
 	private readonly ToggleButton _name = new() { Padding = new Thickness(6f, 1f, 8f, 2f) };
 	private readonly TextBlock _queued = new() { Text = "at the next bar", FontSize = 11f, Foreground = Theme.Accent, Margin = new Thickness(8f, 3f, 0f, 0f), Visibility = Visibility.Collapsed };
+	// The bar cell a left press went down on, which a release over the same cell picks: a right-click or a drag that
+	// ends over a bar picks nothing
+	private Border? _pressed;
 
 	public SectionHeader()
 	{
@@ -122,7 +127,22 @@ internal sealed class SectionHeader : ContentControl
 				? $"Bar {bar + 1}: the progression again (its bar {at + 1}, {written}); click to change that bar"
 				: $"Bar {bar + 1}: {written}; click to change its chords");
 			var bar1 = at;
-			cell.AddHandler(PointerReleasedEvent, (_, _) => Pick(cell, bar1));
+			cell.AddHandler(PointerPressedEvent, (_, e) =>
+			{
+				if (e is PointerRoutedEventArgs { Pointer.Buttons: PointerButtons.Left })
+					_pressed = cell;
+			});
+			cell.AddHandler(PointerReleasedEvent, (_, _) =>
+			{
+				if (ReferenceEquals(_pressed, cell))
+					Pick(cell, bar1);
+				_pressed = null;
+			});
+			cell.PointerExited += (_, _) =>
+			{
+				if (ReferenceEquals(_pressed, cell))
+					_pressed = null;
+			};
 			_cells.Add(cell);
 			cells.Children.Add(cell);
 		}

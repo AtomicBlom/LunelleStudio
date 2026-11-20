@@ -167,17 +167,9 @@ internal sealed class ChordPicker : ContentControl
 		return accidentals + (minor ? numeral.ToLowerInvariant() : numeral) + suffix;
 	}
 
-	private static Chord Read(string token)
-	{
-		try
-		{
-			return Chord.Parse(token);
-		}
-		catch (NotationException)
-		{
-			return new Chord(1);
-		}
-	}
+	// A bar's token as a chord: the tokens came from a section that read them, so one that doesn't read throws rather than
+	// showing (and on the next pick writing back) a chord it isn't
+	private static Chord Read(string token) => Chord.Parse(token);
 
 	private static StackPanel Row() => new() { Orientation = Orientation.Horizontal, Margin = new Thickness(0f, 0f, 0f, 6f) };
 

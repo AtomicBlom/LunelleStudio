@@ -121,10 +121,16 @@ internal sealed class Inspector : ContentControl
 		var bars = new NumberBox { Minimum = 1, Maximum = 256, SmallChange = 1, LargeChange = 4, Value = section.Bars, SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline };
 		bars.ValueChanged += (_, _) =>
 		{
-			if (!double.IsNaN(bars.Value) && (int)bars.Value != Section?.Bars && Section is { } s)
+			if (double.IsNaN(bars.Value))
+				return;
+			// The box shows what is typed as it is, so a part bar is rounded here, and the box shows what was taken
+			var whole = (int)Math.Round(bars.Value);
+			if (whole != bars.Value)
+				bars.Value = whole;
+			else if (whole != Section?.Bars && Section is { } s)
 				Edit(() =>
 				{
-					s.SetBars((int)bars.Value);
+					s.SetBars(whole);
 					return 0;
 				});
 		};

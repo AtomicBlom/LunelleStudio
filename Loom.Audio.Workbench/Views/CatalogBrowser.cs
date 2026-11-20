@@ -8,9 +8,11 @@ using SUIsei.RoutedEvents;
 namespace Loom.Audio.Workbench.Views;
 
 /// <summary>
-/// The library: the catalog filtered by what is typed, as lists of songs, patches and kits. A click or Enter on a row
-/// opens it; the lists show what is open. While its filter has the keys, the workbench's own keys wait. The + on Songs and
-/// Patches makes a new file of that kind beside the project's others, which it lists once the project has built again.
+/// The library: the catalog filtered by what is typed, as lists of songs, patches and kits. A click on a row opens it, and
+/// leaves the keys with the workbench (<see cref="WorkbenchFocus"/>); a list reached with Tab takes the arrows, and Enter
+/// opens the row. The lists show what is open. While its filter has the keys, the workbench's own keys wait. The + on
+/// Songs and Patches makes a new file of that kind beside the project's others, which it lists once the project has built
+/// again.
 /// </summary>
 internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyChanged
 {

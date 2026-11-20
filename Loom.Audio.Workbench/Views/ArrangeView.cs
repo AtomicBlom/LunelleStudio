@@ -81,6 +81,7 @@ internal sealed partial class ArrangeView : ContentControl, INotifyPropertyChang
 		{
 			ItemsSource = instruments.Select(i => (object?)$"{(i.IsKit ? "kit" : "patch")} · {i.Name}").ToList(),
 			SelectedIndex = instruments.Count > 0 ? 0 : -1,
+			MaxHeight = 220f,
 		};
 		var problem = new TextBlock { FontSize = 11f, Foreground = Theme.Error, TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
 		var add = new Button { Content = new TextBlock { Text = "Add the track", FontSize = 12f }, Padding = new Thickness(10f, 3f, 10f, 4f), Margin = new Thickness(0f, 8f, 0f, 0f) };
@@ -88,7 +89,7 @@ internal sealed partial class ArrangeView : ContentControl, INotifyPropertyChang
 		column.Children.Add(Label("Name"));
 		column.Children.Add(name);
 		column.Children.Add(Label("Plays"));
-		column.Children.Add(new ScrollViewer { Content = list, MaxHeight = 220f });
+		column.Children.Add(list);
 		column.Children.Add(add);
 		column.Children.Add(problem);
 		var flyout = new Flyout { Content = column, Placement = FlyoutPlacementMode.BottomEdgeAlignedRight };

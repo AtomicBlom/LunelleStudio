@@ -18,6 +18,9 @@ public sealed partial class Workbench
 	/// <summary>The cues a condition can name, as the project has them: what a condition editor offers.</summary>
 	public IReadOnlyList<CueBase> ConditionCues => _catalog.Cues;
 
+	// The lists in a section of a song's file whose entries name a track: a rename or a delete of the track reaches each
+	private static readonly string[] TrackLists = ["parts", "sweeps"];
+
 	/// <summary>The catalog's patches and kits by name: what a track can play.</summary>
 	public IReadOnlyList<(string Name, bool IsKit)> Instruments =>
 		[.. _catalog.Patches.Select(p => (p.Name, false)), .. _catalog.Kits.Select(k => (k.Name, true))];
@@ -206,9 +209,11 @@ public sealed partial class Workbench
 			foreach (var track in (root["tracks"] as JsonArray ?? []).OfType<JsonObject>())
 				if (track["name"]?.GetValue<string>() == old)
 					track["name"] = name;
-			foreach (var node in Parts(root))
-				if (node["track"]?.GetValue<string>() == old)
-					node["track"] = name;
+			foreach (var section in (root["sections"] as JsonArray ?? []).OfType<JsonObject>())
+				foreach (var key in TrackLists)
+					foreach (var node in (section[key] as JsonArray ?? []).OfType<JsonObject>())
+						if (node["track"]?.GetValue<string>() == old)
+							node["track"] = name;
 		});
 		return null;
 	}
@@ -234,7 +239,7 @@ public sealed partial class Workbench
 				foreach (var t in tracks.OfType<JsonObject>().Where(t => t["name"]?.GetValue<string>() == track).ToList())
 					tracks.Remove(t);
 			foreach (var section in (root["sections"] as JsonArray ?? []).OfType<JsonObject>())
-				foreach (var key in new[] { "parts", "sweeps" })
+				foreach (var key in TrackLists)
 					if (section[key] is JsonArray list)
 						foreach (var gone in list.OfType<JsonObject>().Where(p => p["track"]?.GetValue<string>() == track).ToList())
 							list.Remove(gone);
@@ -371,7 +376,4 @@ public sealed partial class Workbench
 		var stem = name.Trim().ToLowerInvariant().Replace(' ', '-');
 		return stem.Length > 0 && stem.All(c => char.IsAsciiLetterOrDigit(c) || c == '-') ? stem : null;
 	}
-
-	private static IEnumerable<JsonObject> Parts(JsonObject root) =>
-		(root["sections"] as JsonArray ?? []).OfType<JsonObject>().SelectMany(s => (s["parts"] as JsonArray ?? []).OfType<JsonObject>());
 }

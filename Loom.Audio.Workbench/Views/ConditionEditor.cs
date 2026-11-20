@@ -148,7 +148,9 @@ internal sealed class ConditionEditor : ContentControl
 		var choice = cue is not null && cue.OptionNames.Count > 0;
 		var ops = choice ? new List<object?> { "is" } : subject == PassName ? [">", "<", "is"] : [">", "<"];
 		var how = new ComboBox { ItemsSource = ops, SelectedItem = op, Margin = new Thickness(0f, 0f, 4f, 0f) };
-		ToolTipService.SetToolTip(how, "> holds at the level and above, < at the level and below");
+		ToolTipService.SetToolTip(how, subject == PassName
+			? "> holds on passes after the count, < on passes before it, is on that pass alone"
+			: "> holds at the level and above, < at the level and below");
 		Grid.SetColumn(how, 1);
 		how.SelectionChanged += (_, _) =>
 		{
@@ -173,7 +175,7 @@ internal sealed class ConditionEditor : ContentControl
 			var pass = subject == PassName;
 			var number = new NumberBox
 			{
-				Minimum = pass ? 0 : -1,
+				Minimum = pass ? 1 : -1,
 				Maximum = pass ? 99 : 2,
 				SmallChange = pass ? 1 : 0.05,
 				Value = double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out var v) ? v : 0,

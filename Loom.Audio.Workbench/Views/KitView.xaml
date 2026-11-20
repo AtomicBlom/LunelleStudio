@@ -24,7 +24,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="wb:PadViewModel">
-                            <Button Command="{x:Bind Hit}" Width="120" Height="84" Margin="0,0,8,0">
+                            <Button ToolTipService.ToolTip="{x:Bind views:Display.PadTip(Piece)}" Command="{x:Bind Hit}" Width="120" Height="84" Margin="0,0,8,0">
                                 <TextBlock Text="{x:Bind Piece}" FontSize="14" HorizontalAlignment="Center" VerticalAlignment="Center" />
                             </Button>
                         </DataTemplate>
@@ -35,13 +35,13 @@
             <StackPanel Visibility="{x:Bind views:Display.Chosen(ViewModel.SelectedKit), Mode=OneWay}">
                 <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
                     <TextBlock Text="BEAT SKETCHER" FontSize="10" Foreground="{x:Static views:Theme.Faint}" VerticalAlignment="Center" Margin="0,0,12,0" />
-                    <ToggleButton IsChecked="{x:Bind ViewModel.Sketch.IsLooping, Mode=TwoWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <ToggleButton ToolTipService.ToolTip="Loop the sketch as it is written" IsChecked="{x:Bind ViewModel.Sketch.IsLooping, Mode=TwoWay}" Margin="0,0,6,0" Padding="8,3,8,4">
                         <TextBlock Text="Loop it" FontSize="12" />
                     </ToggleButton>
-                    <Button Command="{x:Bind ViewModel.Sketch.ClearCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <Button ToolTipService.ToolTip="Clear the sketch" Command="{x:Bind ViewModel.Sketch.ClearCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
                         <TextBlock Text="Clear" FontSize="12" />
                     </Button>
-                    <Button Command="{x:Bind ViewModel.Sketch.CopyCommand, Mode=OneWay}" Margin="0,0,10,0" Padding="8,3,8,4">
+                    <Button ToolTipService.ToolTip="Copy the sketch as a beat for a song's file" Command="{x:Bind ViewModel.Sketch.CopyCommand, Mode=OneWay}" Margin="0,0,10,0" Padding="8,3,8,4">
                         <TextBlock Text="Copy Beat" FontSize="12" />
                     </Button>
                     <TextBlock Text="tempo" FontSize="12" Foreground="{x:Static views:Theme.Dim}" VerticalAlignment="Center" Margin="0,0,6,0" />
@@ -64,7 +64,7 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="wb:BeatStepViewModel">
-                                            <Button Command="{x:Bind Cycle}" Margin="{x:Bind views:Display.StepGap(IsBeat)}">
+                                            <Button ToolTipService.ToolTip="Cycle the step: off, hit, accented" Command="{x:Bind Cycle}" Margin="{x:Bind views:Display.StepGap(IsBeat)}">
                                                 <Border Width="24" Height="22" CornerRadius="3" Background="{x:Bind views:Display.Step(Value), Mode=OneWay}"
                                                         BorderBrush="{x:Bind views:Display.Now(IsNow), Mode=OneWay}" BorderThickness="1">
                                                     <TextBlock Text="{x:Bind Text, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.AccentInk}"

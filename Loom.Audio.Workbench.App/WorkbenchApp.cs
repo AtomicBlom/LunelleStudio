@@ -122,6 +122,7 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 	{
 		_view.Root.LayoutScale = WorkbenchView.FitScale(SurfaceSize, DisplayScale);
 		_ui.Tick(time.DeltaSeconds, (float)time.TotalSeconds, SurfaceSize);
+		WorkbenchFocus.KeepKeys(_ui.Focus);
 		_ui.Render();
 		_painter.Prepare();
 	}

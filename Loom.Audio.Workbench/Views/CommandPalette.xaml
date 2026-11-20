@@ -22,7 +22,7 @@
                 <ItemsControl ItemsSource="{x:Bind ViewModel.PaletteItems, Mode=OneWay}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="wb:PaletteItemViewModel">
-                            <Button Command="{x:Bind ChooseCommand}" HorizontalAlignment="Stretch" Margin="0,0,0,1"
+                            <Button ToolTipService.ToolTip="Open it (Enter)" Command="{x:Bind ChooseCommand}" HorizontalAlignment="Stretch" Margin="0,0,0,1"
                                     Background="{x:Bind views:Display.Highlight(IsSelected), Mode=OneWay}">
                                 <StackPanel Orientation="Horizontal" Margin="6,3,6,4">
                                     <TextBlock Text="{x:Bind Category}" Width="76" FontSize="12" Foreground="{x:Static views:Theme.Faint}" />

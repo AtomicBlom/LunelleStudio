@@ -70,6 +70,39 @@ public sealed class TrackViewModel : ViewModel
 	/// <summary>What it plays on: "patch acoustic-guitar", "kit general".</summary>
 	public string Instrument { get; internal init; } = "";
 
+	/// <summary>How tall its lane is, and its header with it: room for the most parts it plays in any one section.</summary>
+	public float Height => ArrangeLayout.LaneHeight(Cells.Count == 0 ? 1 : Cells.Max(c => c.Placements.Count));
+
+	/// <summary>How far Arrange's lanes are scrolled, which its header follows across.</summary>
+	public ArrangeScroll Scroll => _workbench.ViewModel.ArrangeScroll;
+
+	/// <summary>It, for a view built from all of it at once.</summary>
+	public TrackViewModel Self => this;
+
+	/// <summary>Its place in the song, which gives it its hue.</summary>
+	public int Index { get; internal init; }
+
+	/// <summary>The name of the patch or kit it plays.</summary>
+	public string InstrumentName { get; internal init; } = "";
+
+	/// <summary>Whether it plays a kit rather than a patch.</summary>
+	public bool IsKit { get; internal init; }
+
+	/// <summary>Renames it; why it can't be, or null.</summary>
+	public string? Rename(string name) => _workbench.RenameTrack(Name, name);
+
+	/// <summary>Gives it another of the catalog's instruments.</summary>
+	public void SetInstrument(string instrument, bool isKit) => _workbench.SetInstrument(Name, instrument, isKit);
+
+	/// <summary>What it could play instead: the catalog's patches and kits.</summary>
+	public List<(string Name, bool IsKit)> Instruments => [.. _workbench.Instruments];
+
+	/// <summary>Takes it out of the song, with everything it plays.</summary>
+	public void Delete() => _workbench.DeleteTrack(Name);
+
+	/// <summary>Adds an empty part for it in a section, chosen at once.</summary>
+	public void AddPart(int section) => _workbench.AddPart(section, Name);
+
 	/// <summary>Its row in Arrange: a cell per section, each with the parts it plays there.</summary>
 	public ObservableCollection<LaneCellViewModel> Cells { get; } = [];
 }

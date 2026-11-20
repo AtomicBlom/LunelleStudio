@@ -27,22 +27,22 @@
                            Foreground="{x:Bind views:Display.Problem(ViewModel.Designer.HasProblems), Mode=OneWay}" />
             </StackPanel>
             <StackPanel Orientation="Horizontal">
-                <ToggleButton IsChecked="{x:Bind ViewModel.Designer.HearOriginal, Mode=TwoWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                <ToggleButton ToolTipService.ToolTip="Hear the patch as its file had it when opened" IsChecked="{x:Bind ViewModel.Designer.HearOriginal, Mode=TwoWay}" Margin="0,0,6,0" Padding="8,3,8,4">
                     <TextBlock Text="Hear its code" FontSize="12" />
                 </ToggleButton>
-                <ToggleButton IsChecked="{x:Bind ViewModel.Designer.AddOpen, Mode=TwoWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                <ToggleButton ToolTipService.ToolTip="Add an operator to the patch" IsChecked="{x:Bind ViewModel.Designer.AddOpen, Mode=TwoWay}" Margin="0,0,6,0" Padding="8,3,8,4">
                     <TextBlock Text="+ Operator" FontSize="12" />
                 </ToggleButton>
-                <Button Command="{x:Bind ViewModel.Designer.RevertCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                <Button ToolTipService.ToolTip="Put the patch back as its file had it when opened" Command="{x:Bind ViewModel.Designer.RevertCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
                     <TextBlock Text="Revert" FontSize="12" />
                 </Button>
-                <Button Command="{x:Bind ViewModel.Designer.CopyCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                <Button ToolTipService.ToolTip="Copy the patch's C#" Command="{x:Bind ViewModel.Designer.CopyCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
                     <TextBlock Text="Copy C#" FontSize="12" />
                 </Button>
-                <Button Command="{x:Bind ViewModel.Designer.EjectCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Designer.CanEject, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                <Button ToolTipService.ToolTip="Make the patch C#, to build any way you like" Command="{x:Bind ViewModel.Designer.EjectCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Designer.CanEject, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
                     <TextBlock Text="Eject to code" FontSize="12" />
                 </Button>
-                <Button Command="{x:Bind ViewModel.Designer.BringBackCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Designer.IsCode, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                <Button ToolTipService.ToolTip="Make the patch data in its file again, from the patch its code builds" Command="{x:Bind ViewModel.Designer.BringBackCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Designer.IsCode, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
                     <TextBlock Text="Bring back as data" FontSize="12" />
                 </Button>
                 <TextBlock Text="code: edits are heard, not saved" Visibility="{x:Bind ViewModel.Designer.IsCode, Mode=OneWay}" FontSize="11"
@@ -61,7 +61,7 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="wb:InspectorItemViewModel">
-                    <Button Command="{x:Bind Command}" Margin="0,0,4,0" Padding="8,3,8,4">
+                    <Button ToolTipService.ToolTip="{x:Bind views:Display.ItemTip(Label)}" Command="{x:Bind Command}" Margin="0,0,4,0" Padding="8,3,8,4">
                         <TextBlock Text="{x:Bind Label}" FontSize="12" />
                     </Button>
                 </DataTemplate>
@@ -88,7 +88,7 @@
             </ItemsControl.ItemsPanel>
             <ItemsControl.ItemTemplate>
                 <DataTemplate x:DataType="wb:StageViewModel">
-                    <Button Command="{x:Bind Choose}" Margin="0,0,4,0">
+                    <Button ToolTipService.ToolTip="{x:Bind views:Display.StageTip(Name)}" Command="{x:Bind Choose}" Margin="0,0,4,0">
                         <StackPanel Margin="6,2,6,3">
                             <TextBlock Text="{x:Bind Name}" FontSize="10" Foreground="{x:Static views:Theme.Faint}" />
                             <TextBlock Text="{x:Bind Value}" FontSize="12" Foreground="{x:Bind views:Display.StageInk(IsOff)}" />

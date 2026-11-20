@@ -189,11 +189,34 @@ public sealed class WorkbenchViewModel : ViewModel
 		}
 	}
 
+	/// <summary>Whether Shift is held on the computer's keyboard, as the last frame's keys said.</summary>
+	internal bool ShiftHeld { get; set; }
+
+	/// <summary>How tall Arrange's part panel is, in DIPs: where its splitter was left.</summary>
+	public float PartPanelHeight
+	{
+		get;
+		set => Set(ref field, Math.Clamp(value, 120f, 900f));
+	} = 300f;
+
+	/// <summary>How far Arrange's lanes are scrolled, which its headers follow to stay put.</summary>
+	public ArrangeScroll ArrangeScroll { get; } = new();
+
+	/// <summary>The workbench this models, for the views that change the song through it.</summary>
+	internal Workbench Workbench => _workbench;
+
+	/// <summary>What the inspector shows: a <see cref="SectionViewModel"/>, a <see cref="PlacementViewModel"/>, or null.</summary>
+	public object? Inspected
+	{
+		get;
+		internal set => Set(ref field, value);
+	}
+
 	/// <summary>The keyboard's octave: its lowest C is in it.</summary>
 	public int Octave
 	{
 		get => _octave;
-		set => Set(ref _octave, Math.Clamp(value, 0, 8));
+		set => Set(ref _octave, Math.Clamp(value, 1, 7));
 	}
 
 	/// <summary>How hard the keyboard plays, 0 to 1.</summary>

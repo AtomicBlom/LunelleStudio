@@ -39,6 +39,9 @@ internal sealed class RollEditor : ContentControl
 	private bool _dragging;
 	private long _lastPress;
 	private (int Step, int Row) _lastCell = (-1, -1);
+	// The part last drawn, and the offset to scroll to once its rows are laid out: a part newly opened shows its notes
+	private string? _shownTitle;
+	private float _centreOn = -1f;
 
 	public RollEditor()
 	{
@@ -49,6 +52,14 @@ internal sealed class RollEditor : ContentControl
 		_grid.PointerMoved += OnMoved;
 		_grid.PointerReleased += OnReleased;
 		_grid.PointerCaptureLost += (_, _) => Release();
+		// Shift turns the wheel across, as the roll is wider than it is tall
+		_scroll.AddHandler(PreviewPointerWheelChangedEvent, (_, e) =>
+		{
+			if (e is not PointerRoutedEventArgs { Wheel.Y: var notch and not 0f } || Roll?.ShiftHeld != true)
+				return;
+			_scroll.ScrollToHorizontalOffset(_scroll.HorizontalOffset - notch * 48f);
+			e.Handled = true;
+		});
 	}
 
 	/// <summary>The roll it draws and edits through.</summary>
@@ -91,7 +102,13 @@ internal sealed class RollEditor : ContentControl
 			Draw();
 			InvalidateMeasure();
 		}
-		return base.ArrangeOverride(finalSize);
+		var arranged = base.ArrangeOverride(finalSize);
+		if (_centreOn >= 0f && _scroll.ScrollableHeight > 0f)
+		{
+			_scroll.ScrollToVerticalOffset(_centreOn - _scroll.ViewportHeight / 2f);
+			_centreOn = -1f;
+		}
+		return arranged;
 	}
 
 	// Fit the labels, the steps and the rows to `space`: the labels as wide as the longest row's name, the steps sharing
@@ -131,6 +148,12 @@ internal sealed class RollEditor : ContentControl
 		var (label, stepWidth, rowHeight) = (_label, _stepWidth, _rowHeight);
 		_grid.Width = label + roll.Steps * stepWidth;
 		_grid.Height = roll.Rows.Count * rowHeight;
+		// A part newly opened: its notes, or the middle of its rows, brought into view once laid out
+		if (roll.Title != _shownTitle)
+		{
+			_shownTitle = roll.Title;
+			_centreOn = roll.Notes.Count > 0 ? (float)roll.Notes.Average(n => n.Row + 0.5) * rowHeight : roll.Rows.Count * rowHeight / 2f;
+		}
 		var text = MathF.Min(12f, rowHeight - 4f);
 
 		for (var r = 0; r < roll.Rows.Count; r++)

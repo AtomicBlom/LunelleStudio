@@ -12,7 +12,7 @@ namespace Loom.Audio.Workbench;
 /// headless; an app hosts it with <c>WorkbenchView</c> over its view model.
 /// </summary>
 /// <remarks>Every call is for the thread that made the engine: the app's frame thread.</remarks>
-public sealed class Workbench : IDisposable
+public sealed partial class Workbench : IDisposable
 {
 	// The keyboard's keys, an octave from C, as a piano's white and black keys lie on a QWERTY board
 	private static readonly Key[] Keys = [Key.A, Key.W, Key.S, Key.E, Key.D, Key.F, Key.T, Key.G, Key.Y, Key.H, Key.U, Key.J, Key.K];
@@ -227,7 +227,10 @@ public sealed class Workbench : IDisposable
 		_song = null;
 		_selected = null;
 		_selectedIndex = -1;
-		ViewModel.Roll.ShowNone("Choose a part to edit it.");
+		ViewModel.Roll.ShowNone("Choose a part's title in a lane to see it here.");
+		ViewModel.Pattern.Clear();
+		ViewModel.Inspected = null;
+		_inspected = null;
 		_muted.Clear();
 		_soloed.Clear();
 		_gainDb.Clear();
@@ -319,7 +322,12 @@ public sealed class Workbench : IDisposable
 		ViewModel.ScaleText = Describe.Scale(_scale ?? song.Scale);
 		ViewModel.Sections.Clear();
 		foreach (var section in song.Sections)
-			ViewModel.Sections.Add(new SectionViewModel(this, section.Index, section.Name, section.Bars, section.ChordText));
+			ViewModel.Sections.Add(new SectionViewModel(this, section.Index, section.Name, section.Bars, section.ChordText)
+			{
+				Progression = section.Progression,
+				Scale = _scale ?? song.Scale,
+				Exits = [.. section.Exits.Select(e => (e.When is { } when ? ConditionText.Write(when) : null, e.To.Name))],
+			});
 		ViewModel.Tracks.Clear();
 		foreach (var track in song.Tracks)
 		{
@@ -327,10 +335,13 @@ public sealed class Workbench : IDisposable
 				_gainDb.GetValueOrDefault(track.Name))
 			{
 				Instrument = track.Patch is { } patch ? $"patch {patch.Name}" : track.Kit is { } kit ? $"kit {kit.Name}" : "",
+				Index = IndexOfTrack(song, track),
+				InstrumentName = track.Patch?.Name ?? track.Kit?.Name ?? "",
+				IsKit = track.Kit is not null,
 			};
 			foreach (var section in song.Sections)
 			{
-				var cell = new LaneCellViewModel(section.Index, ArrangeLayout.SectionWidth(section.Bars));
+				var cell = new LaneCellViewModel(section.Index, ArrangeLayout.SectionWidth(section.Bars)) { Track = row };
 				foreach (var placement in section.Placements)
 					if (placement.Track == track)
 					{
@@ -351,30 +362,66 @@ public sealed class Workbench : IDisposable
 			cue.IsUsed = used.Contains(cue.Cue);
 			cue.Readers.Clear();
 			foreach (var section in song.Sections)
+			{
 				foreach (var placement in section.Placements)
 					if (placement.Condition is { } condition)
 						foreach (var (level, above) in Levels(condition, cue.Cue))
 							cue.Readers.Add(new CueReaderViewModel(level, above, $"{section.Name} · {placement.Name}"));
+				foreach (var exit in section.Exits)
+					if (exit.When is { } when)
+						foreach (var (level, above) in Levels(when, cue.Cue))
+							cue.Readers.Add(new CueReaderViewModel(level, above, $"{section.Name} → {exit.To.Name}"));
+			}
 		}
 		if (_selected is { } selected && FindPlacement(selected) is { } again)
 		{
 			ShowPattern(again);
 			ShowRoll(again);
 		}
+		// What the inspector showed, found again in the song rebuilt
+		ViewModel.Inspected = _inspected switch
+		{
+			int section when section < ViewModel.Sections.Count => ViewModel.Sections[section],
+			ValueTuple<string, string> key => ViewModel.Tracks.SelectMany(t => t.Placements).FirstOrDefault(p => (p.Placement.Section.Name, p.Placement.Name) == key),
+			_ => null,
+		};
+		if (ViewModel.Inspected is SectionViewModel inspected)
+			inspected.IsInspected = true;
 		RefreshConditions();
 	}
 
-	// A part as a clip in Arrange: one pass of it drawn small, what it plays, whether it is the one chosen
+	// What the inspector shows, by what survives a rebuild: a section's index, or a placement's section and name
+	private object? _inspected;
+
+	/// <summary>Puts the inspector away until something is chosen again.</summary>
+	internal void CloseInspector()
+	{
+		_inspected = null;
+		foreach (var section in ViewModel.Sections)
+			section.IsInspected = false;
+		ViewModel.Inspected = null;
+	}
+
+	/// <summary>Shows a section in the inspector.</summary>
+	internal void Inspect(SectionViewModel section)
+	{
+		_inspected = section.Index;
+		foreach (var each in ViewModel.Sections)
+			each.IsInspected = each == section;
+		ViewModel.Inspected = section;
+	}
+
+	// A part as a clip in Arrange: everything it plays through its section, what it plays, whether it is the one chosen
 	private PlacementViewModel Clip(Placement placement)
 	{
-		PlacementPattern pattern;
+		SectionPattern pattern;
 		try
 		{
-			pattern = Player.Pattern(placement, _scale);
+			pattern = Player.SectionPatternOf(placement, _scale);
 		}
 		catch (ArgumentException)
 		{
-			pattern = new PlacementPattern(0, 0, null, []);
+			pattern = new SectionPattern(0, 0, -1, 0, null, []);
 		}
 		var events = pattern.Events;
 		var kit = pattern.Kit;
@@ -387,9 +434,23 @@ public sealed class Workbench : IDisposable
 			KindText = (kit is not null ? "hits" : "notes") + (placement.IsOnPhrase ? " · on its phrase" : ""),
 			Notes = [.. events.Select(e => new PatternNote(e.Tick, e.Length, rows.IndexOf(kit is not null ? e.Piece : MathF.Round(e.Note)), e.Velocity))],
 			LoopTicks = pattern.LoopTicks,
+			LengthTicks = pattern.LengthTicks,
+			FillTick = pattern.FillTick,
+			TrackIndex = IndexOfTrack(placement.Section.Song, placement.Track),
+			When = placement.Condition is { } condition ? ConditionText.Write(condition) : null,
 			Rows = rows.Count,
 			IsSelected = _selected == key,
 		};
+	}
+
+	// A track's place in its song, which gives it its hue
+	private static int IndexOfTrack(Song song, SongTrack track)
+	{
+		var tracks = song.Tracks;
+		for (var i = 0; i < tracks.Count; i++)
+			if (tracks[i] == track)
+				return i;
+		return 0;
 	}
 
 	// Each level a condition compares a cue with, and whether it waits for the cue above it; a not turns the comparison over
@@ -413,7 +474,7 @@ public sealed class Workbench : IDisposable
 		{
 			var value = Player.Get(cue.Cue);
 			foreach (var reader in cue.Readers)
-				reader.IsMet = reader.Above ? value > reader.Level : value < reader.Level;
+				reader.IsMet = reader.Above ? value >= reader.Level : value <= reader.Level;
 		}
 	}
 
@@ -424,11 +485,14 @@ public sealed class Workbench : IDisposable
 		var progress = Math.Clamp(Player.SectionTick / (float)Math.Max(1, song.Sections[position.SectionIndex].Bars * song.Meter.TicksPerBar), 0f, 1f);
 		if (_queued == position.SectionIndex)
 			_queued = -1;
+		var nextExit = Player.NextExit;
 		foreach (var section in ViewModel.Sections)
 		{
 			var current = section.Index == position.SectionIndex;
 			section.Progress = current ? progress : 0f;
 			section.IsQueued = section.Index == _queued;
+			section.PlayingBar = current ? position.Bar - 1 : -1;
+			section.NextExit = current ? nextExit : -1;
 		}
 		foreach (var row in ViewModel.Tracks)
 			foreach (var cell in row.Cells)
@@ -449,6 +513,8 @@ public sealed class Workbench : IDisposable
 		{
 			section.Progress = 0f;
 			section.IsQueued = false;
+			section.PlayingBar = -1;
+			section.NextExit = -1;
 		}
 		foreach (var row in ViewModel.Tracks)
 			foreach (var cell in row.Cells)
@@ -527,7 +593,13 @@ public sealed class Workbench : IDisposable
 			var track = TrackOf(row.Name);
 			row.Peak = track is null ? 0f : Player.TrackPeak(track);
 			foreach (var placement in row.Placements)
-				placement.IsActive = placement.Placement.Section.Song == song && Player.IsActive(placement.Placement);
+			{
+				var mine = placement.Placement.Section.Song == song;
+				placement.IsActive = mine && Player.IsActive(placement.Placement);
+				var at = mine ? Player.PositionOf(placement.Placement) : default;
+				placement.PassPlaying = at.IsPlaying ? at.Pass : -1;
+				placement.SectionTick = at.IsPlaying ? Player.SectionTick : -1;
+			}
 		}
 		ViewModel.Pattern.PlayheadTick = _selected is { } selected && FindPlacement(selected) is { } shown
 			&& shown.Section.Index == position.SectionIndex && Player.IsActive(shown) && ViewModel.Pattern.LengthTicks > 0
@@ -613,6 +685,10 @@ public sealed class Workbench : IDisposable
 	{
 		_selected = (row.Placement.Section.Name, row.Placement.Name);
 		_selectedIndex = IndexIn(row.Placement);
+		_inspected = _selected;
+		foreach (var section in ViewModel.Sections)
+			section.IsInspected = false;
+		ViewModel.Inspected = row;
 		foreach (var track in ViewModel.Tracks)
 			foreach (var clip in track.Placements)
 				clip.IsSelected = clip == row;
@@ -879,6 +955,7 @@ public sealed class Workbench : IDisposable
 	{
 		ArgumentNullException.ThrowIfNull(input);
 		var control = input.Down(Key.LeftControl) || input.Down(Key.RightControl);
+		ViewModel.ShiftHeld = input.Down(Key.LeftShift) || input.Down(Key.RightShift);
 		if (control && input.Pressed(Key.K))
 		{
 			ViewModel.PaletteOpen = !ViewModel.PaletteOpen;
@@ -961,6 +1038,7 @@ public sealed class Workbench : IDisposable
 			Patch = _benchPatch >= 0 ? _catalog.Patches[_benchPatch].Name : null,
 			Kit = _benchKitIndex >= 0 ? _catalog.Kits[_benchKitIndex].Name : null,
 			Octave = ViewModel.Octave,
+			PartPanelHeight = ViewModel.PartPanelHeight,
 			Velocity = ViewModel.Velocity,
 			Mode = ViewModel.Mode.ToString(),
 			LibraryPinned = ViewModel.LibraryPinned,
@@ -1016,6 +1094,7 @@ public sealed class Workbench : IDisposable
 		_loop = state.LoopSection;
 		ViewModel.ShowLoop(_loop);
 		ViewModel.Octave = state.Octave;
+		ViewModel.PartPanelHeight = state.PartPanelHeight;
 		ViewModel.Velocity = state.Velocity;
 		if (state.SelectedPart is { } part && part.IndexOf('/') is var slash && slash > 0)
 			_selected = (part[..slash], part[(slash + 1)..]);
@@ -1138,7 +1217,7 @@ public sealed class Workbench : IDisposable
 		{
 			roll.ShowNone(_source is null
 				? "This song is code alone: a song with a .song.json is edited here."
-				: "The song's file couldn't be read.");
+				: "The song's file couldn't be read.", $"{placement.Name} · {placement.Section.Name}");
 			roll.ShowCode(false, false, "");
 			return;
 		}
@@ -1153,7 +1232,8 @@ public sealed class Workbench : IDisposable
 				: member ?? "";
 			roll.ShowNone(member is null
 				? "A hook adds this part, so it is edited in its C#."
-				: $"This part is code ({where}), so it is edited there: bring it back to edit it here.");
+				: $"This part is code ({where}), so it is edited there: bring it back to edit it here.",
+				$"{placement.Name} · {placement.Section.Name}");
 			roll.ShowCode(false, member is not null, where);
 			return;
 		}
@@ -1165,6 +1245,7 @@ public sealed class Workbench : IDisposable
 			_ => Ticks.Triplet,
 		};
 		var editor = _editor;
+		roll.KitPieces = placement.Track.Kit is { } kit ? [.. kit.Pieces.Select(p => p.Piece.Id)] : [];
 		roll.Show($"{placement.Name} · {placement.Section.Name}", (JsonObject)part.DeepClone(),
 			placement.Section.Song.Meter.TicksPerBar / step, editor.IsEdited(section, index), editor.CanUndo, editor.CanRedo,
 			change => EditPart(section, index, change),
@@ -1469,6 +1550,7 @@ public sealed class Workbench : IDisposable
 		foreach (var other in ViewModel.Files.Files)
 			if (other != entry)
 				other.IsSelected = false;
+		ViewModel.Files.Shown(entry);
 		string text;
 		try
 		{

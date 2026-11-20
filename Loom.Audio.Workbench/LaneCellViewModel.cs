@@ -14,6 +14,12 @@ public sealed class LaneCellViewModel : ViewModel
 		Width = width;
 	}
 
+	/// <summary>It, for a view built from all of it at once.</summary>
+	public LaneCellViewModel Self => this;
+
+	/// <summary>The track whose lane it is in.</summary>
+	public TrackViewModel? Track { get; internal init; }
+
 	/// <summary>The section's index in its song.</summary>
 	public int Section { get; }
 

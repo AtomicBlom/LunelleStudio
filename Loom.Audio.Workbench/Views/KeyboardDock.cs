@@ -7,7 +7,20 @@ namespace Loom.Audio.Workbench.Views;
 /// <summary>The keyboard docked along the bottom, and what it plays.</summary>
 internal sealed partial class KeyboardDock : ContentControl, INotifyPropertyChanged
 {
-	public KeyboardDock() => InitializeComponent();
+	public KeyboardDock()
+	{
+		InitializeComponent();
+		OctaveDown.Click += (_, _) =>
+		{
+			if (ViewModel is { } model)
+				model.Octave--;
+		};
+		OctaveUp.Click += (_, _) =>
+		{
+			if (ViewModel is { } model)
+				model.Octave++;
+		};
+	}
 
 	public event PropertyChangedEventHandler? PropertyChanged;
 

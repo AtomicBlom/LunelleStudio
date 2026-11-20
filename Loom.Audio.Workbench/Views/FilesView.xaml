@@ -12,24 +12,32 @@
                 IsTabStop="False">
     <Grid Margin="12,10,12,10">
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="230" />
+            <ColumnDefinition Width="260" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <ScrollViewer Grid.Column="0" Margin="0,0,10,0">
-            <ItemsControl ItemsSource="{x:Bind ViewModel.Files.Files, Mode=OneWay}">
-                <ItemsControl.ItemTemplate>
+        <Border Grid.Column="0" Margin="0,0,10,0" Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1" CornerRadius="8">
+            <ListView x:Name="FileList" Margin="4,6,4,6" ItemsSource="{x:Bind ViewModel.Files.Files, Mode=OneWay}" IsItemClickEnabled="True"
+                      SelectedIndex="{x:Bind ViewModel.Files.ShownIndex, Mode=TwoWay}">
+                <ListView.ItemTemplate>
                     <DataTemplate x:DataType="wb:FileEntryViewModel">
-                        <ToggleButton IsChecked="{x:Bind IsSelected, Mode=TwoWay}" HorizontalAlignment="Stretch" Margin="0,0,0,3" Padding="8,4,8,6">
-                            <StackPanel>
+                        <Grid ToolTipService.ToolTip="{x:Bind Path}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Path Data="{x:Bind views:Display.FileIcon(Name)}" Width="14" Height="14" Stretch="Uniform" Stroke="{x:Static views:Theme.Dim}"
+                                  StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round"
+                                  VerticalAlignment="Center" Margin="0,0,8,0" />
+                            <StackPanel Grid.Column="1">
                                 <TextBlock Text="{x:Bind Name}" FontSize="12" TextTrimming="CharacterEllipsis" />
-                                <TextBlock Text="{x:Bind Kind}" FontSize="10" Foreground="{x:Static views:Theme.Faint}" />
+                                <TextBlock Text="{x:Bind Kind}" FontSize="10" Foreground="{x:Static views:Theme.Dim}" />
                             </StackPanel>
-                        </ToggleButton>
+                        </Grid>
                     </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+                </ListView.ItemTemplate>
+            </ListView>
+        </Border>
 
         <Grid Grid.Column="1">
             <Grid.RowDefinitions>
@@ -40,7 +48,8 @@
             <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,6">
                 <TextBlock Text="{x:Bind ViewModel.Files.Title, Mode=OneWay}" FontSize="13" Foreground="{x:Static views:Theme.Ink}"
                            VerticalAlignment="Center" Margin="0,0,12,0" TextTrimming="CharacterEllipsis" />
-                <Button Command="{x:Bind ViewModel.Files.CopyFileCommand, Mode=OneWay}" Margin="0,0,10,0" Padding="8,2,8,3">
+                <Button Command="{x:Bind ViewModel.Files.CopyFileCommand, Mode=OneWay}" Margin="0,0,10,0" Padding="8,2,8,3"
+                        ToolTipService.ToolTip="Copy the whole file to the clipboard">
                     <TextBlock Text="Copy file" FontSize="12" />
                 </Button>
                 <TextBlock Text="{x:Bind ViewModel.CopyStatus, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Dim}" VerticalAlignment="Center" />
@@ -54,7 +63,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="wb:FilePieceViewModel">
-                            <Button Command="{x:Bind CopyCommand}" Margin="0,0,3,0" Padding="6,2,6,3">
+                            <Button Command="{x:Bind CopyCommand}" Margin="0,0,3,0" Padding="6,2,6,3" ToolTipService.ToolTip="Copy this piece of the file to the clipboard">
                                 <TextBlock Text="{x:Bind Name}" FontSize="11" />
                             </Button>
                         </DataTemplate>

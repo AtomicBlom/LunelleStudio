@@ -43,6 +43,9 @@ public sealed class WorkbenchState
 	/// <summary>The keyboard's octave.</summary>
 	public int Octave { get; set; } = 4;
 
+	/// <summary>How tall Arrange's part panel is.</summary>
+	public float PartPanelHeight { get; set; } = 300f;
+
 	/// <summary>The keyboard's velocity.</summary>
 	public float Velocity { get; set; } = 0.8f;
 

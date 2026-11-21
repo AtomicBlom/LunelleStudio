@@ -67,14 +67,47 @@ public sealed partial class Workbench : IDisposable
 	{
 		if (_bench is { } chip && _benchKit is null && _benchPatch >= 0)
 			chip.Replace(_benchInstrument, patch);
+		// An edit is heard in the song too, wherever a track plays this patch, once the edits pause a moment
+		if (ViewModel.Designer.IsDirty && (uint)_benchPatch < (uint)_catalog.Patches.Count)
+		{
+			_heard = (_catalog.Patches[_benchPatch].Name, patch);
+			_heardSince = 0;
+		}
 		// An edit, not the patch opening: written to its file a moment after the edits pause
 		if (_patchFile is not null && ViewModel.Designer.IsDirty)
 			_patchSince = 0;
 	}
 
+	// The designer's patch as edited, which the song plays in place of the catalog's of that name until the project is
+	// compiled again with it saved; and how long since the last edit, until the song is built again with it
+	private (string Name, Patch Patch)? _heard;
+	private double _heardSince = -1;
+
+	// How long the designer's edits pause before the song is built again with them: a slider dragged swaps it in once
+	private const double HeardAfterSeconds = 0.15;
+
+	// The patches the song last built asked for by name, so an edit to one of them builds it again
+	private readonly HashSet<string> _songPatches = new(StringComparer.Ordinal);
+
+	// The song's bindings, with the designer's patch in place of the catalog's while it is being edited
+	private SongBindings Bindings(SongBindings bindings) => new()
+	{
+		Patch = name =>
+		{
+			_songPatches.Add(name);
+			return _heard is { } heard && name == heard.Name ? heard.Patch : bindings.Patch(name);
+		},
+		Kit = bindings.Kit,
+		Cue = bindings.Cue,
+		Macro = bindings.Macro,
+		Part = bindings.Part,
+		Placement = bindings.Placement,
+		Hook = bindings.Hook,
+	};
+
 	private void OnCopyRequested(string text) =>
-		ViewModel.CopyStatus = CopyText is null ? "This host has no clipboard: select the code to copy it."
-			: CopyText(text) ? $"Copied at {DateTime.Now:HH:mm:ss}" : "The clipboard refused it.";
+		ViewModel.CopyStatus = CopyText is null ? "No clipboard is available. Select the text to copy it."
+			: CopyText(text) ? $"Copied at {DateTime.Now:HH:mm:ss}" : "Couldn't copy to the clipboard.";
 
 	// The beat sketcher's own player, made when it first loops, so the song's player is left alone
 	private MusicPlayer? _sketchPlayer;
@@ -173,6 +206,8 @@ public sealed partial class Workbench : IDisposable
 		var cues = ViewModel.Cues.ToDictionary(c => c.Name, c => Player.Get(c.Cue));
 
 		_catalog = catalog;
+		_heard = null;
+		_heardSince = -1;
 		WorkbenchViewModel.ReplaceChoices(ViewModel.Songs, [.. catalog.Songs.Select(s => s.Name)], ViewModel.AddSong);
 		WorkbenchViewModel.ReplaceChoices(ViewModel.Patches, [.. catalog.Patches.Select(s => s.Name)], ViewModel.AddPatch);
 		WorkbenchViewModel.ReplaceChoices(ViewModel.Kits, [.. catalog.Kits.Select(s => s.Name)], ViewModel.AddKit);
@@ -198,6 +233,8 @@ public sealed partial class Workbench : IDisposable
 		RebuildBench();
 		if (ViewModel.Mode == WorkbenchMode.Files)
 			RefreshFiles();
+
+		OpenAwaited();
 	}
 
 	/// <summary>
@@ -214,7 +251,7 @@ public sealed partial class Workbench : IDisposable
 			return;
 		}
 		ViewModel.Error = string.Join("\n", errors.Take(8)) + (errors.Count > 8 ? $"\n… and {errors.Count - 8} more" : "");
-		ViewModel.BuildText = "didn't compile · the last that built plays on";
+		ViewModel.BuildText = "Build failed · last build still playing";
 	}
 
 	/// <summary>Chooses a song and builds it; if one was playing, it plays.</summary>
@@ -227,7 +264,7 @@ public sealed partial class Workbench : IDisposable
 		_song = null;
 		_selected = null;
 		_selectedIndex = -1;
-		ViewModel.Roll.ShowNone("Choose a part's title in a lane to see it here.");
+		ViewModel.Roll.ShowNone("Select a part in a lane to edit it here.");
 		ViewModel.Pattern.Clear();
 		ViewModel.Inspected = null;
 		_inspected = null;
@@ -292,14 +329,15 @@ public sealed partial class Workbench : IDisposable
 		try
 		{
 			OpenEditor();
+			_songPatches.Clear();
 			song = _editor is { } editor && _source is { } source
-				? editor.Build(source.Bindings)
+				? editor.Build(Bindings(source.Bindings))
 				: build() ?? throw new InvalidOperationException("Its factory returned no song.");
 		}
 		catch (Exception ex)
 		{
 			ViewModel.Error = $"{name}: {ex.Message}";
-			ViewModel.BuildText = _song is null ? "didn't build" : "didn't build · the last that built plays on";
+			ViewModel.BuildText = _song is null ? "Build failed" : "Build failed · last build still playing";
 			Console.WriteLine($"[workbench] {name} didn't build: {ex.Message}");
 			return;
 		}
@@ -318,6 +356,7 @@ public sealed partial class Workbench : IDisposable
 	private void Fill(Song song)
 	{
 		ViewModel.SongName = song.Name;
+		ViewModel.Song = new SongViewModel(this, song);
 		ViewModel.TempoText = $"{song.Tempo:0} bpm";
 		ViewModel.ScaleText = Describe.Scale(_scale ?? song.Scale);
 		ViewModel.Sections.Clear();
@@ -382,23 +421,31 @@ public sealed partial class Workbench : IDisposable
 		ViewModel.Inspected = _inspected switch
 		{
 			int section when section < ViewModel.Sections.Count => ViewModel.Sections[section],
+			InspectedTrack track => ViewModel.Tracks.FirstOrDefault(t => t.Name == track.Name),
+			InspectedSong => ViewModel.Song,
 			ValueTuple<string, string> key => ViewModel.Tracks.SelectMany(t => t.Placements).FirstOrDefault(p => (p.Placement.Section.Name, p.Placement.Name) == key),
 			_ => null,
 		};
 		if (ViewModel.Inspected is SectionViewModel inspected)
 			inspected.IsInspected = true;
+		if (ViewModel.Inspected is TrackViewModel inspectedTrack)
+			inspectedTrack.IsInspected = true;
+		if (ViewModel.Inspected is SongViewModel inspectedSong)
+			inspectedSong.IsInspected = true;
 		RefreshConditions();
 	}
 
-	// What the inspector shows, by what survives a rebuild: a section's index, or a placement's section and name
+	// What the inspector shows, by what survives a rebuild: a section's index, a track's name, or a placement's section and
+	// name
 	private object? _inspected;
+
+	private sealed record InspectedTrack(string Name);
 
 	/// <summary>Puts the inspector away until something is chosen again.</summary>
 	internal void CloseInspector()
 	{
 		_inspected = null;
-		foreach (var section in ViewModel.Sections)
-			section.IsInspected = false;
+		Unmark();
 		ViewModel.Inspected = null;
 	}
 
@@ -406,9 +453,65 @@ public sealed partial class Workbench : IDisposable
 	internal void Inspect(SectionViewModel section)
 	{
 		_inspected = section.Index;
-		foreach (var each in ViewModel.Sections)
-			each.IsInspected = each == section;
+		Unmark();
+		section.IsInspected = true;
 		ViewModel.Inspected = section;
+	}
+
+	/// <summary>Shows a track in the inspector: its name, and the instrument it plays.</summary>
+	internal void Inspect(TrackViewModel track)
+	{
+		_inspected = new InspectedTrack(track.Name);
+		Unmark();
+		track.IsInspected = true;
+		ViewModel.Inspected = track;
+	}
+
+	private sealed record InspectedSong;
+
+	/// <summary>Shows the song itself in the inspector, its tempo, key and scale, in Arrange where the inspector is.</summary>
+	internal void InspectSong()
+	{
+		if (ViewModel.Song is not { } song)
+			return;
+		if (ViewModel.Mode != WorkbenchMode.Arrange)
+			SetMode(WorkbenchMode.Arrange);
+		_inspected = new InspectedSong();
+		Unmark();
+		song.IsInspected = true;
+		ViewModel.Inspected = song;
+	}
+
+	// No section or track lit as the one the inspector shows
+	private void Unmark()
+	{
+		if (ViewModel.Song is { } song)
+			song.IsInspected = false;
+
+		foreach (var section in ViewModel.Sections)
+			section.IsInspected = false;
+		foreach (var track in ViewModel.Tracks)
+			track.IsInspected = false;
+	}
+
+	/// <summary>
+	/// Opens what a track plays to change it: its patch in the designer, whose edits the song plays from the next bar after
+	/// they pause, or its kit in Kit.
+	/// </summary>
+	internal void OpenInstrument(TrackViewModel track)
+	{
+		var index = track.IsKit
+			? _catalog.Kits.ToList().FindIndex(k => k.Name == track.InstrumentName)
+			: _catalog.Patches.ToList().FindIndex(p => p.Name == track.InstrumentName);
+		if (index < 0)
+		{
+			ViewModel.Error = $"{track.InstrumentName} isn't in the project's catalog, so it can't be opened.";
+			return;
+		}
+		if (track.IsKit)
+			ChooseKit(index);
+		else
+			ChoosePatch(index);
 	}
 
 	// A part as a clip in Arrange: everything it plays through its section, what it plays, whether it is the one chosen
@@ -431,7 +534,7 @@ public sealed partial class Workbench : IDisposable
 		var key = (placement.Section.Name, placement.Name);
 		return new PlacementViewModel(this, placement, Describe.Placement(placement), _forced.GetValueOrDefault(key))
 		{
-			KindText = (kit is not null ? "hits" : "notes") + (placement.IsOnPhrase ? " · on its phrase" : ""),
+			KindText = (kit is not null ? "hits" : "notes") + (placement.IsOnPhrase ? " · starts on phrase" : ""),
 			Notes = [.. events.Select(e => new PatternNote(e.Tick, e.Length, rows.IndexOf(kit is not null ? e.Piece : MathF.Round(e.Note)), e.Velocity))],
 			LoopTicks = pattern.LoopTicks,
 			LengthTicks = pattern.LengthTicks,
@@ -501,7 +604,7 @@ public sealed partial class Workbench : IDisposable
 				cell.Progress = cell.IsCurrent ? progress : 0f;
 			}
 		ViewModel.NextText = _queued >= 0 && _queued < song.Sections.Count
-			? $"Next: {song.Sections[_queued].Name}, at the next bar"
+			? $"Next: {song.Sections[_queued].Name} at the next bar"
 			: _loop
 				? $"Next: {position.Section} again (looping)"
 				: Player.NextSection is { } next ? $"Next: {next.Name}" : "";
@@ -548,6 +651,12 @@ public sealed partial class Workbench : IDisposable
 		}
 		if (_patchSince >= 0 && (_patchSince += deltaSeconds) >= SongEditor.SaveAfterSeconds)
 			SavePatch();
+		if (_heardSince >= 0 && (_heardSince += deltaSeconds) >= HeardAfterSeconds)
+		{
+			_heardSince = -1;
+			if (_heard is { } heard && _songPatches.Contains(heard.Name))
+				Rebuild(swap: true);
+		}
 		if (_editor?.Update(deltaSeconds) == true)
 			ViewModel.BuildText = $"saved {Path.GetFileName(_editor.Path)} {DateTime.Now:HH:mm:ss}";
 		// Thirty refreshes a second, on average: what is left over carries to the next, so a frame rate that doesn't divide it
@@ -686,8 +795,7 @@ public sealed partial class Workbench : IDisposable
 		_selected = (row.Placement.Section.Name, row.Placement.Name);
 		_selectedIndex = IndexIn(row.Placement);
 		_inspected = _selected;
-		foreach (var section in ViewModel.Sections)
-			section.IsInspected = false;
+		Unmark();
 		ViewModel.Inspected = row;
 		foreach (var track in ViewModel.Tracks)
 			foreach (var clip in track.Placements)
@@ -904,7 +1012,7 @@ public sealed partial class Workbench : IDisposable
 			else
 				Play();
 		});
-		yield return new PaletteItemViewModel("Command", _loop ? "Stop looping the section" : "Loop the section playing", () => ViewModel.LoopSection = !_loop);
+		yield return new PaletteItemViewModel("Command", _loop ? "Stop looping section" : "Loop current section", () => ViewModel.LoopSection = !_loop);
 		yield return new PaletteItemViewModel("Command", ViewModel.LibraryPinned ? "Unpin the library" : "Pin the library", () => ViewModel.LibraryPinned = !ViewModel.LibraryPinned);
 		yield return new PaletteItemViewModel("Mode", "Arrange", () => SetMode(WorkbenchMode.Arrange));
 		yield return new PaletteItemViewModel("Mode", "Patch", () => SetMode(WorkbenchMode.Patch));
@@ -1182,7 +1290,7 @@ public sealed partial class Workbench : IDisposable
 		{
 			if (_editor.ReloadIfChanged())
 			{
-				_editorNote = $"{Path.GetFileName(_source.Path)} changed on disk: read again, undo cleared";
+				_editorNote = $"{Path.GetFileName(_source.Path)} changed on disk and was reloaded. Undo history cleared.";
 				Console.WriteLine($"[workbench] {_source.Path} changed on disk: read again");
 			}
 			return;
@@ -1216,8 +1324,8 @@ public sealed partial class Workbench : IDisposable
 		if (_editor is null)
 		{
 			roll.ShowNone(_source is null
-				? "This song is code alone: a song with a .song.json is edited here."
-				: "The song's file couldn't be read.", $"{placement.Name} · {placement.Section.Name}");
+				? "This song is defined in code. Only songs with a .song.json file can be edited here."
+				: "The song file couldn't be read.", $"{placement.Name} · {placement.Section.Name}");
 			roll.ShowCode(false, false, "");
 			return;
 		}
@@ -1231,8 +1339,8 @@ public sealed partial class Workbench : IDisposable
 				? $"{member}, in {Path.GetFileName(found.File)} at line {found.Line}"
 				: member ?? "";
 			roll.ShowNone(member is null
-				? "A hook adds this part, so it is edited in its C#."
-				: $"This part is code ({where}), so it is edited there: bring it back to edit it here.",
+				? "This part is added by a hook, so it is edited in C#."
+				: $"This part is defined in C# ({where}). Convert it to notation to edit it here.",
 				$"{placement.Name} · {placement.Section.Name}");
 			roll.ShowCode(false, member is not null, where);
 			return;
@@ -1246,6 +1354,7 @@ public sealed partial class Workbench : IDisposable
 		};
 		var editor = _editor;
 		roll.KitPieces = placement.Track.Kit is { } kit ? [.. kit.Pieces.Select(p => p.Piece.Id)] : [];
+		roll.Chords = ChordTones(placement, step, part["overChords"]?.GetValue<bool>() == true);
 		roll.Show($"{placement.Name} · {placement.Section.Name}", (JsonObject)part.DeepClone(),
 			placement.Section.Song.Meter.TicksPerBar / step, editor.IsEdited(section, index), editor.CanUndo, editor.CanRedo,
 			change => EditPart(section, index, change),
@@ -1257,6 +1366,27 @@ public sealed partial class Workbench : IDisposable
 					editor.EndGesture();
 			});
 		roll.ShowCode(Code is not null && _source?.Type is not null, false, "");
+	}
+
+	// For the roll: the chord over a step of a part (its first pass through the section), and whether the note a row plays
+	// there is that chord's root (2), another of its notes (1) or neither, as the player plays it, following the chords or not
+	private (Func<int, object> ChordAt, Func<int, int, int> Tone) ChordTones(Placement placement, int stepTicks, bool overChords)
+	{
+		var section = placement.Section;
+		var scale = _scale ?? section.Song.Scale;
+		var sectionTicks = Math.Max(1, section.Bars * section.Song.Meter.TicksPerBar);
+		Chord At(int step) => section.ChordAt(step * stepTicks % sectionTicks);
+		static int Class(Pitch pitch) => (((int)MathF.Round(pitch.Midi) % 12) + 12) % 12;
+		int Tone(int step, int row)
+		{
+			var chord = At(step);
+			var note = NoteToken.OnRow(row);
+			var (degree, accidental) = overChords ? (chord.Degree + note.Degree - 1, chord.Accidental) : (note.Degree, 0);
+			var played = Class(scale.Degree(degree, 4 + note.Octave, accidental));
+			var root = chord.RootClass(scale);
+			return played == root ? 2 : chord.Intervals(scale).Any(i => (root + i) % 12 == played) ? 1 : 0;
+		}
+		return (step => At(step), Tone);
 	}
 
 	// An edit of a part in the song's file: the song built again from the file as edited, heard at the next bar
@@ -1310,6 +1440,11 @@ public sealed partial class Workbench : IDisposable
 	private IReadOnlyList<string>? OpenPatchFile(string name)
 	{
 		SavePatch();
+		if (_heard is { } heard && heard.Name != name && _patchCode is not null)
+		{
+			_heard = null;
+			Rebuild(swap: true);
+		}
 		_patchFile = _catalog.PatchFile(name);
 		_patchAbout = "";
 		_patchCode = null;
@@ -1396,9 +1531,9 @@ public sealed partial class Workbench : IDisposable
 		var (section, index) = (chosen.Section.Index, IndexIn(chosen));
 		var member = MemberName(chosen, type, placement ? "Placement" : "");
 		var code = placement
-			? $"// Ejected from {chosen.Section.Name} · {chosen.Name}: the whole placement, its condition and name too\n"
+			? $"// Converted from {chosen.Section.Name} · {chosen.Name}: the whole part, with its condition and name\n"
 				+ $"private static partial Placement {member}(Section section, SongTrack track) =>\n\t{PartCode.Write(chosen, "section", "track").Replace("\n", "\n\t", StringComparison.Ordinal)};"
-			: $"// Ejected from {chosen.Section.Name} · {chosen.Name}: its notation; its condition and name stay in the data\n"
+			: $"// Converted from {chosen.Section.Name} · {chosen.Name}: its notes; its condition and name stay in the song file\n"
 				+ $"private static partial Part {member}() =>\n\t{PartCode.Write(chosen.Part).Replace("\n", "\n\t", StringComparison.Ordinal)};";
 		var (file, line) = Code.AddMember(type, Path.GetDirectoryName(source.Path)!, code);
 		_editor.Edit(root =>
@@ -1420,7 +1555,7 @@ public sealed partial class Workbench : IDisposable
 			parts[index] = made;
 		});
 		_editor.Save();
-		ViewModel.BuildText = $"ejected to {Path.GetFileName(file)}:{line} · compiling";
+		ViewModel.BuildText = $"Converted to C# in {Path.GetFileName(file)}:{line} · building";
 		ShowRoll(chosen);
 	}
 
@@ -1461,7 +1596,7 @@ public sealed partial class Workbench : IDisposable
 		}
 		catch (NotSupportedException ex)
 		{
-			ViewModel.Roll.ShowNone($"Its code makes something the file can't say ({ex.Message}), so it stays code.");
+			ViewModel.Roll.ShowNone($"This part can't be written as notation ({ex.Message}), so it stays in C#.");
 			return;
 		}
 		_editor.Edit(root => ((JsonArray)root["sections"]![section]!["parts"]!)[index] = data);
@@ -1469,7 +1604,7 @@ public sealed partial class Workbench : IDisposable
 		// Its member goes too, unless another piece of the file still calls it
 		if (Code is not null && !_editor.Text.Contains($"\"code\": \"{member}\"", StringComparison.Ordinal))
 			Code.RemoveMember(type, member);
-		ViewModel.BuildText = $"{member} is data again";
+		ViewModel.BuildText = $"{member} converted to notation";
 		Rebuild(swap: true);
 	}
 
@@ -1486,14 +1621,14 @@ public sealed partial class Workbench : IDisposable
 		var stem = Path.GetFileName(_patchFile);
 		stem = stem[..stem.IndexOf('.', StringComparison.Ordinal)];
 		var property = PatchCode.Pascal(stem);
-		var code = $"// Ejected from {stem}.patch.json: build it any way you like; \"Bring back as data\" reads back the patch it builds\n"
+		var code = $"// Converted from {stem}.patch.json. \"Convert to patch file\" turns the patch this builds back into a file.\n"
 			+ PatchCode.Write(designer.Spec, property, designer.Names, _catalog.MacroName)
 				.Replace($"public static Patch {property} =>", $"public static partial Patch {property} =>", StringComparison.Ordinal);
 		var (file, line) = Code.AddMember(type, Path.GetDirectoryName(_patchFile)!, code);
 		File.WriteAllText(_patchFile, $"{{\n  \"format\": \"{PatchFile.Format}\",\n  \"name\": \"{designer.Spec.Name}\",\n  \"code\": \"{property}\"\n}}\n");
 		_patchCode = property;
 		designer.ShowCode(true, false);
-		ViewModel.BuildText = $"ejected to {Path.GetFileName(file)}:{line} · compiling";
+		ViewModel.BuildText = $"Converted to C# in {Path.GetFileName(file)}:{line} · building";
 	}
 
 	// The code patch made data again: what it builds written to its file, its operators named as its variables are, and
@@ -1510,7 +1645,7 @@ public sealed partial class Workbench : IDisposable
 		_patchCode = null;
 		ViewModel.Designer.Load(patch, _catalog.MacroName, names: names);
 		ViewModel.Designer.ShowCode(false, Code is not null && _catalog.PatchesType is not null);
-		ViewModel.BuildText = $"{property} is data again";
+		ViewModel.BuildText = $"{property} converted to a patch file";
 	}
 
 	// The variables a patch's C# makes its operators into, in order ("var tine = p.Sine(…)"), when each operator is one
@@ -1542,7 +1677,7 @@ public sealed partial class Workbench : IDisposable
 		if ((files.Files.FirstOrDefault(f => f.Path == shown) ?? files.Files.FirstOrDefault()) is { } first)
 			first.IsSelected = true;
 		else
-			files.Show("This project's music has no files: a song or patch made data (a .song.json, a .patch.json) shows here.", "", []);
+			files.Show("This project has no music files. Songs (.song.json) and patches (.patch.json) appear here.", "", []);
 	}
 
 	private void ShowFile(FileEntryViewModel entry)

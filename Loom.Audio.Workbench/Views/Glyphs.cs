@@ -6,7 +6,7 @@ namespace Loom.Audio.Workbench.Views;
 
 /// <summary>
 /// The workbench's icons, stroked with round ends in a 20 square as the rail's are, made at any size: what a library row,
-/// a lane's header, a file and the inspector's title are, and the small marks on buttons (play, add, up and down, close).
+/// a lane's header, a file and the inspector's title are, and the small marks on buttons (play, add, up and down, close, delete) and a handle to drag by.
 /// The patch, kit and files icons are the rail's own.
 /// </summary>
 internal static class Glyphs
@@ -24,6 +24,8 @@ internal static class Glyphs
 	private const string UpData = "M4,13 L10,7 L16,13";
 	private const string DownData = "M4,7 L10,13 L16,7";
 	private const string CloseData = "M4,4 L16,16 M16,4 L4,16";
+	private const string TrashData = "M3.5,5.5 L16.5,5.5 M8,5.5 L8,3 L12,3 L12,5.5 M5.5,5.5 L6.5,17 L13.5,17 L14.5,5.5 M8.5,8.5 L8.8,14 M11.5,8.5 L11.2,14";
+	private const string GripData = "M6,5 L14,5 M6,10 L14,10 M6,15 L14,15";
 
 	public static Path Song(float size, Brush? stroke = null) => Make(SongData, size, stroke);
 	public static Path Patch(float size, Brush? stroke = null) => Make(PatchData, size, stroke);
@@ -38,6 +40,8 @@ internal static class Glyphs
 	public static Path Up(float size, Brush? stroke = null) => Make(UpData, size, stroke);
 	public static Path Down(float size, Brush? stroke = null) => Make(DownData, size, stroke);
 	public static Path Close(float size, Brush? stroke = null) => Make(CloseData, size, stroke);
+	public static Path Trash(float size, Brush? stroke = null) => Make(TrashData, size, stroke);
+	public static Path Grip(float size, Brush? stroke = null) => Make(GripData, size, stroke);
 
 	private static Path Make(string data, float size, Brush? stroke, bool fill = false) => new()
 	{

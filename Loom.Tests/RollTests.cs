@@ -18,6 +18,8 @@ public class RollTests
 	public void A_line_edited_a_step_at_a_time_keeps_its_bars()
 	{
 		var line = NotationText.Line("1 - 3 . | 5 . . .");
+		// Placed where a note starts, a note joins it as a chord: to replace it, it goes first
+		RollEdits.Delete(line, 2);
 		RollEdits.Place(line, 2, 4);
 		line.ToString().ShouldBe("1 - 5 . | 5 . . .");
 		RollEdits.Resize(line, 2, 4);
@@ -44,6 +46,74 @@ public class RollTests
 		hits.ShouldBe([".", "x", "X", "o", "."]);
 		RollEdits.NextStroke(".").ShouldBe("D");
 		RollEdits.NextStroke("_").ShouldBe(".");
+	}
+
+	[Test]
+	public void Notes_placed_where_others_start_make_a_chord_edited_a_note_at_a_time()
+	{
+		var line = NotationText.Line("1 - . . | . . . .");
+		// Row 2 is the third, row 4 the fifth: they join the note starting at step 0, as long as it is
+		RollEdits.Place(line, 0, 2);
+		RollEdits.Place(line, 0, 4);
+		line.ToString().ShouldBe("1/3/5 - . . | . . . .");
+		RollEdits.NoteAt(line, 1, 2).ShouldBe(0);
+		RollEdits.NoteAt(line, 1, 3).ShouldBe(-1);
+
+		// A chord lengthens together; one of its notes changes, leaves or goes alone
+		RollEdits.Resize(line, 0, 2);
+		line.ToString().ShouldBe("1/3/5 - - . | . . . .");
+		RollEdits.Change(line, 0, n => n with { Accidental = -1 }, row: 2);
+		line.ToString().ShouldBe("1/b3/5 - - . | . . . .");
+		RollEdits.Move(line, 0, 4, 4, from: 4);
+		line.ToString().ShouldBe("1/b3 - - . | 5 - - .");
+		RollEdits.Delete(line, 0, row: 0);
+		line.ToString().ShouldBe("b3 - - . | 5 - - .");
+		RollEdits.Delete(line, 0, row: 2);
+		line.ToString().ShouldBe(". . . . | 5 - - .");
+
+		// Moved whole, a chord keeps its shape
+		RollEdits.Place(line, 4, 2);
+		RollEdits.Move(line, 4, 0, 1);
+		line.ToString().ShouldBe("2/4 - - . | . . . .");
+	}
+
+	[Test]
+	public void The_roll_stacks_a_chord_and_deletes_one_of_its_notes()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		model.Tracks[0].Placements[0].SelectCommand.Execute(null);
+		var roll = model.Roll;
+		// "1 3 5 3": a click two rows above the first note (on its step) stacks a third onto it
+		var first = roll.Notes[0];
+		roll.Press(first.Step, first.Row - 2, secondary: false, twice: false);
+		roll.Release();
+		roll.Notes.Where(n => n.Step == 0).Select(n => n.Token).ShouldBe(["1", "3"], ignoreOrder: true);
+		roll.IsSelected(0, first.Row - 2).ShouldBeTrue();
+
+		// A right-click on the first note takes it alone out of the chord
+		roll.Press(first.Step, first.Row, secondary: true, twice: false);
+		roll.Notes.Where(n => n.Step == 0).Select(n => n.Token).ShouldBe(["3"]);
+	}
+
+	[Test]
+	public void A_part_regridded_keeps_its_timing()
+	{
+		// Finer: a line's notes held on, its rests still rests; a strum's strokes ringing
+		var line = RollEdits.Regrid(["1", "-", "3", "."], Ticks.Quarter, Ticks.Eighth, characters: false)!;
+		line.ShouldBe(["1", "-", "-", "-", "3", "-", ".", "."]);
+		RollEdits.Regrid(["D", "x"], Ticks.Quarter, Ticks.Eighth, characters: true).ShouldBe(["D", ".", "x", "."]);
+
+		// Coarser: back again, a note that ran short filling its step; one starting between steps can't go
+		RollEdits.Regrid(line, Ticks.Eighth, Ticks.Quarter, characters: false).ShouldBe(["1", "-", "3", "."]);
+		RollEdits.Regrid(["1", ".", "3", "."], Ticks.Eighth, Ticks.Quarter, characters: false).ShouldBe(["1", "3"]);
+		RollEdits.Regrid(["1", "3", ".", "."], Ticks.Eighth, Ticks.Quarter, characters: false).ShouldBeNull();
+		RollEdits.Regrid(["D", ".", "D", "U"], Ticks.Eighth, Ticks.Quarter, characters: true).ShouldBeNull();
+		// Triplets and eighths don't divide into each other
+		RollEdits.Regrid(["1", ".", "."], Ticks.Triplet, Ticks.Eighth, characters: false).ShouldBeNull();
+
+		RollEdits.Write(line, 4, 2, characters: false).ShouldBe("1 - - - | 3 - . .");
+		RollEdits.Write(["x", ".", "x", ".", "X", ".", "o", "."], 8, 2, characters: true).ShouldBe("x. x. X. o.");
 	}
 
 	private sealed class Rig : IDisposable
@@ -117,7 +187,7 @@ public class RollTests
 		roll.Release();
 		roll.Notes.Select(n => n.Token).ShouldBe(["1", "6", "5", "3"]);
 		rig.Workbench.Editor!.IsDirty.ShouldBeTrue();
-		roll.Status.ShouldStartWith("edited");
+		roll.Status.ShouldStartWith("Edited");
 		roll.CanUndo.ShouldBeTrue();
 		rig.Workbench.Player.Song!.Sections[0].Placements[0].Part.ShouldBeOfType<Line>().Text.ShouldBe("1 6 5 3");
 
@@ -156,6 +226,229 @@ public class RollTests
 	}
 
 	[Test]
+	public void A_track_is_inspected_renamed_and_its_patch_edited_as_the_song_plays()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		rig.Workbench.Play();
+		model.Tracks[0].Inspect();
+		model.Inspected.ShouldBe(model.Tracks[0]);
+		model.Tracks[0].IsInspected.ShouldBeTrue();
+
+		// Renamed, the inspector follows it to its new name
+		model.Tracks[0].Rename("hook").ShouldBeNull();
+		model.Inspected.ShouldBeOfType<TrackViewModel>().Name.ShouldBe("hook");
+		model.Tracks[0].IsInspected.ShouldBeTrue();
+
+		// Its patch opened in the designer: an edit is heard in the song once the edits pause
+		var before = rig.Workbench.Player.Song!.Tracks[0].Patch!.Operators.Length;
+		model.Tracks[0].OpenInstrument();
+		model.IsPatch.ShouldBeTrue();
+		model.Designer.AddButtons[0].Command!.Execute(null);
+		rig.Step(0.3);
+		rig.Workbench.Player.Song!.Tracks[0].Patch!.Operators.Length.ShouldBe(before + 1);
+	}
+
+	[Test]
+	public void The_roll_lights_each_chords_notes_and_a_line_can_follow_the_chords()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		rig.Workbench.Play();
+		model.Sections[0].SetChords("I IV").ShouldBeNull();
+		model.Tracks[0].Placements[0].SelectCommand.Execute(null);
+		var roll = model.Roll;
+		// The middle octave's rows lit at a step, or only the root's
+		string[] Lit(int step, bool root) => [.. roll.ChordTones
+			.Where(t => t.From <= step && step < t.To && (!root || t.Root))
+			.Select(t => roll.Rows[t.Row]).Where(r => r.Length == 1).Order()];
+
+		// "1 3 5 3" in C major: C under I, then F's chord under IV
+		Lit(0, root: false).ShouldBe(["1", "3", "5"]);
+		Lit(0, root: true).ShouldBe(["1"]);
+		Lit(2, root: false).ShouldBe(["1", "4", "6"]);
+		Lit(2, root: true).ShouldBe(["4"]);
+
+		// Following the chords, 1 is each chord's root: under IV, 1 3 5 are its notes
+		model.Tracks[0].Placements[0].IsOverChords.ShouldBeFalse();
+		model.Tracks[0].Placements[0].SetOverChords(true);
+		rig.Workbench.Player.Song!.Sections[0].Placements[0].Part.ShouldBeOfType<Line>().IsOverChords.ShouldBeTrue();
+		model.Tracks[0].Placements[0].IsOverChords.ShouldBeTrue();
+		Lit(2, root: false).ShouldBe(["1", "3", "5"]);
+		Lit(2, root: true).ShouldBe(["1"]);
+		rig.Step(SongEditor.SaveAfterSeconds + 0.1);
+		File.ReadAllText(rig.Path).ShouldContain("\"overChords\": true");
+	}
+
+	[Test]
+	public void A_part_is_added_as_a_melody_a_bass_line_over_the_chords_or_a_strum()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		rig.Workbench.Play();
+		Part Added() => rig.Workbench.Player.Song!.Sections[0].Placements[^1].Part;
+
+		model.Tracks[0].AddPart(0, NewPartKind.Bass);
+		Added().ShouldBeOfType<Line>().ShouldSatisfyAllConditions(l => l.IsOverChords.ShouldBeTrue(), l => l.OctaveShift.ShouldBe(-1));
+		model.Roll.Kind.ShouldBe(RollKind.Line);
+
+		model.Tracks[0].AddPart(0, NewPartKind.Strum);
+		Added().ShouldBeOfType<Strum>();
+		model.Roll.Kind.ShouldBe(RollKind.Strum);
+
+		model.Tracks[0].AddPart(0, NewPartKind.Melody);
+		Added().ShouldBeOfType<Line>().IsOverChords.ShouldBeFalse();
+	}
+
+	[Test]
+	public void A_new_song_opens_once_the_project_has_built_with_it()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		var stem = "fresh-" + Guid.NewGuid().ToString("N")[..6];
+		var made = Path.Combine(Path.GetDirectoryName(rig.Path)!, stem + ".song.json");
+		try
+		{
+			rig.Workbench.NewSong(stem).ShouldBeNull();
+			File.Exists(made).ShouldBeTrue();
+			model.BuildText.ShouldContain(stem);
+			model.SongName.ShouldBe("first");
+
+			rig.Workbench.UseCatalog(rig.Catalog with
+			{
+				Songs = [.. rig.Catalog.Songs, (stem, () =>
+				{
+					var song = new Song(stem);
+					song.Section("a", 4);
+					return song;
+				})],
+			});
+			model.SelectedSong.ShouldBe(1);
+			model.SongName.ShouldBe(stem);
+			model.IsArrange.ShouldBeTrue();
+		}
+		finally
+		{
+			File.Delete(made);
+		}
+	}
+
+	[Test]
+	public void A_part_changes_grid_and_is_deleted()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		rig.Workbench.Play();
+		var melody = model.Tracks[0].Placements[0];
+		melody.GridChoice!.Value.Grid.ShouldBe("quarters");
+
+		melody.SetGrid("eighths").ShouldBeNull();
+		var line = rig.Workbench.Player.Song!.Sections[0].Placements[0].Part.ShouldBeOfType<Line>();
+		line.Step.ShouldBe(Ticks.Eighth);
+		line.Text.ShouldBe("1 - 3 - 5 - 3 -");
+
+		// And back to quarters, as it was
+		model.Tracks[0].Placements[0].SetGrid("quarters").ShouldBeNull();
+		rig.Workbench.Player.Song!.Sections[0].Placements[0].Part.ShouldBeOfType<Line>().Text.ShouldBe("1 3 5 3");
+
+		var count = rig.Workbench.Player.Song!.Sections[0].Placements.Count;
+		model.Tracks[0].Placements[0].Select();
+		model.Tracks[0].Placements[0].Delete();
+		rig.Workbench.Player.Song!.Sections[0].Placements.Count.ShouldBe(count - 1);
+		model.Inspected.ShouldBeNull();
+		model.Roll.Kind.ShouldBe(RollKind.None);
+	}
+
+	[Test]
+	public void The_songs_tempo_and_scale_are_set_from_the_inspector()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		rig.Workbench.Play();
+		model.InspectSongCommand.Execute(null);
+		model.Inspected.ShouldBeOfType<SongViewModel>().IsInspected.ShouldBeTrue();
+
+		model.Song!.SetTempo(90);
+		rig.Workbench.Player.Song!.Tempo.ShouldBe(90f);
+		model.Song!.SetScale("D", "dorian");
+		rig.Workbench.Player.Song!.Scale.Name.ShouldBe("dorian");
+		rig.Workbench.Player.Song!.Scale.Root.ShouldBe(Note.D);
+		// Still shown, as the song built again
+		model.Inspected.ShouldBeOfType<SongViewModel>().ShouldSatisfyAllConditions(
+			s => s.Tempo.ShouldBe(90),
+			s => s.Root.ShouldBe("D"),
+			s => s.ScaleName.ShouldBe("dorian"));
+		Should.Throw<ArgumentException>(() => model.Song!.SetScale("H", "major"));
+	}
+
+	[Test]
+	public void The_songs_settings_open_in_the_inspector_from_the_transport()
+	{
+		using var rig = new Rig();
+		var host = new SUIsei.UIHost();
+		var page = new WorkbenchView(rig.Workbench.ViewModel);
+		host.CreateRoot(SUIsei.UILayer.Default).Root.Content = page;
+		var surface = new System.Numerics.Vector2(1400f, 900f);
+		host.Tick(0.016, 0f, surface);
+
+		var songButtons = Find<SUIsei.Controls.Button>(page).Where(b => SUIsei.Controls.ToolTipService.GetToolTip(b) is "Song settings: tempo, key and scale").ToList();
+		songButtons.Count.ShouldBe(2);
+		songButtons[0].PerformClick();
+		host.Tick(0.016, 0f, surface);
+
+		rig.Workbench.ViewModel.Inspected.ShouldBeOfType<SongViewModel>();
+		Find<SUIsei.Controls.TextBlock>(page).Select(t => t.Text).ShouldContain("Tempo");
+	}
+
+	// Every element of a kind in a tree
+	private static List<T> Find<T>(SUIsei.UIElement top) where T : SUIsei.UIElement
+	{
+		var found = new List<T>();
+		void Walk(SUIsei.UIElement element)
+		{
+			if (element is T t)
+				found.Add(t);
+			for (var i = 0; i < SUIsei.Media.VisualTreeHelper.GetChildrenCount(element); i++)
+				Walk(SUIsei.Media.VisualTreeHelper.GetChild(element, i));
+		}
+		Walk(top);
+		return found;
+	}
+
+	[Test]
+	public void An_instrument_dropped_on_the_board_adds_a_track_named_for_it()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		rig.Workbench.AddTrackPlaying("click", isKit: false).ShouldBeNull();
+		rig.Workbench.AddTrackPlaying("click", isKit: false).ShouldBeNull();
+		model.Tracks.Select(t => t.Name).ShouldBe(["lead", "click", "click 2"]);
+		model.Inspected.ShouldBeOfType<TrackViewModel>().Name.ShouldBe("click 2");
+	}
+
+	[Test]
+	public void An_operator_is_moved_to_another_place_unless_it_would_pass_what_it_reads()
+	{
+		using var session = new OfflineSession();
+		using var workbench = new Workbench(session.Engine, session.Engine.Master, new WorkbenchCatalog { Patches = [("click", () => MusicRig.Click)] });
+		workbench.ChoosePatch(0);
+		var designer = workbench.ViewModel.Designer;
+		designer.AddButtons[0].Command!.Execute(null);
+		designer.AddButtons[0].Command!.Execute(null);
+		var names = designer.Names.ToList();
+		names.Count.ShouldBe(3);
+
+		designer.MoveTo(2, 0).ShouldBe(0);
+		designer.Names.ShouldBe([names[2], names[0], names[1]]);
+		designer.MoveTo(0, 2).ShouldBe(2);
+		designer.Names.ShouldBe(names);
+
+		// One that modulates another can't be moved past it
+		designer.Spec.Operators[2] = designer.Spec.Operators[2] with { Modulators = [new Modulation(1, 1f)] };
+		designer.MoveTo(1, 2).ShouldBe(1);
+	}
+
+	[Test]
 	public void A_part_that_is_code_shows_why_it_is_not_edited_here()
 	{
 		using var rig = new Rig();
@@ -174,7 +467,7 @@ public class RollTests
 		rig.Workbench.UseCatalog(withCode);
 		model.Tracks[0].Placements[1].SelectCommand.Execute(null);
 		model.Roll.Kind.ShouldBe(RollKind.None);
-		model.Roll.Status.ShouldContain("code");
+		model.Roll.Status.ShouldContain("C#");
 	}
 
 	[Test]

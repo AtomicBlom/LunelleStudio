@@ -7,6 +7,7 @@ using Loom.Audio.Synth.Chip;
 using SUIsei;
 using SUIsei.Controls;
 using SUIsei.Media;
+using SUIsei.RoutedEvents;
 using SUIsei.Shapes;
 
 namespace Loom.Audio.Workbench.Views;
@@ -27,12 +28,67 @@ internal sealed class OperatorGraph : ContentControl
 	private readonly Canvas _canvas = new();
 	private readonly ScrollViewer _scroll = new() { HorizontalScrollBarVisibility = ScrollBarVisibility.Auto };
 	private readonly DoubleCollection _dash = [4, 3];
+	// How far a node moves held before it is dragged rather than clicked
+	private const float DragDistance = 4f;
+
+	// The nodes as last drawn, by operator; and each column's operators with their tops, in order
+	private readonly Dictionary<int, Border> _boxes = [];
+	private readonly Dictionary<int, List<(int Index, float Top)>> _columns = [];
+
+	// A node held: its operator, where in it the pointer is, and on which pointer; whether it is being dragged
+	private (int Index, float Grab, uint Pointer)? _held;
+	private bool _dragging;
+
+	// Dragging a node up or down its column reorders the operators; let go, it takes the place it is nearest
+	private void WireDrag()
+	{
+		_canvas.AddHandler(PointerMovedEvent, (_, e) =>
+		{
+			if (_held is not { } held || e is not PointerRoutedEventArgs pointer || pointer.PointerId != held.Pointer
+				|| !_boxes.TryGetValue(held.Index, out var box))
+				return;
+			var top = pointer.GetCurrentPoint(_canvas).Position.Y - held.Grab;
+			if (!_dragging && MathF.Abs(top - Canvas.GetTop(box)) < DragDistance)
+				return;
+			if (!_dragging)
+			{
+				_dragging = true;
+				box.Opacity = 0.85f;
+				// Drawn over the others while it moves
+				_canvas.Children.Remove(box);
+				_canvas.Children.Add(box);
+			}
+			Canvas.SetTop(box, top);
+			e.Handled = true;
+		}, handledEventsToo: true);
+		_canvas.AddHandler(PointerReleasedEvent, (_, _) => Drop(), handledEventsToo: true);
+		_canvas.AddHandler(PointerCaptureLostEvent, (_, _) => Drop(), handledEventsToo: true);
+	}
+
+	private void Drop()
+	{
+		var (held, dragging) = (_held, _dragging);
+		_held = null;
+		_dragging = false;
+		if (held is not { } h)
+			return;
+		_canvas.ReleasePointerCapture(h.Pointer);
+		if (!dragging || Designer is not { } designer || !_boxes.TryGetValue(h.Index, out var box))
+			return;
+		var centre = Canvas.GetTop(box) + NodeHeight / 2f;
+		var column = _columns.FirstOrDefault(c => c.Value.Any(s => s.Index == h.Index)).Value;
+		var target = column?.MinBy(s => MathF.Abs(s.Top + NodeHeight / 2f - centre)).Index ?? h.Index;
+		if (target == h.Index || designer.MoveTo(h.Index, target) == h.Index)
+			Draw();
+	}
 
 	public OperatorGraph()
 	{
 		IsTabStop = false;
 		_scroll.Content = _canvas;
 		Content = _scroll;
+
+		WireDrag();
 	}
 
 	/// <summary>The designer whose patch it draws.</summary>
@@ -67,13 +123,15 @@ internal sealed class OperatorGraph : ContentControl
 	private void Draw()
 	{
 		_canvas.Children.Clear();
+		_boxes.Clear();
+		_columns.Clear();
 		if (Designer is not { IsLoaded: true } designer)
 			return;
 		var spec = designer.Spec;
 		var nodes = designer.Nodes;
 		if (nodes.Count == 0)
 		{
-			_canvas.Children.Add(new TextBlock { Text = "No operators yet: + Operator adds one; a Sine is the simplest.", FontSize = 13f, Foreground = Theme.Dim });
+			_canvas.Children.Add(new TextBlock { Text = "No operators yet. Use + Add operator to add one; Sine is the simplest.", FontSize = 13f, Foreground = Theme.Dim });
 			_canvas.Width = 400f;
 			_canvas.Height = 40f;
 			return;
@@ -151,11 +209,22 @@ internal sealed class OperatorGraph : ContentControl
 			cell.Children.Add(stripe);
 			cell.Children.Add(stack);
 			box.Child = cell;
+			ToolTipService.SetToolTip(box, $"{node.Name}. Drag up or down to reorder.");
 			box.PointerPressed += (_, e) =>
 			{
+				if (e is PointerRoutedEventArgs pointer)
+				{
+					var at = pointer.GetCurrentPoint(_canvas).Position.Y;
+					_held = (index, at - y, pointer.PointerId);
+					_canvas.CapturePointer(pointer.PointerId);
+				}
 				designer.Select(index);
 				e.Handled = true;
 			};
+			_boxes[index] = box;
+			if (!_columns.TryGetValue(node.Column, out var slots))
+				_columns[node.Column] = slots = [];
+			slots.Add((index, y));
 			Place(box, x, y);
 		}
 		var output = new Border

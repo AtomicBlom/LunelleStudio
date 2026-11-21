@@ -49,15 +49,9 @@ internal sealed class LaneCell : ContentControl
 		Width = cell.Width;
 		Height = track.Height;
 		var column = new StackPanel { Orientation = Orientation.Vertical, Margin = new Thickness(6f, 6f, 6f, 0f) };
-		if (cell.Placements.Count == 0)
-		{
-			var add = new Button { Content = Glyphs.Plus(12f, Theme.Dim), Padding = new Thickness(8f, 4f, 8f, 4f), Opacity = 0.6f, HorizontalAlignment = HorizontalAlignment.Left, Margin = new Thickness(0f, 14f, 0f, 0f) };
-			ToolTipService.SetToolTip(add, $"Add a part for {track.Name} here: a bar to write in the roll");
-			add.Click += (_, _) => track.AddPart(cell.Section);
-			column.Children.Add(add);
-		}
 		foreach (var part in cell.Placements)
 			column.Children.Add(PartClip(part, cell.Width - 12f));
+		column.Children.Add(AddButton(track, cell.Section, compact: cell.Placements.Count > 0));
 		_ground.Background = Display.Column(cell.IsCurrent);
 		_ground.BorderBrush = Theme.Line;
 		_ground.BorderThickness = new Thickness(1f, 0f, 0f, 1f);
@@ -65,6 +59,45 @@ internal sealed class LaneCell : ContentControl
 		grid.Children.Add(_ground);
 		grid.Children.Add(column);
 		Content = grid;
+	}
+
+	// A part added for the track in this section: a beat on a kit's track, otherwise a choice of melody, bass line or strum.
+	// Alone in an empty cell it is a plus; under parts already there, a small "+ Part".
+	private static Button AddButton(TrackViewModel track, int section, bool compact)
+	{
+		var add = compact
+			? new Button
+			{
+				Content = new TextBlock { Text = "+ Part", FontSize = 11f, Foreground = Theme.Dim },
+				Padding = new Thickness(6f, 1f, 7f, 2f),
+				Height = ArrangeLayout.AddRowHeight - 4f,
+				HorizontalAlignment = HorizontalAlignment.Left,
+				Opacity = 0.75f,
+			}
+			: new Button
+			{
+				Content = Glyphs.Plus(12f, Theme.Dim),
+				Padding = new Thickness(8f, 4f, 8f, 4f),
+				Opacity = 0.6f,
+				HorizontalAlignment = HorizontalAlignment.Left,
+				Margin = new Thickness(0f, 14f, 0f, 0f),
+			};
+		if (track.IsKit)
+		{
+			ToolTipService.SetToolTip(add, $"Add a beat for {track.Name} in this section");
+			add.Click += (_, _) => track.AddPart(section);
+			return add;
+		}
+		ToolTipService.SetToolTip(add, $"Add a part for {track.Name} in this section: a melody, a bass line, chords or a strum");
+		var kinds = new MenuFlyout();
+		foreach (var (text, kind) in new[] { ("Melody", NewPartKind.Melody), ("Bass line (follows chords)", NewPartKind.Bass), ("Chords (block chords, as on keys)", NewPartKind.Chords), ("Strum (chords, as on a guitar)", NewPartKind.Strum) })
+		{
+			var item = new MenuFlyoutItem { Text = text };
+			item.Click += (_, _) => track.AddPart(section, kind);
+			kinds.Items.Add(item);
+		}
+		add.Click += (_, _) => kinds.ShowAt(add);
+		return add;
 	}
 
 	private static StackPanel PartClip(PlacementViewModel part, float width)
@@ -76,19 +109,19 @@ internal sealed class LaneCell : ContentControl
 		title.ColumnDefinitions.Add(GridLength.Auto);
 
 		var dot = new SUIsei.Shapes.Ellipse { Width = 7f, Height = 7f, VerticalAlignment = VerticalAlignment.Center, Fill = Display.Lit(part.IsActive) };
-		ToolTipService.SetToolTip(dot, "Lit while it plays");
+		ToolTipService.SetToolTip(dot, "Playing");
 		title.Children.Add(dot);
 
 		var name = new Button { Content = new TextBlock { Text = part.Title, FontSize = 12f, TextTrimming = TextTrimming.CharacterEllipsis }, Padding = new Thickness(6f, 1f, 6f, 2f), MaxWidth = width * 0.45f };
 		name.Background = part.IsSelected ? Theme.AccentSoft : null;
 		name.Click += (_, _) => part.Select();
-		ToolTipService.SetToolTip(name, $"{part.Title}: open it in the roll and the inspector");
+		ToolTipService.SetToolTip(name, $"Edit {part.Title}");
 		Grid.SetColumn(name, 1);
 		title.Children.Add(name);
 
 		var chipText = new TextBlock { Text = part.WhenShown, FontSize = 10.5f, TextTrimming = TextTrimming.CharacterEllipsis, Foreground = part.When is null ? Theme.Faint : Display.Met(part.ConditionMet) };
 		var chip = new Button { Content = chipText, Padding = new Thickness(6f, 1f, 6f, 2f), Margin = new Thickness(4f, 0f, 4f, 0f), HorizontalAlignment = HorizontalAlignment.Left, Background = Theme.Sunk };
-		ToolTipService.SetToolTip(chip, part.When is null ? "It always plays: click to give it a condition" : $"When {part.When}: click to change it");
+		ToolTipService.SetToolTip(chip, part.When is null ? "Always plays. Click to add a condition." : $"Plays when {part.When}. Click to edit.");
 		chip.Click += (_, _) =>
 		{
 			var workbench = part.Workbench;
@@ -105,9 +138,9 @@ internal sealed class LaneCell : ContentControl
 		var states = new StackPanel { Orientation = Orientation.Horizontal };
 		foreach (var (state, text, tip) in new[]
 		{
-			(Loom.Audio.Synth.Music.PlacementState.Auto, "auto", "Plays by its condition"),
-			(Loom.Audio.Synth.Music.PlacementState.On, "on", "Held on, whatever its condition"),
-			(Loom.Audio.Synth.Music.PlacementState.Off, "off", "Held off, whatever its condition"),
+			(Loom.Audio.Synth.Music.PlacementState.Auto, "Auto", "Play when the condition is met"),
+			(Loom.Audio.Synth.Music.PlacementState.On, "On", "Always play, ignoring the condition"),
+			(Loom.Audio.Synth.Music.PlacementState.Off, "Off", "Never play, ignoring the condition"),
 		})
 		{
 			var toggle = new ToggleButton { Content = new TextBlock { Text = text, FontSize = 10f }, IsChecked = part.State == state, Padding = new Thickness(5f, 1f, 5f, 2f), Margin = new Thickness(1f, 0f, 0f, 0f) };

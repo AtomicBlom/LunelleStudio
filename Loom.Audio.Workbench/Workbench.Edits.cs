@@ -74,9 +74,9 @@ public sealed partial class Workbench
 	{
 		name = name.Trim();
 		if (name.Length == 0)
-			return "A section has a name.";
+			return "Enter a name for the section.";
 		if (_song?.Sections.Any(s => s.Index != section && s.Name == name) == true)
-			return $"Another section is named '{name}'.";
+			return $"A section named '{name}' already exists.";
 		EditSong(root =>
 		{
 			if (root["sections"] is not JsonArray sections || sections[section] is not JsonObject renamed)
@@ -102,7 +102,7 @@ public sealed partial class Workbench
 			if (exits[i].When is { } when && CheckCondition(when) is { } why)
 				return $"Exit {i + 1}: {why}";
 			if (exits[i].When is null && i < exits.Count - 1)
-				return $"Exit {i + 1} always holds, so it comes last.";
+				return $"Exit {i + 1} has no condition, so it must be last.";
 		}
 		EditSection(section, s =>
 		{
@@ -175,6 +175,132 @@ public sealed partial class Workbench
 				part.Remove("onPhrase");
 		});
 
+	/// <summary>Sets the song's tempo, in beats a minute (20 to 300).</summary>
+	internal void SetTempo(double bpm)
+	{
+		EditSong(root =>
+				{
+					// As the file writes numbers: a whole tempo as an int, else a float to a tenth
+					var bpm10 = Math.Round(Math.Clamp(bpm, 20, 300) * 10) / 10;
+					root["tempo"] = bpm10 == Math.Floor(bpm10) ? JsonValue.Create((int)bpm10) : JsonValue.Create((float)bpm10);
+				});
+	}
+
+	/// <summary>Sets the song's key and scale: a root of <see cref="SongFile.ScaleRoots"/>, a scale of <see cref="SongFile.ScaleNames"/>.</summary>
+	internal void SetScale(string root, string scale)
+	{
+		if (!SongFile.ScaleRoots.Contains(root) || !SongFile.ScaleNames.Contains(scale))
+			throw new ArgumentException($"'{root} {scale}' isn't a scale a song file can name.");
+		EditSong(file => file["scale"] = $"{root} {scale}");
+	}
+
+	/// <summary>Sets whether a line follows the chords: its degree 1 each bar's root, as a bass line plays.</summary>
+	internal void SetOverChords(Placement placement, bool over) =>
+		EditPart(placement.Section.Index, IndexIn(placement), part =>
+		{
+			if (over)
+				part["overChords"] = true;
+			else
+				part.Remove("overChords");
+		});
+
+	private static int GridTicks(string grid) => grid switch
+	{
+		"quarters" => Ticks.Quarter,
+		"eighths" => Ticks.Eighth,
+		"sixteenths" => Ticks.Sixteenth,
+		"triplets" => Ticks.Triplet,
+		_ => 0,
+	};
+
+	/// <summary>
+	/// The grid a part's notes are written on (quarters, eighths, sixteenths or triplets) and the grids its kind can be:
+	/// a line any, a beat eighths and finer, a strum no triplets. Null for a part that is code.
+	/// </summary>
+	internal (string Grid, IReadOnlyList<string> Grids)? GridOf(Placement placement)
+	{
+		if (_editor?.Part(placement.Section.Index, IndexIn(placement)) is not { } part)
+			return null;
+		if (part["line"]?.GetValue<string>() is { } line)
+			return (line, ["quarters", "eighths", "sixteenths", "triplets"]);
+		if (part["beat"]?.GetValue<string>() is { } beat)
+			return (beat, ["eighths", "sixteenths", "triplets"]);
+		if (part["strum"]?.GetValue<string>() is { } strum)
+			return (strum, ["quarters", "eighths", "sixteenths"]);
+		return null;
+	}
+
+	/// <summary>
+	/// Writes a part on another grid, its notes where they were: finer for shorter notes, coarser when every note starts on
+	/// the coarser grid's steps. Why it can't be, or null.
+	/// </summary>
+	internal string? SetGrid(Placement placement, string grid)
+	{
+		var (section, index) = (placement.Section.Index, IndexIn(placement));
+		if (_editor?.Part(section, index) is not { } part || GridOf(placement) is not { } current)
+			return "This part is defined in code, so its grid is changed there.";
+		if (!current.Grids.Contains(grid))
+			return $"This kind of part can't be written in {grid}.";
+		if (grid == current.Grid)
+			return null;
+		var (from, to) = (GridTicks(current.Grid), GridTicks(grid));
+		if (Math.Max(from, to) % Math.Min(from, to) != 0)
+			return $"Steps of {current.Grid} don't line up with {grid}, so the notes can't keep their timing.";
+		var perBar = placement.Section.Song.Meter.TicksPerBar / to;
+		var perBeat = Ticks.PerBeat / to;
+		string? Respaced(string? text, bool characters)
+		{
+			var steps = (characters ? NotationText.Characters(text ?? "") : NotationText.Line(text ?? "")).Steps.ToList();
+			return RollEdits.Regrid(steps, from, to, characters) is { } regridded ? RollEdits.Write(regridded, perBar, perBeat, characters) : null;
+		}
+		var kind = part["line"] is not null ? "line" : part["beat"] is not null ? "beat" : "strum";
+		var why = $"Some notes start between the steps of {grid}, so the part can't be written in {grid} without moving them.";
+		if (kind == "beat")
+		{
+			var rows = new Dictionary<string, string>();
+			foreach (var (piece, row) in part["rows"] as JsonObject ?? [])
+			{
+				if (Respaced(row?.GetValue<string>(), characters: true) is not { } respaced)
+					return why;
+				rows[piece] = respaced;
+			}
+			EditPart(section, index, p =>
+			{
+				p["beat"] = grid;
+				p["rows"] = new JsonObject(rows.Select(r => KeyValuePair.Create(r.Key, (JsonNode?)r.Value)));
+			});
+			return null;
+		}
+		if (Respaced(part["notes"]?.GetValue<string>(), characters: kind == "strum") is not { } notes)
+			return why;
+		EditPart(section, index, p =>
+		{
+			p[kind] = grid;
+			p["notes"] = notes;
+		});
+		return null;
+	}
+
+	/// <summary>Deletes a part from its section; the roll and the inspector let it go.</summary>
+	internal void DeletePart(Placement placement)
+	{
+		var (section, index) = (placement.Section.Index, IndexIn(placement));
+		if (_editor is null || index < 0)
+			return;
+		_editor.Edit(root =>
+		{
+			if (root["sections"]?[section]?["parts"] is JsonArray parts && index < parts.Count)
+				parts.RemoveAt(index);
+		});
+		_selected = null;
+		_selectedIndex = -1;
+		_inspected = null;
+		ViewModel.Inspected = null;
+		ViewModel.Roll.ShowNone("Select a part in a lane to edit it here.");
+		ViewModel.Pattern.Clear();
+		Rebuild(swap: true);
+	}
+
 	/// <summary>Takes a part's fill out of its last bar.</summary>
 	internal void RemoveFill(Placement placement) =>
 		EditPart(placement.Section.Index, IndexIn(placement), part => part.Remove("endWith"));
@@ -184,9 +310,9 @@ public sealed partial class Workbench
 	{
 		name = name.Trim();
 		if (name.Length == 0)
-			return "A track has a name.";
+			return "Enter a name for the track.";
 		if (_song?.Tracks.Any(t => t.Name == name) == true)
-			return $"A track is named '{name}' already.";
+			return $"A track named '{name}' already exists.";
 		EditSong(root =>
 		{
 			var tracks = root["tracks"] as JsonArray ?? [];
@@ -196,14 +322,35 @@ public sealed partial class Workbench
 		return null;
 	}
 
+	/// <summary>
+	/// Adds a track playing an instrument dropped on the board, named for it ("warm-pad", then "warm-pad 2" and on), and
+	/// shows it in the inspector; the reason it can't be, or null.
+	/// </summary>
+	internal string? AddTrackPlaying(string instrument, bool isKit)
+	{
+		if (!CanEditSong)
+			return "This song is defined in code. Tracks can be added only to songs with a .song.json file.";
+		var name = instrument;
+		for (var n = 2; _song?.Tracks.Any(t => t.Name == name) == true; n++)
+			name = $"{instrument} {n}";
+		if (AddTrack(name, instrument, isKit) is { } why)
+			return why;
+		if (ViewModel.Tracks.FirstOrDefault(t => t.Name == name) is { } added)
+			Inspect(added);
+		return null;
+	}
+
 	/// <summary>Renames a track, and every part it plays; the reason it can't be, or null.</summary>
 	internal string? RenameTrack(string old, string name)
 	{
 		name = name.Trim();
 		if (name.Length == 0)
-			return "A track has a name.";
+			return "Enter a name for the track.";
 		if (name != old && _song?.Tracks.Any(t => t.Name == name) == true)
-			return $"A track is named '{name}' already.";
+			return $"A track named '{name}' already exists.";
+		// The inspector follows the track to its new name as the song is built again
+		if (_inspected is InspectedTrack inspected && inspected.Name == old)
+			_inspected = new InspectedTrack(name);
 		EditSong(root =>
 		{
 			foreach (var track in (root["tracks"] as JsonArray ?? []).OfType<JsonObject>())
@@ -249,15 +396,31 @@ public sealed partial class Workbench
 	/// Adds an empty part for <paramref name="track"/> in <paramref name="section"/>, a bar long: a line for a patch, a beat
 	/// for a kit, on its first piece. It is chosen, so the roll opens on it.
 	/// </summary>
-	internal void AddPart(int section, string track)
+	internal void AddPart(int section, string track, NewPartKind kind = NewPartKind.Melody)
 	{
 		if (_editor is null || _song?.Tracks.FirstOrDefault(t => t.Name == track) is not { } playing)
 			return;
 		var beats = _song.Meter.Beats;
-		var empty = string.Join(" ", Enumerable.Repeat(".", beats));
+		string Steps(string each) => string.Join(" ", Enumerable.Repeat(each, beats));
 		JsonObject part = playing.Kit is { } kit && kit.Pieces.Count > 0
-			? new JsonObject { ["track"] = track, ["beat"] = "quarters", ["rows"] = new JsonObject { [kit.Pieces[0].Piece.Id] = new string('.', beats) } }
-			: new JsonObject { ["track"] = track, ["line"] = "quarters", ["notes"] = empty };
+			// A beat is in eighths at the coarsest: two steps a beat
+			? new JsonObject { ["track"] = track, ["beat"] = "eighths", ["rows"] = new JsonObject { [kit.Pieces[0].Piece.Id] = new string('.', beats * 2) } }
+			: kind switch
+			{
+				NewPartKind.Bass => new JsonObject { ["track"] = track, ["line"] = "quarters", ["notes"] = Steps("1"), ["overChords"] = true, ["octave"] = -1 },
+				// Down on each beat, an up between the last two: a strum to change in the roll
+				NewPartKind.Strum => new JsonObject { ["track"] = track, ["strum"] = "eighths", ["notes"] = string.Concat(Enumerable.Range(0, beats).Select(b => b == beats - 1 ? "DU" : "D.")), ["voicing"] = "open" },
+				// A block chord on the first beat and, in an even bar, halfway through: a rhythm to change in the roll
+				NewPartKind.Chords => new JsonObject
+				{
+					["track"] = track,
+					["strum"] = "quarters",
+					["notes"] = string.Concat(Enumerable.Range(0, beats).Select(b => b == 0 || (beats % 2 == 0 && b == beats / 2) ? "D" : ".")),
+					["voicing"] = "close",
+					["spread"] = 0,
+				},
+				_ => new JsonObject { ["track"] = track, ["line"] = "quarters", ["notes"] = Steps(".") },
+			};
 		var index = -1;
 		_editor.Edit(root =>
 		{
@@ -313,12 +476,12 @@ public sealed partial class Workbench
 	internal string? NewPatch(string name, string? copyOf)
 	{
 		if (FileName(name) is not { } stem)
-			return "A patch's name is letters, digits and hyphens: electric-piano.";
+			return "Use lowercase letters, digits and hyphens, for example electric-piano.";
 		if (PatchFolder() is not { } folder)
-			return "This project has no patch files to put one beside.";
+			return "This project has no patch files, so there is no folder for a new one.";
 		var path = Path.Combine(folder, stem + ".patch.json");
 		if (File.Exists(path))
-			return $"{Path.GetFileName(path)} is there already.";
+			return $"{Path.GetFileName(path)} already exists.";
 		JsonObject file;
 		if (copyOf is not null && _catalog.PatchFile(copyOf) is { } source && File.Exists(source))
 		{
@@ -334,6 +497,7 @@ public sealed partial class Workbench
 				["out"] = new JsonArray(new JsonObject { ["op"] = "sine1" }),
 			};
 		File.WriteAllText(path, Synth.Music.SongFile.Write(file));
+		Awaiting(stem, song: false);
 		return null;
 	}
 
@@ -344,12 +508,12 @@ public sealed partial class Workbench
 	internal string? NewSong(string name)
 	{
 		if (FileName(name) is not { } stem)
-			return "A song's name is letters, digits and hyphens: open-road.";
+			return "Use lowercase letters, digits and hyphens, for example open-road.";
 		if (SongFolder() is not { } folder)
-			return "This project has no song files to put one beside.";
+			return "This project has no song files, so there is no folder for a new one.";
 		var path = Path.Combine(folder, stem + ".song.json");
 		if (File.Exists(path))
-			return $"{Path.GetFileName(path)} is there already.";
+			return $"{Path.GetFileName(path)} already exists.";
 		var patch = _catalog.Patches.Count > 0 ? _catalog.Patches[0].Name : null;
 		var file = new JsonObject
 		{
@@ -361,7 +525,34 @@ public sealed partial class Workbench
 			["sections"] = new JsonArray(new JsonObject { ["name"] = "a", ["bars"] = 4, ["chords"] = "I | IV | V | I", ["parts"] = new JsonArray() }),
 		};
 		File.WriteAllText(path, Synth.Music.SongFile.Write(file));
+		Awaiting(stem, song: true);
 		return null;
+	}
+
+	// A song or patch just made, opened once the project has built again and its catalog lists it
+	private (string Name, bool Song)? _awaiting;
+
+	private void Awaiting(string name, bool song)
+	{
+		_awaiting = (name, song);
+		ViewModel.BuildText = $"Created {name}. It opens when the build finishes.";
+	}
+
+	// The catalog built again: what was just made, opened if it lists it now
+	private void OpenAwaited()
+	{
+		if (_awaiting is not { } awaited)
+			return;
+		if (awaited.Song && Index(_catalog.Songs, awaited.Name) is >= 0 and var song)
+		{
+			_awaiting = null;
+			ChooseSong(song);
+		}
+		else if (!awaited.Song && Index(_catalog.Patches, awaited.Name) is >= 0 and var patch)
+		{
+			_awaiting = null;
+			ChoosePatch(patch);
+		}
 	}
 
 	private string? PatchFolder() =>

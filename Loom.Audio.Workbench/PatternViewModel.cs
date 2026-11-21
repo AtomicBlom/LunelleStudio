@@ -3,7 +3,7 @@ namespace Loom.Audio.Workbench;
 /// <summary>The selected placement as a grid: its notes over one pass of its part, and where the song is in it.</summary>
 public sealed class PatternViewModel : ViewModel
 {
-	private string _title = "Choose a part to see it";
+	private string _title = "Select a part to view it";
 	private int _lengthTicks;
 	private int _ticksPerBar = 3840;
 	private IReadOnlyList<PatternNote> _notes = [];

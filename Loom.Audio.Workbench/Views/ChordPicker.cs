@@ -15,7 +15,7 @@ internal sealed class ChordPicker : ContentControl
 	private static readonly string[] Numerals = ["I", "II", "III", "IV", "V", "VI", "VII"];
 	private static readonly (ChordKind Kind, string Suffix, string Name)[] Kinds =
 	[
-		(ChordKind.Triad, "", "the scale's"), (ChordKind.Major, "M", "major"), (ChordKind.Minor, "m", "minor"),
+		(ChordKind.Triad, "", "diatonic"), (ChordKind.Major, "M", "major"), (ChordKind.Minor, "m", "minor"),
 		(ChordKind.Power, "5", "power"), (ChordKind.Sus2, "sus2", "sus2"), (ChordKind.Sus4, "sus4", "sus4"),
 		(ChordKind.Seventh, "7", "seventh"), (ChordKind.Diminished, "dim", "diminished"),
 	];
@@ -48,13 +48,13 @@ internal sealed class ChordPicker : ContentControl
 	private void Build()
 	{
 		_column.Children.Clear();
-		_column.Children.Add(Label($"Bar {_bar + 1} of the progression"));
+		_column.Children.Add(Label($"Bar {_bar + 1}"));
 
 		var slots = Row();
 		for (var i = 0; i < Bar.Count; i++)
 		{
 			var slot = i;
-			var button = Toggle(Bar[i], slot == _slot, $"Pick chord {slot + 1} of the bar");
+			var button = Toggle(Bar[i], slot == _slot, $"Edit chord {slot + 1} in this bar");
 			button.Click += (_, _) =>
 			{
 				_slot = slot;
@@ -77,14 +77,14 @@ internal sealed class ChordPicker : ContentControl
 		for (var d = 1; d <= 7; d++)
 		{
 			var degree = d;
-			var button = Toggle(Spell(new Chord(d, chord.Kind, chord.Accidental)), chord.Degree == d, $"Build the chord on degree {Numerals[d - 1]} of the scale");
+			var button = Toggle(Spell(new Chord(d, chord.Kind, chord.Accidental)), chord.Degree == d, $"Chord on scale degree {Numerals[d - 1]}");
 			button.Click += (_, _) => Set(chord with { Degree = degree });
 			degrees.Children.Add(button);
 		}
 		_column.Children.Add(degrees);
 
 		var accidentals = Row();
-		foreach (var (shift, text, tip) in new[] { (-1, "flat", "Its root a semitone lower"), (0, "natural", "Its root on the scale"), (1, "sharp", "Its root a semitone higher") })
+		foreach (var (shift, text, tip) in new[] { (-1, "flat", "Lower the root a semitone"), (0, "natural", "Root on the scale"), (1, "sharp", "Raise the root a semitone") })
 		{
 			var button = Toggle(text, chord.Accidental == shift, tip);
 			button.Click += (_, _) => Set(chord with { Accidental = shift });
@@ -96,23 +96,23 @@ internal sealed class ChordPicker : ContentControl
 		var kinds = Row();
 		foreach (var (kind, _, name) in Kinds)
 		{
-			var button = Toggle(name, chord.Kind == kind, kind == ChordKind.Triad ? "Major, minor or diminished as the scale makes it on this degree" : $"A {name} chord whatever the scale");
+			var button = Toggle(name, chord.Kind == kind, kind == ChordKind.Triad ? "Diatonic: major, minor or diminished, as the scale gives on this degree" : $"{char.ToUpperInvariant(name[0])}{name[1..]} chord, regardless of the scale");
 			button.Click += (_, _) => Set(chord with { Kind = kind });
 			kinds.Children.Add(button);
 		}
 		_column.Children.Add(kinds);
 
 		var progression = Row();
-		var add = new Button { Content = Text("+ bar after"), Padding = new Thickness(8f, 2f, 8f, 3f), Margin = new Thickness(0f, 0f, 4f, 0f) };
-		ToolTipService.SetToolTip(add, "Add a bar after this one, the same chords, to the progression");
+		var add = new Button { Content = Text("+ Add bar"), Padding = new Thickness(8f, 2f, 8f, 3f), Margin = new Thickness(0f, 0f, 4f, 0f) };
+		ToolTipService.SetToolTip(add, "Add a bar after this one with the same chords");
 		add.Click += (_, _) =>
 		{
 			_bars.Insert(_bar + 1, [.. Bar]);
 			Send();
 		};
 		progression.Children.Add(add);
-		var remove = new Button { Content = Text("remove bar"), Padding = new Thickness(8f, 2f, 8f, 3f), IsEnabled = _bars.Count > 1 };
-		ToolTipService.SetToolTip(remove, "Take this bar out of the progression");
+		var remove = new Button { Content = Text("Delete bar"), Padding = new Thickness(8f, 2f, 8f, 3f), IsEnabled = _bars.Count > 1 };
+		ToolTipService.SetToolTip(remove, "Delete this bar from the progression");
 		remove.Click += (_, _) =>
 		{
 			_bars.RemoveAt(_bar);

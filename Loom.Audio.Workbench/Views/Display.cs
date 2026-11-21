@@ -73,7 +73,7 @@ internal static class Display
 	public static string ItemTip(string? label) => label ?? "";
 
 	/// <summary>A stage of a patch's voice, pointed at.</summary>
-	public static string StageTip(string name) => $"Show the voice's {name.ToLowerInvariant()} in the inspector";
+	public static string StageTip(string name) => $"Edit the voice's {name.ToLowerInvariant()}";
 
 	/// <summary>One of a choice's options, pointed at.</summary>
 	public static string OptionTip(string name) => $"Choose {name}";
@@ -88,8 +88,8 @@ internal static class Display
 
 	/// <summary>What a cue's row says when pointed at: what reads it, or that nothing does.</summary>
 	public static string CueTip(bool used) => used
-		? "The song reads it: a part's condition or level, an exit, or a macro follows it"
-		: "Nothing in this song reads this cue, so it is left as it is";
+		? "Used by this song: in a condition, an exit, a part's volume or a macro"
+		: "Not used by this song";
 
 	// A rail icon, in the accent while its mode is the one showing
 	public static SolidColorBrush RailInk(bool on) => on ? Theme.Accent : Theme.Dim;

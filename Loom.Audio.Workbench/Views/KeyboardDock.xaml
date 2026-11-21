@@ -19,17 +19,17 @@
                 <TextBlock Text="{x:Bind ViewModel.DockLabel, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.Ink}"
                            TextTrimming="CharacterEllipsis" Margin="0,2,0,6" />
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="velocity" FontSize="12" Foreground="{x:Static views:Theme.Dim}" Width="60" VerticalAlignment="Center" />
+                    <TextBlock Text="Velocity" FontSize="12" Foreground="{x:Static views:Theme.Dim}" Width="60" VerticalAlignment="Center" />
                     <Slider Minimum="0.05" Maximum="1" StepFrequency="0.01" Width="150" Height="26" Value="{x:Bind ViewModel.Velocity, Mode=TwoWay}"
-                            ToolTipService.ToolTip="How hard the keys play, the computer's keys and the ones drawn" />
+                            ToolTipService.ToolTip="How hard notes are played, from the computer keyboard or the keys on screen" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="0,4,0,0">
-                    <Button x:Name="OctaveDown" Padding="7,0,7,2" ToolTipService.ToolTip="The keys an octave down (Z)">
+                    <Button x:Name="OctaveDown" Padding="7,0,7,2" ToolTipService.ToolTip="Octave down (Z)">
                         <TextBlock Text="−" FontSize="12" />
                     </Button>
                     <TextBlock Text="{x:Bind views:Display.Octave(ViewModel.Octave), Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Faint}"
                                Margin="8,0,8,0" VerticalAlignment="Center" />
-                    <Button x:Name="OctaveUp" Padding="7,0,7,2" ToolTipService.ToolTip="The keys an octave up (X)">
+                    <Button x:Name="OctaveUp" Padding="7,0,7,2" ToolTipService.ToolTip="Octave up (X)">
                         <TextBlock Text="+" FontSize="12" />
                     </Button>
                 </StackPanel>

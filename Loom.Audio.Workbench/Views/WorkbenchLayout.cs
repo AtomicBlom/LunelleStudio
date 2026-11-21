@@ -1,12 +1,16 @@
 using System.ComponentModel;
 
+using System.Numerics;
+
 using SUIsei;
+using SUIsei.Controls;
 
 namespace Loom.Audio.Workbench.Views;
 
 /// <summary>
 /// The workbench page's layout (<c>WorkbenchLayout.xaml</c>): its regions, each a view handed the page's view model in
-/// its XAML. <see cref="WorkbenchView"/> hosts it.
+/// its XAML. <see cref="WorkbenchView"/> hosts it. A patch or kit dragged out of the library is dropped here: on the
+/// board in Arrange, it adds a track that plays it.
 /// </summary>
 internal sealed partial class WorkbenchLayout : SUIsei.Controls.ContentControl
 {
@@ -20,6 +24,42 @@ internal sealed partial class WorkbenchLayout : SUIsei.Controls.ContentControl
 		// Set before the page joins a tree, so every control's template reads them as it is built.
 		(Resources ??= new ResourceDictionary()).MergedDictionaries.Add(Theme.Controls());
 		RailModes.Resources = Theme.Markers();
+		WireDrops();
+	}
+
+	partial void OnComponentRebuilt() => WireDrops();
+
+	private void WireDrops()
+	{
+		PinnedLibrary.InstrumentDragged += (name, isKit, at, dropped) => OnInstrumentDragged(PinnedLibrary, name, isKit, at, dropped);
+		FlyoutLibrary.InstrumentDragged += (name, isKit, at, dropped) => OnInstrumentDragged(FlyoutLibrary, name, isKit, at, dropped);
+	}
+
+	// Whether a point (in an element's space) is over the board, past the library it came from
+	private bool OverBoard(CatalogBrowser from, Func<UIElement, Vector2> at) =>
+		ViewModel.IsArrange && Inside(Board, at(Board)) && !Inside(from, at(from));
+
+	private static bool Inside(FrameworkElement element, Vector2 point) =>
+		point.X >= 0f && point.Y >= 0f && point.X < element.LayoutRect.Width && point.Y < element.LayoutRect.Height;
+
+	private void OnInstrumentDragged(CatalogBrowser from, string name, bool isKit, Func<UIElement, Vector2> at, bool dropped)
+	{
+		var over = OverBoard(from, at);
+		if (dropped)
+		{
+			DragGhost.Visibility = Visibility.Collapsed;
+			if (over && ViewModel.Workbench.AddTrackPlaying(name, isKit) is { } why)
+				ViewModel.Error = why;
+			return;
+		}
+		var point = at(DragLayer);
+		DragText.Text = over ? $"Add track: {name}" : ViewModel.IsArrange ? name : $"{name} (drop in Arrange to add a track)";
+		DragText.Foreground = over ? Theme.AccentInk : Theme.Ink;
+		DragGhost.Background = over ? Theme.Accent : Theme.Raised;
+		DragGhost.BorderBrush = over ? Theme.AccentOver : Theme.LineStrong;
+		Canvas.SetLeft(DragGhost, point.X + 14f);
+		Canvas.SetTop(DragGhost, point.Y + 10f);
+		DragGhost.Visibility = Visibility.Visible;
 	}
 
 	/// <summary>What it shows.</summary>

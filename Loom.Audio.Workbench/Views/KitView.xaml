@@ -13,7 +13,7 @@
     <ScrollViewer>
         <StackPanel Margin="12,10,16,12">
             <TextBlock Text="{x:Bind ViewModel.DockLabel, Mode=OneWay}" FontSize="16" Foreground="{x:Static views:Theme.Ink}" Margin="0,0,0,10" />
-            <TextBlock Text="Choose a kit from the library." FontSize="13" Foreground="{x:Static views:Theme.Dim}"
+            <TextBlock Text="Select a kit in the library." FontSize="13" Foreground="{x:Static views:Theme.Dim}"
                        Visibility="{x:Bind views:Display.NoneChosen(ViewModel.SelectedKit), Mode=OneWay}" />
             <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
                 <ItemsControl ItemsSource="{x:Bind ViewModel.Pads, Mode=OneWay}" Margin="0,0,0,14">
@@ -35,21 +35,21 @@
             <StackPanel Visibility="{x:Bind views:Display.Chosen(ViewModel.SelectedKit), Mode=OneWay}">
                 <StackPanel Orientation="Horizontal" Margin="0,4,0,8">
                     <TextBlock Text="BEAT SKETCHER" FontSize="10" Foreground="{x:Static views:Theme.Faint}" VerticalAlignment="Center" Margin="0,0,12,0" />
-                    <ToggleButton ToolTipService.ToolTip="Loop the sketch as it is written" IsChecked="{x:Bind ViewModel.Sketch.IsLooping, Mode=TwoWay}" Margin="0,0,6,0" Padding="8,3,8,4">
-                        <TextBlock Text="Loop it" FontSize="12" />
+                    <ToggleButton ToolTipService.ToolTip="Play the sketch in a loop" IsChecked="{x:Bind ViewModel.Sketch.IsLooping, Mode=TwoWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                        <TextBlock Text="Loop" FontSize="12" />
                     </ToggleButton>
                     <Button ToolTipService.ToolTip="Clear the sketch" Command="{x:Bind ViewModel.Sketch.ClearCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
                         <TextBlock Text="Clear" FontSize="12" />
                     </Button>
-                    <Button ToolTipService.ToolTip="Copy the sketch as a beat for a song's file" Command="{x:Bind ViewModel.Sketch.CopyCommand, Mode=OneWay}" Margin="0,0,10,0" Padding="8,3,8,4">
-                        <TextBlock Text="Copy Beat" FontSize="12" />
+                    <Button ToolTipService.ToolTip="Copy the sketch as a beat for a song file" Command="{x:Bind ViewModel.Sketch.CopyCommand, Mode=OneWay}" Margin="0,0,10,0" Padding="8,3,8,4">
+                        <TextBlock Text="Copy beat" FontSize="12" />
                     </Button>
-                    <TextBlock Text="tempo" FontSize="12" Foreground="{x:Static views:Theme.Dim}" VerticalAlignment="Center" Margin="0,0,6,0" />
+                    <TextBlock Text="Tempo" FontSize="12" Foreground="{x:Static views:Theme.Dim}" VerticalAlignment="Center" Margin="0,0,6,0" />
                     <Slider Minimum="60" Maximum="200" StepFrequency="1" Width="140" Height="26" Value="{x:Bind ViewModel.Sketch.Tempo, Mode=TwoWay}" />
                     <TextBlock Text="{x:Bind ViewModel.CopyStatus, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Dim}"
                                VerticalAlignment="Center" Margin="10,0,0,0" />
                 </StackPanel>
-                <TextBlock Text="A click turns a step to x (a hit), X (an accent), o (a ghost note), then off." FontSize="11"
+                <TextBlock Text="Click a step to cycle it: x hit, X accent, o ghost note, off." FontSize="11"
                            Foreground="{x:Static views:Theme.Faint}" Margin="0,0,0,6" />
                 <ItemsControl ItemsSource="{x:Bind ViewModel.Sketch.Rows, Mode=OneWay}">
                     <ItemsControl.ItemTemplate>
@@ -64,7 +64,7 @@
                                     </ItemsControl.ItemsPanel>
                                     <ItemsControl.ItemTemplate>
                                         <DataTemplate x:DataType="wb:BeatStepViewModel">
-                                            <Button ToolTipService.ToolTip="Cycle the step: off, hit, accented" Command="{x:Bind Cycle}" Margin="{x:Bind views:Display.StepGap(IsBeat)}">
+                                            <Button ToolTipService.ToolTip="Click to cycle: hit, accent, ghost note, off" Command="{x:Bind Cycle}" Margin="{x:Bind views:Display.StepGap(IsBeat)}">
                                                 <Border Width="24" Height="22" CornerRadius="3" Background="{x:Bind views:Display.Step(Value), Mode=OneWay}"
                                                         BorderBrush="{x:Bind views:Display.Now(IsNow), Mode=OneWay}" BorderThickness="1">
                                                     <TextBlock Text="{x:Bind Text, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.AccentInk}"

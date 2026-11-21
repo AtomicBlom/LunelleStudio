@@ -9,7 +9,8 @@ namespace Loom.Audio.Workbench.Views;
 
 /// <summary>
 /// A track at the head of its lane: a stripe in its hue, its name, what it plays, mute and solo, its gain and its meter.
-/// Right-click (or Shift+F10) for its menu: rename it, give it another instrument, take it out.
+/// A click shows it in the inspector, edged in the accent while it does; right-click (or Shift+F10) for its menu: rename
+/// it, give it another instrument, open that instrument, take it out.
 /// </summary>
 internal sealed class TrackHeader : ContentControl
 {
@@ -17,12 +18,19 @@ internal sealed class TrackHeader : ContentControl
 
 	private readonly SUIsei.Media.TranslateTransform _stay = new();
 	private ArrangeScroll? _scroll;
+	private Border? _frame;
 	private readonly Border _meter = new() { HorizontalAlignment = HorizontalAlignment.Left, CornerRadius = new CornerRadius(2f), Background = Theme.Meter, Height = 4f };
 
 	public TrackHeader()
 	{
 		IsTabStop = false;
 		Width = HeaderWidth;
+		// A left press its buttons and slider don't take for themselves chooses it
+		AddHandler(PointerPressedEvent, (_, e) =>
+		{
+			if (e is PointerRoutedEventArgs pointer && pointer.Pointer.Buttons.HasFlag(PointerButtons.Left) && Track is { } track)
+				track.Inspect();
+		});
 	}
 
 	public TrackViewModel? Track
@@ -43,6 +51,18 @@ internal sealed class TrackHeader : ContentControl
 	{
 		if (e.PropertyName == nameof(TrackViewModel.Peak) && Track is { } track)
 			_meter.Width = Display.Meter(track.Peak);
+		else if (e.PropertyName == nameof(TrackViewModel.IsInspected))
+			Light();
+	}
+
+	// Edged in the accent while the inspector shows it
+	private void Light()
+	{
+		if (_frame is null || Track is not { } track)
+			return;
+		_frame.BorderBrush = track.IsInspected ? Theme.Accent : Theme.Line;
+		_frame.BorderThickness = track.IsInspected ? new Thickness(1f) : new Thickness(0f, 0f, 1f, 1f);
+		_frame.Background = track.IsInspected ? Theme.Raised : Theme.Panel;
 	}
 
 	private void Build()
@@ -71,11 +91,11 @@ internal sealed class TrackHeader : ContentControl
 		top.Children.Add(new TextBlock { Text = track.Name, FontSize = 13f, Foreground = Theme.Ink, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis });
 		var mute = new ToggleButton { Content = Letter("M"), IsChecked = track.Muted, Width = 26f, Margin = new Thickness(0f, 0f, 3f, 0f), Padding = new Thickness(0f, 1f, 0f, 2f) };
 		mute.Click += (_, _) => track.Muted = mute.IsChecked == true;
-		ToolTipService.SetToolTip(mute, "Mute it");
+		ToolTipService.SetToolTip(mute, "Mute");
 		Grid.SetColumn(mute, 1);
 		var solo = new ToggleButton { Content = Letter("S"), IsChecked = track.Solo, Width = 26f, Padding = new Thickness(0f, 1f, 0f, 2f) };
 		solo.Click += (_, _) => track.Solo = solo.IsChecked == true;
-		ToolTipService.SetToolTip(solo, "Solo it: hear it, and any other soloed, alone");
+		ToolTipService.SetToolTip(solo, "Solo: hear only soloed tracks");
 		Grid.SetColumn(solo, 2);
 		top.Children.Add(mute);
 		top.Children.Add(solo);
@@ -88,14 +108,14 @@ internal sealed class TrackHeader : ContentControl
 
 		var gain = new Slider { Minimum = -24, Maximum = 6, StepFrequency = 0.5, Value = track.GainDb, Height = 20f };
 		gain.ValueChanged += (_, _) => track.GainDb = (float)gain.Value;
-		ToolTipService.SetToolTip(gain, "Its level here, in decibels, over what the song gives it");
+		ToolTipService.SetToolTip(gain, "Track gain in dB, on top of the song's level");
 		column.Children.Add(gain);
 		column.Children.Add(new Border { Height = 4f, CornerRadius = new CornerRadius(2f), Background = Theme.Sunk, Child = _meter });
 		_meter.Width = Display.Meter(track.Peak);
 		Grid.SetColumn(column, 1);
 		grid.Children.Add(column);
 
-		Content = new Border
+		_frame = new Border
 		{
 			Background = Theme.Panel,
 			BorderBrush = Theme.Line,
@@ -103,8 +123,10 @@ internal sealed class TrackHeader : ContentControl
 			Height = track.Height,
 			Child = grid,
 		};
+		Content = _frame;
+		Light();
 		ContextFlyout = Menu(track);
-		ToolTipService.SetToolTip(this, $"{track.Name}: right-click to rename it, give it another instrument or take it out");
+		ToolTipService.SetToolTip(this, $"{track.Name}. Click to edit; right-click for more options.");
 	}
 
 	// The lanes scrolled across: it moves back by as much, so it stays at the left
@@ -119,12 +141,15 @@ internal sealed class TrackHeader : ContentControl
 		var menu = new MenuFlyout();
 		var rename = new MenuFlyoutItem { Text = "Rename…" };
 		rename.Click += (_, _) => Ask(track);
-		var instrument = new MenuFlyoutItem { Text = "Instrument…" };
+		var instrument = new MenuFlyoutItem { Text = "Change instrument…" };
 		instrument.Click += (_, _) => Choose(track);
-		var delete = new MenuFlyoutItem { Text = "Take it out" };
+		var open = new MenuFlyoutItem { Text = track.IsKit ? "Open kit" : "Edit patch" };
+		open.Click += (_, _) => track.OpenInstrument();
+		var delete = new MenuFlyoutItem { Text = "Delete" };
 		delete.Click += (_, _) => track.Delete();
 		menu.Items.Add(rename);
 		menu.Items.Add(instrument);
+		menu.Items.Add(open);
 		menu.Items.Add(delete);
 		return menu;
 	}
@@ -135,7 +160,7 @@ internal sealed class TrackHeader : ContentControl
 		var box = new TextBox { Text = track.Name, Width = 200f };
 		var problem = new TextBlock { FontSize = 11f, Foreground = Theme.Error, Visibility = Visibility.Collapsed };
 		var column = new StackPanel { Orientation = Orientation.Vertical };
-		column.Children.Add(new TextBlock { Text = "Rename the track", FontSize = 12f, Foreground = Theme.Dim, Margin = new Thickness(0f, 0f, 0f, 6f) });
+		column.Children.Add(new TextBlock { Text = "Rename track", FontSize = 12f, Foreground = Theme.Dim, Margin = new Thickness(0f, 0f, 0f, 6f) });
 		column.Children.Add(box);
 		column.Children.Add(problem);
 		var flyout = new Flyout { Content = column, Placement = FlyoutPlacementMode.RightEdgeAlignedTop };
@@ -160,7 +185,6 @@ internal sealed class TrackHeader : ContentControl
 		{
 			ItemsSource = instruments.Select(i => (object?)$"{(i.IsKit ? "kit" : "patch")} · {i.Name}").ToList(),
 			IsItemClickEnabled = true,
-			MaxHeight = 320f,
 			SelectedIndex = instruments.FindIndex(i => i.Name == track.InstrumentName && i.IsKit == track.IsKit),
 		};
 		var flyout = new Flyout { Content = list, Placement = FlyoutPlacementMode.RightEdgeAlignedTop };

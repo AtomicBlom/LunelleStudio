@@ -88,6 +88,22 @@ public sealed class TrackViewModel : ViewModel
 	/// <summary>Whether it plays a kit rather than a patch.</summary>
 	public bool IsKit { get; internal init; }
 
+	/// <summary>Whether it is what the inspector shows.</summary>
+	public bool IsInspected
+	{
+		get;
+		internal set => Set(ref field, value);
+	}
+
+	/// <summary>Shows it in the inspector.</summary>
+	public void Inspect() => _workbench.Inspect(this);
+
+	/// <summary>Opens what it plays to change it: its patch in the designer, heard in the song as it changes, or its kit.</summary>
+	public void OpenInstrument() => _workbench.OpenInstrument(this);
+
+	/// <summary>Whether the song is a file the workbench edits, so it can be renamed and given another instrument.</summary>
+	public bool CanEdit => _workbench.CanEditSong;
+
 	/// <summary>Renames it; why it can't be, or null.</summary>
 	public string? Rename(string name) => _workbench.RenameTrack(Name, name);
 
@@ -100,8 +116,8 @@ public sealed class TrackViewModel : ViewModel
 	/// <summary>Takes it out of the song, with everything it plays.</summary>
 	public void Delete() => _workbench.DeleteTrack(Name);
 
-	/// <summary>Adds an empty part for it in a section, chosen at once.</summary>
-	public void AddPart(int section) => _workbench.AddPart(section, Name);
+	/// <summary>Adds a part for it in a section, chosen at once: a melody, a bass line over the chords, or a strum (a kit's is a beat).</summary>
+	public void AddPart(int section, NewPartKind kind = NewPartKind.Melody) => _workbench.AddPart(section, Name, kind);
 
 	/// <summary>Its row in Arrange: a cell per section, each with the parts it plays there.</summary>
 	public ObservableCollection<LaneCellViewModel> Cells { get; } = [];

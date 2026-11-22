@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using System.Reflection;
 using System.Runtime.CompilerServices;
 
 using Loom.Audio;
@@ -15,8 +16,17 @@ namespace Loom.Tests;
 /// </summary>
 public class MusicProjectTests
 {
-	private static string SynthProject([CallerFilePath] string here = "") =>
-		Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, "..", "Loom.Audio.Synth", "Loom.Audio.Synth.csproj"));
+	// Loom.Audio.Synth's project in the Sirrow checkout this build took the audio from (build/Sources.props). Built from
+	// Sirrow's packages there is no project to reference, so a test making a music project skips.
+	private static string SynthProject()
+	{
+		var source = typeof(MusicProjectTests).Assembly.GetCustomAttributes<AssemblyMetadataAttribute>()
+			.FirstOrDefault(a => a.Key == "SirrowSource")?.Value;
+		if (string.IsNullOrEmpty(source) || source == "none")
+			throw new TUnit.Core.Exceptions.SkipTestException(
+				"The audio came from Sirrow's packages: a music project here references Loom.Audio.Synth's project, in a Sirrow checkout.");
+		return Path.GetFullPath(Path.Combine(source, "Loom.Audio.Synth", "Loom.Audio.Synth.csproj"));
+	}
 
 	// The configuration these tests were built in, for a project's design-time build: left to itself it is Debug, whose
 	// references a Release run never built

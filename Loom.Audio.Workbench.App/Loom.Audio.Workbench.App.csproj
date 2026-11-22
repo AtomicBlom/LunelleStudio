@@ -1,5 +1,8 @@
 <Project>
 
+	<!-- Where the engine, the audio and SUIsei come from (build/Sources.props): first, since it says which SDK to import -->
+	<Import Project="..\build\Sources.props" />
+
 	<!--
 		loom-workbench: the music workbench over any music project. Give it a .csproj (or the folder it is in) whose assembly
 		names its catalog with [assembly: MusicCatalog(typeof(...))]; it compiles the project with Roslyn, plays it, and
@@ -15,7 +18,8 @@
 		<UseImGui>false</UseImGui>
 	</PropertyGroup>
 
-	<Import Project="..\build\Loom.Sdk\Sdk\Sdk.props" />
+	<Import Project="$(LoomSource)build\Loom.Sdk\Sdk\Sdk.props" Condition="'$(LoomFromSource)' == 'true'" />
+	<Import Project="Sdk.props" Sdk="Loom.Sdk" Version="$(LoomPackageVersion)" Condition="'$(LoomFromSource)' != 'true'" />
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
@@ -27,23 +31,26 @@
 		<LoomShaderSourceDir>$(MSBuildProjectDirectory)\Shaders</LoomShaderSourceDir>
 		<!-- On the newest .NET installed, so it can load a project (and an extension) that targets a newer one than Loom -->
 		<RollForward>LatestMajor</RollForward>
+		<!-- The generator beside the app, for a project it makes ("new") to name as its analyzer (build/Sources.targets) -->
+		<CopyMusicGenerator>true</CopyMusicGenerator>
 	</PropertyGroup>
 
 	<ItemGroup>
 		<ProjectReference Include="..\Loom.Audio.Workbench.Projects\Loom.Audio.Workbench.Projects.csproj" />
 		<!-- The music's output: SDL 3's, registered in Program -->
-		<ProjectReference Include="..\Loom.Audio.Sdl\Loom.Audio.Sdl.csproj" />
+		<SirrowReference Include="Loom.Audio.Sdl" Path="Loom.Audio.Sdl\Loom.Audio.Sdl.csproj" />
 		<!-- Beside the app, for a project it makes ("new") to reference as its analyzer, as it references the app's Loom -->
-		<ProjectReference Include="..\Loom.Audio.Music.Generator\Loom.Audio.Music.Generator.csproj" />
+		<SirrowReference Include="Loom.Audio.Music.Generator" Path="Loom.Audio.Music.Generator\Loom.Audio.Music.Generator.csproj" SourceOnly="true" />
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
 		<!-- SUIsei's diagnostics endpoint, which RoseMCP's live UI tools reach the window's tree through; Debug only: the
 				 switch, and the endpoint itself, which Program starts -->
 		<RuntimeHostConfigurationOption Include="SUIsei.Diagnostics.Enabled" Value="true" Trim="true" />
-		<ProjectReference Include="..\external\SUIsei\SUIsei.Diagnostics.Endpoint\SUIsei.Diagnostics.Endpoint.csproj" />
+		<SUIseiReference Include="SUIsei.Diagnostics.Endpoint" Path="SUIsei.Diagnostics.Endpoint\SUIsei.Diagnostics.Endpoint.csproj" />
 	</ItemGroup>
 
-	<Import Project="..\build\Loom.Sdk\Sdk\Sdk.targets" />
+	<Import Project="$(LoomSource)build\Loom.Sdk\Sdk\Sdk.targets" Condition="'$(LoomFromSource)' == 'true'" />
+	<Import Project="Sdk.targets" Sdk="Loom.Sdk" Version="$(LoomPackageVersion)" Condition="'$(LoomFromSource)' != 'true'" />
 
 </Project>

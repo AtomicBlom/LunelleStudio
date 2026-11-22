@@ -1,0 +1,61 @@
+<Project>
+
+  <!--
+    Each reference into another repository, by its package id, as a reference to the project in that repository's
+    checkout or to the package (build/Sources.props says which):
+
+      <LoomReference Include="Loom.Input" Path="Loom.Input\Loom.Input.csproj" />           the engine
+      <SirrowReference Include="Loom.Audio.Synth" Path="Loom.Audio.Synth\Loom.Audio.Synth.csproj" />   the audio
+      <SUIseiReference Include="SUIsei" Path="SUIsei\SUIsei.csproj" />                    the UI library
+
+    Path is its project's path in the checkout (not Project: a ProjectReference keeps a GUID in that). Any other
+    metadata (OutputItemType, ReferenceOutputAssembly) goes with it onto the project reference. SourceOnly="true"
+    marks a reference only a source build needs: the music generator, which the Loom.Audio.Synth package carries as its
+    analyzer.
+  -->
+  <ItemGroup Condition="'$(LoomFromSource)' == 'true'">
+    <ProjectReference Include="@(LoomReference->'$(LoomSource)%(Path)')" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(LoomFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' != 'true'">
+    <PackageReference Include="@(LoomReference)" Exclude="@(LoomReference->WithMetadataValue('SourceOnly', 'true'))"
+                      Version="$(LoomPackageVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(LoomFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' == 'true'">
+    <PackageReference Include="@(LoomReference)" Exclude="@(LoomReference->WithMetadataValue('SourceOnly', 'true'))"
+                      VersionOverride="$(LoomPackageVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(SirrowFromSource)' == 'true'">
+    <ProjectReference Include="@(SirrowReference->'$(SirrowSource)%(Path)')" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(SirrowFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' != 'true'">
+    <PackageReference Include="@(SirrowReference)" Exclude="@(SirrowReference->WithMetadataValue('SourceOnly', 'true'))"
+                      Version="$(SirrowPackageVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(SirrowFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' == 'true'">
+    <PackageReference Include="@(SirrowReference)" Exclude="@(SirrowReference->WithMetadataValue('SourceOnly', 'true'))"
+                      VersionOverride="$(SirrowPackageVersion)" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(SUIseiFromSource)' == 'true'">
+    <ProjectReference Include="@(SUIseiReference->'$(SUIseiSource)%(Path)')" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(SUIseiFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' != 'true'">
+    <PackageReference Include="@(SUIseiReference)" Version="$(LoomSUIseiVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(SUIseiFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' == 'true'">
+    <PackageReference Include="@(SUIseiReference)" VersionOverride="$(LoomSUIseiVersion)" />
+  </ItemGroup>
+
+  <!--
+    The music generator's assembly beside a project's output, where CopyMusicGenerator is true: a project
+    loom-workbench new makes names it there as its analyzer (ProjectTemplate), as it names Loom.Audio's and the Synth's.
+    From source, the project reference to the generator copies it; from the packages, it is taken out of the
+    Loom.Audio.Synth package, which carries it as its analyzer.
+  -->
+  <ItemGroup Condition="'$(CopyMusicGenerator)' == 'true' and '$(SirrowFromSource)' != 'true'">
+    <None Include="$(NuGetPackageRoot)loom.audio.synth\$(SirrowPackageVersion)\analyzers\dotnet\cs\Loom.Audio.Music.Generator.dll"
+          CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+
+</Project>

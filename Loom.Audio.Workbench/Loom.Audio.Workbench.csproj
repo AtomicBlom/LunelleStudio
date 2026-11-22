@@ -3,7 +3,8 @@
 	<!-- The music workbench: a SUIsei page that plays a song while its code is edited under dotnet watch, rebuilding it
 	     and swapping it in on the next bar. Its model and view models need no window; its views are SUIsei XAML. Given a
 	     catalog of songs, patches, kits and cues by the app that hosts it; knows nothing of any game. -->
-	<Import Project="..\external\SUIsei\build\SUIsei.props" />
+	<!-- SUIsei's XAML generator, from its checkout; its package carries the same build files, which NuGet imports -->
+	<Import Project="$(SUIseiSource)build\SUIsei.props" Condition="'$(SUIseiFromSource)' == 'true'" />
 
 	<PropertyGroup>
 		<TargetFramework>net11.0</TargetFramework>
@@ -26,11 +27,11 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\Loom.Input\Loom.Input.csproj" />
-		<ProjectReference Include="..\Loom.Audio.Synth\Loom.Audio.Synth.csproj" />
-		<ProjectReference Include="..\external\SUIsei\SUIsei\SUIsei.csproj" />
+		<LoomReference Include="Loom.Input" Path="Loom.Input\Loom.Input.csproj" />
+		<SirrowReference Include="Loom.Audio.Synth" Path="Loom.Audio.Synth\Loom.Audio.Synth.csproj" />
+		<SUIseiReference Include="SUIsei" Path="SUIsei\SUIsei.csproj" />
 	</ItemGroup>
 
-	<Import Project="..\external\SUIsei\build\SUIsei.targets" />
+	<Import Project="$(SUIseiSource)build\SUIsei.targets" Condition="'$(SUIseiFromSource)' == 'true'" />
 
 </Project>

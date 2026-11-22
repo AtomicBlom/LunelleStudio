@@ -14,7 +14,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<ProjectReference Include="..\..\Loom.Audio.Synth\Loom.Audio.Synth.csproj" />
+		<SirrowReference Include="Loom.Audio.Synth" Path="Loom.Audio.Synth\Loom.Audio.Synth.csproj" />
 	</ItemGroup>
 
 	<!-- The music as data: the generator makes C# of each file as the project builds -->
@@ -22,7 +22,8 @@
 		<AdditionalFiles Include="Patches\*.patch.json;Songs\*.song.json" />
 		<CompilerVisibleProperty Include="RootNamespace" />
 		<CompilerVisibleProperty Include="ProjectDir" />
-		<ProjectReference Include="..\..\Loom.Audio.Music.Generator\Loom.Audio.Music.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" />
+		<!-- From source only: the Loom.Audio.Synth package carries the generator as its analyzer -->
+		<SirrowReference Include="Loom.Audio.Music.Generator" Path="Loom.Audio.Music.Generator\Loom.Audio.Music.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" SourceOnly="true" />
 	</ItemGroup>
 
 </Project>

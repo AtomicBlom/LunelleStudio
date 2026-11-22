@@ -49,7 +49,7 @@
                 <TextBlock Text="{x:Bind ViewModel.Files.Title, Mode=OneWay}" FontSize="13" Foreground="{x:Static views:Theme.Ink}"
                            VerticalAlignment="Center" Margin="0,0,12,0" TextTrimming="CharacterEllipsis" />
                 <Button Command="{x:Bind ViewModel.Files.CopyFileCommand, Mode=OneWay}" Margin="0,0,10,0" Padding="8,2,8,3"
-                        ToolTipService.ToolTip="Copy the whole file to the clipboard">
+                        ToolTipService.ToolTip="Copy the file to the clipboard">
                     <TextBlock Text="Copy file" FontSize="12" />
                 </Button>
                 <TextBlock Text="{x:Bind ViewModel.CopyStatus, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Dim}" VerticalAlignment="Center" />
@@ -63,7 +63,7 @@
                     </ItemsControl.ItemsPanel>
                     <ItemsControl.ItemTemplate>
                         <DataTemplate x:DataType="wb:FilePieceViewModel">
-                            <Button Command="{x:Bind CopyCommand}" Margin="0,0,3,0" Padding="6,2,6,3" ToolTipService.ToolTip="Copy this piece of the file to the clipboard">
+                            <Button Command="{x:Bind CopyCommand}" Margin="0,0,3,0" Padding="6,2,6,3" ToolTipService.ToolTip="Copy this section of the file to the clipboard">
                                 <TextBlock Text="{x:Bind Name}" FontSize="11" />
                             </Button>
                         </DataTemplate>

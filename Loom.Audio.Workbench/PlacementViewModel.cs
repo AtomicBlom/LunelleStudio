@@ -149,6 +149,24 @@ public sealed class PlacementViewModel : ViewModel
 	/// <summary>Sets when it plays, as a song file writes a condition (null: always); the reason it can't be, or null.</summary>
 	public string? SetWhen(string? when) => _workbench.SetCondition(Placement, when);
 
+	/// <summary>Whether it is a line, which can follow the chords.</summary>
+	public bool IsLine => Placement.Part is Line;
+
+	/// <summary>Whether it is a line that follows the chords: its degree 1 each bar's root.</summary>
+	public bool IsOverChords => Placement.Part is Line { IsOverChords: true };
+
+	/// <summary>Makes a line follow the chords, or play the scale's degrees as written.</summary>
+	public void SetOverChords(bool over) => _workbench.SetOverChords(Placement, over);
+
+	/// <summary>The grid its notes are written on (quarters, eighths, sixteenths or triplets), and those its kind can be; null for a part that is code.</summary>
+	public (string Grid, IReadOnlyList<string> Grids)? GridChoice => _workbench.GridOf(Placement);
+
+	/// <summary>Writes it on another grid, its notes keeping their timing; why it can't be, or null.</summary>
+	public string? SetGrid(string grid) => _workbench.SetGrid(Placement, grid);
+
+	/// <summary>Deletes it from its section.</summary>
+	public void Delete() => _workbench.DeletePart(Placement);
+
 	/// <summary>How many rows its notes lie on: pitches or pieces.</summary>
 	public int Rows { get; internal init; }
 

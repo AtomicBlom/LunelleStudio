@@ -20,8 +20,8 @@ internal sealed class ConditionEditor : ContentControl
 	private readonly Func<string?, string?> _apply;
 	private readonly StackPanel _rows = new() { Orientation = Orientation.Vertical };
 	private readonly StackPanel _join = new() { Orientation = Orientation.Horizontal, Margin = new Thickness(0f, 0f, 0f, 6f) };
-	private readonly ToggleButton _all = Segment("all of");
-	private readonly ToggleButton _any = Segment("any of");
+	private readonly ToggleButton _all = Segment("All of");
+	private readonly ToggleButton _any = Segment("Any of");
 	private readonly TextBox _text = new() { FontSize = 12f };
 	private readonly ToggleButton _asText = new() { Content = Small("as text"), Padding = new Thickness(8f, 2f, 8f, 3f) };
 	private readonly TextBlock _problem = new() { FontSize = 11f, Foreground = Theme.Error, TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
@@ -41,13 +41,13 @@ internal sealed class ConditionEditor : ContentControl
 		_join.Children.Add(_any);
 		_all.Click += (_, _) => Join(anyOf: false);
 		_any.Click += (_, _) => Join(anyOf: true);
-		ToolTipService.SetToolTip(_all, "The condition holds while every row does");
-		ToolTipService.SetToolTip(_any, "The condition holds while any row does");
-		ToolTipService.SetToolTip(_asText, "Write the condition as a song file does: intensity > 0.5 and not biome is Forest");
+		ToolTipService.SetToolTip(_all, "Met when every row is met");
+		ToolTipService.SetToolTip(_any, "Met when any row is met");
+		ToolTipService.SetToolTip(_asText, "Edit the condition as text, for example: intensity > 0.5 and not biome is Forest");
 
 		var add = new Button { Content = Small("+ condition"), Padding = new Thickness(8f, 2f, 8f, 3f), Margin = new Thickness(0f, 0f, 6f, 0f) };
 		add.Click += (_, _) => AddRow();
-		ToolTipService.SetToolTip(add, "Add a row: a cue compared with a level, or the section's pass");
+		ToolTipService.SetToolTip(add, "Add a row comparing a cue with a value, or checking the pass");
 		_asText.Click += (_, _) => ShowText(_asText.IsChecked == true);
 		_text.TextChanged += (_, _) =>
 		{
@@ -132,7 +132,7 @@ internal sealed class ConditionEditor : ContentControl
 		var names = new List<object?> { PassName };
 		names.InsertRange(0, _cues.Select(c => (object?)c.Name));
 		var what = new ComboBox { ItemsSource = names, SelectedItem = subject, Margin = new Thickness(0f, 0f, 4f, 0f) };
-		ToolTipService.SetToolTip(what, "What it compares: a cue the game sets, or which pass of the section in a row this is");
+		ToolTipService.SetToolTip(what, "A cue set by the game, or the number of times the section has played in a row");
 		what.SelectionChanged += (_, _) =>
 		{
 			if (what.SelectedItem is string chosen && chosen != _model[index].Subject)
@@ -149,8 +149,8 @@ internal sealed class ConditionEditor : ContentControl
 		var ops = choice ? new List<object?> { "is" } : subject == PassName ? [">", "<", "is"] : [">", "<"];
 		var how = new ComboBox { ItemsSource = ops, SelectedItem = op, Margin = new Thickness(0f, 0f, 4f, 0f) };
 		ToolTipService.SetToolTip(how, subject == PassName
-			? "> holds on passes after the count, < on passes before it, is on that pass alone"
-			: "> holds at the level and above, < at the level and below");
+			? "> means after that pass, < before it, is on that pass only"
+			: "> means at or above the value, < at or below it");
 		Grid.SetColumn(how, 1);
 		how.SelectionChanged += (_, _) =>
 		{
@@ -182,7 +182,7 @@ internal sealed class ConditionEditor : ContentControl
 				SpinButtonPlacementMode = NumberBoxSpinButtonPlacementMode.Inline,
 				MinWidth = 76f,
 			};
-			ToolTipService.SetToolTip(number, pass ? "How many passes: 1 is the first time through" : "The level: the cue is usually 0 to 1");
+			ToolTipService.SetToolTip(number, pass ? "Pass number: 1 is the first time through" : "Value, usually from 0 to 1");
 			number.ValueChanged += (_, _) =>
 			{
 				if (!double.IsNaN(number.Value))
@@ -194,7 +194,7 @@ internal sealed class ConditionEditor : ContentControl
 		grid.Children.Add(with);
 
 		var remove = new Button { Content = Small("✕"), Padding = new Thickness(7f, 2f, 7f, 3f), Margin = new Thickness(4f, 0f, 0f, 0f) };
-		ToolTipService.SetToolTip(remove, "Take this row out");
+		ToolTipService.SetToolTip(remove, "Delete row");
 		remove.Click += (_, _) =>
 		{
 			_model.RemoveAt(index);

@@ -174,6 +174,13 @@ public sealed class PatchDesigner : ViewModel
 		private set => Set(ref field, value);
 	} = "";
 
+	/// <summary>Which songs the patch is used in, said so an edit's reach is clear: "Used in open-road and understory".</summary>
+	public string UsedBy
+	{
+		get;
+		internal set => Set(ref field, value);
+	} = "";
+
 	/// <summary>Whether it differs from the patch as its code has it.</summary>
 	public bool IsDirty
 	{
@@ -311,7 +318,7 @@ public sealed class PatchDesigner : ViewModel
 		}
 		catch (Exception ex) when (ex is IndexOutOfRangeException or ArgumentOutOfRangeException)
 		{
-			Code = "// It can't be written while it is routed to an operator it doesn't have.";
+			Code = "// This patch can't be written as C# while it routes to an operator that doesn't exist.";
 		}
 		IsDirty = Code != _originalCode;
 		Status = $"{_spec.Operators.Count} of {Patch.MaxOperators} operators · {(HasProblems ? "doesn't build" : "builds")}{(IsDirty ? " · edited" : "")}";
@@ -504,6 +511,24 @@ public sealed class PatchDesigner : ViewModel
 		return true;
 	}
 
+	/// <summary>
+	/// Moves operator <paramref name="from"/> to <paramref name="to"/> in the patch's order, a place at a time, stopping
+	/// where it would pass an operator it reads or that reads it (an operator reads only those before it). Returns where
+	/// it ended up.
+	/// </summary>
+	public int MoveTo(int from, int to)
+	{
+		var ops = _spec.Operators;
+		if ((uint)from >= (uint)ops.Count)
+			return from;
+		to = Math.Clamp(to, 0, ops.Count - 1);
+		var at = from;
+		var step = Math.Sign(to - from);
+		while (at != to && Move(at, at + step))
+			at += step;
+		return at;
+	}
+
 	// ---- The inspector
 
 	private void ShowInspector()
@@ -534,9 +559,7 @@ public sealed class PatchDesigner : ViewModel
 		var o = Op;
 		var earlier = Enumerable.Range(0, i).ToArray();
 		Show(InspectorItemViewModel.Heading($"{NameOf(i)} · #{i + 1} of {_spec.Operators.Count}"));
-		Show(InspectorItemViewModel.Toggle("Listen alone", () => ListenAlone, on => ListenAlone = on));
-		Show(InspectorItemViewModel.Button("Move earlier", () => Move(i, i - 1)));
-		Show(InspectorItemViewModel.Button("Move later", () => Move(i, i + 1)));
+		Show(InspectorItemViewModel.Toggle("Solo", () => ListenAlone, on => ListenAlone = on));
 		Show(InspectorItemViewModel.Button("Delete", () => Delete(i)));
 
 		var tap = _spec.Outputs.FindIndex(t => t.Operator == i);
@@ -603,7 +626,7 @@ public sealed class PatchDesigner : ViewModel
 			Show(InspectorItemViewModel.Number("level", () => Op.Level, v => SetOp(x => x with { Level = v }), 0f, 2f));
 			Show(InspectorItemViewModel.Number("velocity", () => Op.Velocity, v => SetOp(x => x with { Velocity = v }), 0f, 1f));
 		}
-		Show(InspectorItemViewModel.Heading("Across the keyboard"));
+		Show(InspectorItemViewModel.Heading("Key scaling"));
 		Show(InspectorItemViewModel.Number("key level", () => Op.KeyLevelDb, v => SetOp(x => x with { KeyLevelDb = v }), -12f, 6f, 0.5f, "dB/oct"));
 		Show(InspectorItemViewModel.Number("key decay", () => Op.KeyDecay, v => SetOp(x => x with { KeyDecay = v }), 0f, 0.95f));
 
@@ -617,7 +640,7 @@ public sealed class PatchDesigner : ViewModel
 					c => SetOp(x => x with { Modulators = Replaced(x.Modulators, at, x.Modulators[at] with { Operator = c }) }, structure: true)));
 				Show(InspectorItemViewModel.Number("index", () => Op.Modulators[at].Index,
 					v => SetOp(x => x with { Modulators = Replaced(x.Modulators, at, x.Modulators[at] with { Index = v }) }), 0f, 12f, 0.05f));
-				Show(InspectorItemViewModel.Button("Remove this modulator", () => SetOp(x => x with { Modulators = [.. x.Modulators.Where((_, k) => k != at)] }, structure: true)));
+				Show(InspectorItemViewModel.Button("Delete modulator", () => SetOp(x => x with { Modulators = [.. x.Modulators.Where((_, k) => k != at)] }, structure: true)));
 			}
 			if (earlier.Length > 0)
 				Show(InspectorItemViewModel.Button("+ Modulator", () => SetOp(x => x with { Modulators = [.. x.Modulators, new Modulation(i - 1, 1f)] }, structure: true)));
@@ -648,7 +671,7 @@ public sealed class PatchDesigner : ViewModel
 			Show(InspectorItemViewModel.Scaled("rings", () => Op.Modes[at].DecaySeconds, v => SetOp(x => x with { Modes = Replaced(x.Modes, at, x.Modes[at] with { DecaySeconds = v }) }), 0.002f, 10f, "s"));
 			Show(InspectorItemViewModel.Number("level", () => Op.Modes[at].Level, v => SetOp(x => x with { Modes = Replaced(x.Modes, at, x.Modes[at] with { Level = v }) }), 0f, 1.5f));
 			if (o.Modes.Length > 1)
-				Show(InspectorItemViewModel.Button("Remove this mode", () => SetOp(x => x with { Modes = [.. x.Modes.Where((_, k) => k != at)] }, structure: true)));
+				Show(InspectorItemViewModel.Button("Delete mode", () => SetOp(x => x with { Modes = [.. x.Modes.Where((_, k) => k != at)] }, structure: true)));
 		}
 		if (o.Modes.Length < Mode.Max)
 			Show(InspectorItemViewModel.Button("+ Mode", () => SetOp(x => x with { Modes = [.. x.Modes, Mode.At(x.Modes.Length + 2, 0.5f, 0.5f)] }, structure: true)));
@@ -750,7 +773,7 @@ public sealed class PatchDesigner : ViewModel
 				Show(InspectorItemViewModel.Choice("operator", [.. _names], () => _spec.Macros[at].Operator, c => SetMacro(at, m => m with { Operator = c })));
 			Show(InspectorItemViewModel.Number("at 0", () => _spec.Macros[at].From, v => SetMacro(at, m => m with { From = v }), -6f, 6f, 0.05f));
 			Show(InspectorItemViewModel.Number("at 1", () => _spec.Macros[at].To, v => SetMacro(at, m => m with { To = v }), -6f, 6f, 0.05f));
-			Show(InspectorItemViewModel.Button("Remove this macro", () =>
+			Show(InspectorItemViewModel.Button("Delete macro", () =>
 			{
 				_spec.Macros.RemoveAt(at);
 				Rebuild(false);

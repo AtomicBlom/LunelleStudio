@@ -14,7 +14,6 @@ internal static class ArrangeLayout
 	/// <summary>How tall one part's clip is in a lane: its title row and its passes.</summary>
 	public const float ClipHeight = 58f;
 
-	/// <summary>How tall a track's lane is, its header with it, so the two line up row for row: room for <paramref name="parts"/>
-	/// clips stacked, at least one.</summary>
+	/// <summary>A lane tall enough for the most parts its track plays in one section.</summary>
 	public static float LaneHeight(int parts) => 12f + Math.Max(1, parts) * ClipHeight;
 }

@@ -16,9 +16,9 @@ internal static class Describe
 		if (placement.Condition is { } condition)
 			parts.Add("when " + condition);
 		if (placement.LevelCue is { } level)
-			parts.Add($"level follows {level.Name}");
+			parts.Add($"volume follows {level.Name}");
 		if (placement.IsOnPhrase)
-			parts.Add("on its phrase");
+			parts.Add("starts on phrase");
 		return string.Join(", ", parts);
 	}
 

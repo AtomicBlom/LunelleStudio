@@ -12,7 +12,8 @@ namespace Loom.Audio.Workbench.Views;
 /// leaves the keys with the workbench (<see cref="WorkbenchFocus"/>); a list reached with Tab takes the arrows, and Enter
 /// opens the row. The lists show what is open. While its filter has the keys, the workbench's own keys wait. The + on
 /// Songs and Patches makes a new file of that kind beside the project's others, which it lists once the project has built
-/// again.
+/// again. A patch or kit dragged out of it (<see cref="InstrumentDragged"/>) is for the page to drop on the board as a new
+/// track.
 /// </summary>
 internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyChanged
 {
@@ -20,9 +21,84 @@ internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyCh
 	{
 		InitializeComponent();
 		Wire();
+		WireDragMoves();
 	}
 
 	public event PropertyChangedEventHandler? PropertyChanged;
+
+	/// <summary>
+	/// A patch or kit dragged out of the library: its name, whether a kit, where the pointer is (a point in an element's
+	/// space), and whether it was let go there. Raised as it moves and once as it is let go; a drag lost to the window is
+	/// let go nowhere (the point is NaN).
+	/// </summary>
+	internal event Action<string, bool, Func<UIElement, System.Numerics.Vector2>, bool>? InstrumentDragged;
+
+	// How far the pointer moves with a row held before it is a drag rather than a click
+	private const float DragDistance = 6f;
+
+	// A row pressed: what it is, whether a kit, where, and on which pointer; and whether it has become a drag
+	private (ChoiceViewModel Choice, bool IsKit, System.Numerics.Vector2 At, uint Pointer)? _held;
+	private bool _dragging;
+
+	// The patch or kit a row shows, from an element in it
+	private static ChoiceViewModel? ChoiceOf(object? source)
+	{
+		for (var element = source as UIElement; element is not null; element = SUIsei.Media.VisualTreeHelper.GetParent(element))
+			if (element is FrameworkElement { Tag: ChoiceViewModel choice })
+				return choice;
+		return null;
+	}
+
+	private void WireDrag()
+	{
+		foreach (var (list, isKit) in new[] { (PatchList, false), (KitList, true) })
+			list.AddHandler(PreviewPointerPressedEvent, (_, e) =>
+			{
+				if (e is PointerRoutedEventArgs pointer && (pointer.Pointer.Buttons & PointerButtons.Left) != 0 && ChoiceOf(e.OriginalSource) is { } choice)
+					_held = (choice, isKit, pointer.GetCurrentPoint(null).Position, pointer.PointerId);
+			}, handledEventsToo: true);
+	}
+
+	// The drag itself, on the library as a whole: it holds the pointer from the first move past the distance
+	private void WireDragMoves()
+	{
+		AddHandler(PointerMovedEvent, (_, e) =>
+		{
+			if (_held is not { } held || e is not PointerRoutedEventArgs pointer || pointer.PointerId != held.Pointer)
+				return;
+			if ((pointer.Pointer.Buttons & PointerButtons.Left) == 0)
+			{
+				EndDrag(null);
+				return;
+			}
+			if (!_dragging && System.Numerics.Vector2.Distance(pointer.GetCurrentPoint(null).Position, held.At) < DragDistance)
+				return;
+			if (!_dragging)
+				_dragging = CapturePointer(held.Pointer);
+			InstrumentDragged?.Invoke(held.Choice.Name, held.IsKit, element => pointer.GetCurrentPoint(element).Position, false);
+			e.Handled = true;
+		}, handledEventsToo: true);
+		AddHandler(PointerReleasedEvent, (_, e) =>
+		{
+			if (_dragging && e is PointerRoutedEventArgs pointer)
+				e.Handled = true;
+			EndDrag(e as PointerRoutedEventArgs);
+		}, handledEventsToo: true);
+		AddHandler(PointerCaptureLostEvent, (_, _) => EndDrag(null), handledEventsToo: true);
+	}
+
+	// The row let go: dropped where the pointer is, or nowhere
+	private void EndDrag(PointerRoutedEventArgs? at)
+	{
+		var (held, dragging) = (_held, _dragging);
+		_held = null;
+		_dragging = false;
+		if (held is not { } h || !dragging)
+			return;
+		ReleasePointerCapture(h.Pointer);
+		InstrumentDragged?.Invoke(h.Choice.Name, h.IsKit,
+			at is null ? _ => new System.Numerics.Vector2(float.NaN) : element => at.GetCurrentPoint(element).Position, true);
+	}
 
 	public WorkbenchViewModel? ViewModel
 	{
@@ -64,6 +140,7 @@ internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyCh
 				if (e.ClickedItem is ChoiceViewModel choice)
 					choice.IsSelected = true;
 			};
+		WireDrag();
 		NewSong.Click += (_, _) => AskForName(NewSong, "New song", "open-road", copy: false);
 		NewPatch.Click += (_, _) => AskForName(NewPatch, "New patch", "warm-pad", copy: true);
 	}
@@ -91,8 +168,8 @@ internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyCh
 		if (ViewModel?.Workbench is not { } workbench)
 			return;
 		var name = new TextBox { Width = 220f };
-		ToolTipService.SetToolTip(name, $"Its name: letters, digits and hyphens, as {example}");
-		var from = new ToggleSwitch { OnContent = "a copy of the patch open", OffContent = "blank", IsOn = copy && ViewModel.SelectedPatch >= 0 };
+		ToolTipService.SetToolTip(name, $"Lowercase letters, digits and hyphens, for example {example}");
+		var from = new ToggleSwitch { OnContent = "Copy of open patch", OffContent = "Blank", IsOn = copy && ViewModel.SelectedPatch >= 0 };
 		var problem = new TextBlock { FontSize = 11f, Foreground = Theme.Error, TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed, Width = 220f };
 		var column = new StackPanel { Orientation = Orientation.Vertical };
 		column.Children.Add(new TextBlock { Text = title, FontSize = 12f, Foreground = Theme.Dim, Margin = new Thickness(0f, 0f, 0f, 6f) });

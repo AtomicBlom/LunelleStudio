@@ -22,6 +22,9 @@ public sealed class ChoiceViewModel : ViewModel
 	/// <summary>Its name.</summary>
 	public string Name { get; }
 
+	/// <summary>It, for a view to find it from the element showing it (a drag out of the library).</summary>
+	public ChoiceViewModel Self => this;
+
 	/// <summary>
 	/// Whether it is the one chosen. Setting it true asks for it to be chosen, which shows once its owner has chosen it;
 	/// setting it false does nothing, since one is let go only by choosing another.

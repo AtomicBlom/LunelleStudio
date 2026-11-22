@@ -70,13 +70,13 @@ internal sealed partial class ArrangeView : ContentControl, INotifyPropertyChang
 			return;
 		if (!workbench.CanEditSong)
 		{
-			var note = new Flyout { Content = new TextBlock { Text = "This song is code alone: a song with a .song.json is edited here.", FontSize = 12f, Foreground = Theme.Dim } };
+			var note = new Flyout { Content = new TextBlock { Text = "This song is defined in code. Only songs with a .song.json file can be edited here.", FontSize = 12f, Foreground = Theme.Dim } };
 			note.ShowAt(AddTrack);
 			return;
 		}
 		var instruments = workbench.Instruments.ToList();
 		var name = new TextBox { Text = "", Width = 260f };
-		ToolTipService.SetToolTip(name, "The track's name, which its parts name it by");
+		ToolTipService.SetToolTip(name, "Track name");
 		var list = new ListView
 		{
 			ItemsSource = instruments.Select(i => (object?)$"{(i.IsKit ? "kit" : "patch")} · {i.Name}").ToList(),
@@ -84,7 +84,7 @@ internal sealed partial class ArrangeView : ContentControl, INotifyPropertyChang
 			MaxHeight = 220f,
 		};
 		var problem = new TextBlock { FontSize = 11f, Foreground = Theme.Error, TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
-		var add = new Button { Content = new TextBlock { Text = "Add the track", FontSize = 12f }, Padding = new Thickness(10f, 3f, 10f, 4f), Margin = new Thickness(0f, 8f, 0f, 0f) };
+		var add = new Button { Content = new TextBlock { Text = "Add track", FontSize = 12f }, Padding = new Thickness(10f, 3f, 10f, 4f), Margin = new Thickness(0f, 8f, 0f, 0f) };
 		var column = new StackPanel { Orientation = Orientation.Vertical, Width = 280f };
 		column.Children.Add(Label("Name"));
 		column.Children.Add(name);

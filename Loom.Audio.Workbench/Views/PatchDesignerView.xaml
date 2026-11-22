@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Patch: the patch designer. Its name, whether it builds and is edited, the patch as its code has it to hear against,
-    + Operator, Revert, Copy C#; what the builder refuses; the operators as a graph in render order; the voice after them
+    Patch: the patch designer. Its name, whether it builds and is edited, the songs it is used in, the patch as its code has
+    it to hear against, + Operator, Revert, Duplicate, Copy C#; what the builder refuses; the operators as a graph in render order; the voice after them
     as a chain; and a scope and spectrum of what is heard. The inspector beside it changes what is chosen.
 -->
 <ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
@@ -25,27 +25,33 @@
                 <TextBlock Text="{x:Bind ViewModel.Designer.Name, Mode=OneWay}" FontSize="16" Foreground="{x:Static views:Theme.Ink}" VerticalAlignment="Center" />
                 <TextBlock Text="{x:Bind ViewModel.Designer.Status, Mode=OneWay}" FontSize="12" VerticalAlignment="Center" Margin="12,0,0,0"
                            Foreground="{x:Bind views:Display.Problem(ViewModel.Designer.HasProblems), Mode=OneWay}" />
+                <TextBlock Text="{x:Bind ViewModel.Designer.UsedBy, Mode=OneWay}" FontSize="12" VerticalAlignment="Center" Margin="12,0,0,0"
+                           Foreground="{x:Static views:Theme.Dim}" TextTrimming="CharacterEllipsis"
+                           ToolTipService.ToolTip="The songs with a track playing this patch. Use Duplicate to change it for one song only." />
             </StackPanel>
             <StackPanel Orientation="Horizontal">
-                <ToggleButton ToolTipService.ToolTip="Hear the patch as its file had it when opened" IsChecked="{x:Bind ViewModel.Designer.HearOriginal, Mode=TwoWay}" Margin="0,0,6,0" Padding="8,3,8,4">
-                    <TextBlock Text="Hear its code" FontSize="12" />
+                <ToggleButton ToolTipService.ToolTip="Hear the patch as it was when opened" IsChecked="{x:Bind ViewModel.Designer.HearOriginal, Mode=TwoWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <TextBlock Text="Hear original" FontSize="12" />
                 </ToggleButton>
                 <ToggleButton ToolTipService.ToolTip="Add an operator to the patch" IsChecked="{x:Bind ViewModel.Designer.AddOpen, Mode=TwoWay}" Margin="0,0,6,0" Padding="8,3,8,4">
-                    <TextBlock Text="+ Operator" FontSize="12" />
+                    <TextBlock Text="+ Add operator" FontSize="12" />
                 </ToggleButton>
-                <Button ToolTipService.ToolTip="Put the patch back as its file had it when opened" Command="{x:Bind ViewModel.Designer.RevertCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                <Button ToolTipService.ToolTip="Revert the patch to how it was when opened" Command="{x:Bind ViewModel.Designer.RevertCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
                     <TextBlock Text="Revert" FontSize="12" />
                 </Button>
-                <Button ToolTipService.ToolTip="Copy the patch's C#" Command="{x:Bind ViewModel.Designer.CopyCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                <Button x:Name="Duplicate" ToolTipService.ToolTip="Make a copy of the patch under a new name, to change without changing the songs that use this one" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <TextBlock Text="Duplicate…" FontSize="12" />
+                </Button>
+                <Button ToolTipService.ToolTip="Copy the patch's C# to the clipboard" Command="{x:Bind ViewModel.Designer.CopyCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
                     <TextBlock Text="Copy C#" FontSize="12" />
                 </Button>
-                <Button ToolTipService.ToolTip="Make the patch C#, to build any way you like" Command="{x:Bind ViewModel.Designer.EjectCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Designer.CanEject, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
-                    <TextBlock Text="Eject to code" FontSize="12" />
+                <Button ToolTipService.ToolTip="Convert the patch to C#, to build it in code" Command="{x:Bind ViewModel.Designer.EjectCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Designer.CanEject, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <TextBlock Text="Convert to C#" FontSize="12" />
                 </Button>
-                <Button ToolTipService.ToolTip="Make the patch data in its file again, from the patch its code builds" Command="{x:Bind ViewModel.Designer.BringBackCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Designer.IsCode, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
-                    <TextBlock Text="Bring back as data" FontSize="12" />
+                <Button ToolTipService.ToolTip="Convert the patch from C# back to a patch file" Command="{x:Bind ViewModel.Designer.BringBackCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Designer.IsCode, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <TextBlock Text="Convert to patch file" FontSize="12" />
                 </Button>
-                <TextBlock Text="code: edits are heard, not saved" Visibility="{x:Bind ViewModel.Designer.IsCode, Mode=OneWay}" FontSize="11"
+                <TextBlock Text="Defined in C#: edits are heard but not saved" Visibility="{x:Bind ViewModel.Designer.IsCode, Mode=OneWay}" FontSize="11"
                            Foreground="{x:Static views:Theme.Accent}" VerticalAlignment="Center" Margin="4,0,0,0" />
                 <TextBlock Text="{x:Bind ViewModel.CopyStatus, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Dim}"
                            VerticalAlignment="Center" Margin="10,0,0,0" />
@@ -74,7 +80,7 @@
         </Border>
 
         <Grid Grid.Row="3" Margin="12,0,12,6">
-            <TextBlock Text="Choose a patch from the library." FontSize="13" Foreground="{x:Static views:Theme.Dim}"
+            <TextBlock Text="Select a patch in the library." FontSize="13" Foreground="{x:Static views:Theme.Dim}"
                        Visibility="{x:Bind views:Display.Not(ViewModel.Designer.IsLoaded), Mode=OneWay}" />
             <views:OperatorGraph Designer="{x:Bind ViewModel.Designer, Mode=OneWay}" />
         </Grid>

@@ -58,6 +58,9 @@ internal sealed class LanePasses : ContentControl
 			ShowPosition();
 	}
 
+	// How far a pass's notes keep in from its sides: its border and the curve of its corners
+	private const float NoteInset = 3f;
+
 	private void Draw()
 	{
 		_canvas.Children.Clear();
@@ -68,11 +71,15 @@ internal sealed class LanePasses : ContentControl
 		_scale = DrawWidth / part.LengthTicks;
 		var hue = Theme.TrackHue(part.TrackIndex);
 		var end = part.FillTick >= 0 ? part.FillTick : part.LengthTicks;
+		// Each pass's box (and the fill's) by the ticks it spans, for its notes to be laid inside
+		var boxes = _boxes;
+		boxes.Clear();
 		for (var start = 0; start < end; start += part.LoopTicks)
 		{
+			var to = Math.Min(start + part.LoopTicks, end);
 			var pass = new Border
 			{
-				Width = MathF.Max(1f, MathF.Min(part.LoopTicks, end - start) * _scale - 2f),
+				Width = MathF.Max(1f, (to - start) * _scale - 2f),
 				Height = DrawnHeight,
 				CornerRadius = new CornerRadius(3f),
 				Background = Theme.Sunk,
@@ -80,6 +87,7 @@ internal sealed class LanePasses : ContentControl
 				BorderThickness = new Thickness(1f),
 			};
 			Canvas.SetLeft(pass, start * _scale + 1f);
+			boxes.Add((start, to, start * _scale + 1f, (float)pass.Width));
 			_passes.Add(pass);
 			_canvas.Children.Add(pass);
 		}
@@ -95,20 +103,28 @@ internal sealed class LanePasses : ContentControl
 				BorderThickness = new Thickness(1f),
 			};
 			Canvas.SetLeft(fill, part.FillTick * _scale + 1f);
+			boxes.Add((part.FillTick, part.LengthTicks, part.FillTick * _scale + 1f, (float)fill.Width));
 			_canvas.Children.Add(fill);
 		}
 		var rowHeight = (DrawnHeight - 6f) / Math.Max(1, part.Rows);
 		foreach (var note in part.Notes)
 		{
+			// Inside the box of the pass it plays in, clear of its border and rounded corners
+			var tick = Math.Clamp(note.Tick, 0, part.LengthTicks - 1);
+			if (BoxAt(tick) is not { } box)
+				continue;
+			var perTick = PerTick(box);
+			var left = X(tick);
+			var right = box.X + box.Width - NoteInset;
 			var bar = new Border
 			{
-				Width = MathF.Max(1.5f, note.Length * _scale - 0.5f),
+				Width = MathF.Max(1.5f, MathF.Min(note.Length * perTick - 0.5f, right - left)),
 				Height = MathF.Max(1.5f, rowHeight - 1f),
 				Background = hue,
 				Opacity = 0.35f + 0.65f * note.Velocity,
 				CornerRadius = new CornerRadius(1f),
 			};
-			Canvas.SetLeft(bar, note.Tick * _scale);
+			Canvas.SetLeft(bar, left);
 			Canvas.SetTop(bar, 3f + note.Row * rowHeight);
 			_canvas.Children.Add(bar);
 		}
@@ -131,6 +147,23 @@ internal sealed class LanePasses : ContentControl
 		var tick = part.SectionTick;
 		_playhead.Visibility = tick >= 0 ? Visibility.Visible : Visibility.Collapsed;
 		if (tick >= 0)
-			Canvas.SetLeft(_playhead, tick * _scale);
+			Canvas.SetLeft(_playhead, X(tick));
 	}
+
+	// The passes' boxes and the fill's as last drawn: the ticks each spans, and where it is
+	private readonly List<(int From, int To, float X, float Width)> _boxes = [];
+
+	private (int From, int To, float X, float Width)? BoxAt(int tick)
+	{
+		for (var i = _boxes.Count - 1; i >= 0; i--)
+			if (_boxes[i].From <= tick)
+				return _boxes[i];
+		return null;
+	}
+
+	private static float PerTick((int From, int To, float X, float Width) box) =>
+		MathF.Max(0f, box.Width - 2f * NoteInset) / Math.Max(1, box.To - box.From);
+
+	// Where a tick is drawn: inside the box of the pass it falls in, as its notes are
+	private float X(int tick) => BoxAt(tick) is { } box ? box.X + NoteInset + (tick - box.From) * PerTick(box) : tick * _scale;
 }

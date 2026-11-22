@@ -164,6 +164,9 @@ internal sealed class RollEditor : ContentControl
 			Add(new TextBlock { Text = roll.Rows[r], FontSize = 11, Foreground = Theme.Dim, Width = label - 8, TextTrimming = TextTrimming.CharacterEllipsis },
 				4, r * rowHeight + (rowHeight - 14) / 2);
 		}
+		// The chord's notes lit under each stretch of steps it sounds for, its root more: what fits under it
+		foreach (var (from, to, row, root) in roll.ChordTones)
+			Add(new Border { Width = (to - from) * stepWidth, Height = rowHeight, Background = root ? Theme.ChordRoot : Theme.ChordTone }, label + from * stepWidth, row * rowHeight);
 		var perBar = Math.Max(1, roll.StepsPerBar);
 		var beat = Math.Max(1, perBar / 4);
 		for (var s = 0; s <= roll.Steps; s++)
@@ -174,7 +177,7 @@ internal sealed class RollEditor : ContentControl
 		if (roll.Kind == RollKind.Line)
 			foreach (var (step, length, row, token) in roll.Notes)
 			{
-				var chosen = step == roll.Selected;
+				var chosen = roll.IsSelected(step, row);
 				var note = new Border
 				{
 					Width = length * stepWidth - 2,

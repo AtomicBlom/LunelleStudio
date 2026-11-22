@@ -141,7 +141,7 @@ public class WorkbenchTests
 		// Long enough for the view model's refresh (30 a second), short of the bar's end
 		rig.Step(MusicRig.Bar / 8);
 		model.Sections[1].IsQueued.ShouldBeTrue();
-		model.NextText.ShouldBe("Next: chorus, at the next bar");
+		model.NextText.ShouldBe("Next: chorus at the next bar");
 
 		rig.Step(MusicRig.Bar);
 		model.Sections[1].IsQueued.ShouldBeFalse();

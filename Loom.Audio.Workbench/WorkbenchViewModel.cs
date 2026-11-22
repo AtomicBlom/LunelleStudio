@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Windows.Input;
 
 namespace Loom.Audio.Workbench;
 
@@ -205,7 +206,17 @@ public sealed class WorkbenchViewModel : ViewModel
 	/// <summary>The workbench this models, for the views that change the song through it.</summary>
 	internal Workbench Workbench => _workbench;
 
-	/// <summary>What the inspector shows: a <see cref="SectionViewModel"/>, a <see cref="PlacementViewModel"/>, or null.</summary>
+	/// <summary>The song itself, its tempo and scale, for the inspector; null before a song has built.</summary>
+	public SongViewModel? Song
+	{
+		get;
+		internal set => Set(ref field, value);
+	}
+
+	/// <summary>Shows the song's own settings (tempo, key, scale) in the inspector.</summary>
+	public ICommand InspectSongCommand => field ??= new ActionCommand(() => _workbench.InspectSong());
+
+	/// <summary>What the inspector shows: a <see cref="SectionViewModel"/>, a <see cref="TrackViewModel"/>, a <see cref="PlacementViewModel"/>, or null.</summary>
 	public object? Inspected
 	{
 		get;
@@ -417,6 +428,13 @@ public sealed class WorkbenchViewModel : ViewModel
 		get;
 		internal set => Set(ref field, value);
 	} = "";
+
+	/// <summary>Whether the song has any tracks; with none, Arrange offers a button to add the first.</summary>
+	public bool HasTracks
+	{
+		get;
+		internal set => Set(ref field, value);
+	}
 
 	/// <summary>The last build, for the status pill: "built 14:02:31", or what failed.</summary>
 	public string BuildText

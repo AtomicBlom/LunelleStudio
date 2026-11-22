@@ -85,6 +85,8 @@ internal static class Theme
 	public static SolidColorBrush KindSample { get; } = Brush(255, 143, 177);
 	public static SolidColorBrush StepHit { get; } = Brush(92, 170, 255, 190);
 	public static SolidColorBrush StepGhost { get; } = Brush(92, 170, 255, 90);
+	public static SolidColorBrush ChordTone { get; } = Brush(92, 170, 255, 26);
+	public static SolidColorBrush ChordRoot { get; } = Brush(92, 170, 255, 58);
 
 	// One hue per track, in the order a song makes its tracks, round again past the last: told apart on a dark panel
 	private static readonly SolidColorBrush[] TrackHues =

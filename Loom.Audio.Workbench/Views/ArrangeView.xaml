@@ -2,7 +2,8 @@
 <!--
     Arrange: the song as a board. Across the top each section's head (its name, a ruler of its bars and chords, its exits),
     down the left each track's head (its hue, mute, solo, gain and meter); both stay put as the lanes under them scroll.
-    Where a lane crosses a section, the parts the track plays there, every pass drawn across the section. Beside the board
+    Where a lane crosses a section, the parts the track plays there, every pass drawn across the section. A track or part
+    is added where the pointer shows a line with a + between them; + Add track shows only while the song has no tracks. Beside the board
     the inspector, for the section or part chosen; under it, past a splitter, the part chosen in the roll.
 -->
 <ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
@@ -51,11 +52,15 @@
                 <ColumnDefinition Width="*" />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
-            <TextBlock Text="{x:Bind ViewModel.SongName, Mode=OneWay}" FontSize="16" Foreground="{x:Static views:Theme.Ink}" VerticalAlignment="Center" />
+            <Button Command="{x:Bind ViewModel.InspectSongCommand, Mode=OneWay}" Padding="8,2,10,3" VerticalAlignment="Center"
+                    ToolTipService.ToolTip="Song settings: tempo, key and scale">
+                <TextBlock Text="{x:Bind ViewModel.SongName, Mode=OneWay}" FontSize="16" Foreground="{x:Static views:Theme.Ink}" />
+            </Button>
             <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.NextText, Mode=OneWay}" FontSize="13" Foreground="{x:Static views:Theme.Dim}"
                        Margin="16,0,0,0" VerticalAlignment="Center" />
-            <Button x:Name="AddTrack" Grid.Column="2" Padding="10,3,10,4" ToolTipService.ToolTip="Add a track: its name and what it plays">
-                <TextBlock Text="+ Track" FontSize="12" />
+            <Button x:Name="AddTrack" Grid.Column="2" Padding="10,3,10,4" Visibility="{x:Bind views:Display.Not(ViewModel.HasTracks), Mode=OneWay}"
+                    ToolTipService.ToolTip="Add the first track. You can also drag a patch or kit from the library onto the board.">
+                <TextBlock Text="+ Add track" FontSize="12" />
             </Button>
         </Grid>
 
@@ -116,8 +121,8 @@
                             BorderBrush="{x:Static views:Theme.LineStrong}" BorderThickness="0,0,1,1">
                         <StackPanel Margin="12,10,8,8">
                             <TextBlock Text="SECTIONS" FontSize="10" Foreground="{x:Static views:Theme.Faint}" />
-                            <TextBlock Text="bars and chords" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Margin="0,22,0,0" />
-                            <TextBlock Text="exits" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Margin="0,8,0,0" />
+                            <TextBlock Text="Bars and chords" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Margin="0,22,0,0" />
+                            <TextBlock Text="Exits" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Margin="0,8,0,0" />
                         </StackPanel>
                     </Border>
                 </Grid>
@@ -126,7 +131,7 @@
         </Grid>
 
         <suisei:GridSplitter x:Name="Splitter" Grid.Row="2" ResizeDirection="Rows" MinimumTrackSize="120"
-                             ToolTipService.ToolTip="Drag to give the part more room, or the board" />
+                             ToolTipService.ToolTip="Drag to resize the part editor" />
 
         <!-- The part chosen: set apart on its own ground, under a rule in the accent, its title in a bar of its own -->
         <Border Grid.Row="3" Background="{x:Static views:Theme.Sunk}" BorderBrush="{x:Static views:Theme.Accent}" BorderThickness="0,2,0,0">
@@ -151,8 +156,8 @@
                                HorizontalAlignment="Center" Margin="0,12,0,0" TextWrapping="Wrap" />
                     <Button Command="{x:Bind ViewModel.Roll.BringBackCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Roll.CanBringBack, Mode=OneWay}"
                             HorizontalAlignment="Center" Margin="0,8,0,0" Padding="8,2,8,3"
-                            ToolTipService.ToolTip="Make this part data in the song's file again, from the part its code builds">
-                        <TextBlock Text="Bring back as data" FontSize="12" />
+                            ToolTipService.ToolTip="Convert this part from C# back to notation in the song file">
+                        <TextBlock Text="Convert to notation" FontSize="12" />
                     </Button>
                 </StackPanel>
 
@@ -166,29 +171,29 @@
                              fewer; undo, redo and revert; then ejecting, in words -->
                         <StackPanel Orientation="Horizontal">
                             <StackPanel Orientation="Horizontal" Margin="0,0,8,0" Visibility="{x:Bind ViewModel.Roll.IsLine, Mode=OneWay}">
-                                <Button Command="{x:Bind ViewModel.Roll.FlatCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0" ToolTipService.ToolTip="Flat: the chosen notes a semitone down">
+                                <Button Command="{x:Bind ViewModel.Roll.FlatCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0" ToolTipService.ToolTip="Flat: lower the selected note a semitone">
                                     <Path Data="M6,2 L6,14 C9,13 12,11 11,9 C10.2,7.4 7.8,7.8 6,9.5" Style="{StaticResource Glyph}" />
                                 </Button>
-                                <Button Command="{x:Bind ViewModel.Roll.NaturalCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0" ToolTipService.ToolTip="Natural: the chosen notes back on the scale">
+                                <Button Command="{x:Bind ViewModel.Roll.NaturalCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0" ToolTipService.ToolTip="Natural: return the selected note to the scale">
                                     <Path Data="M5,2 L5,11 M11,5 L11,14 M5,7 L11,5 M5,11 L11,9" Style="{StaticResource Glyph}" />
                                 </Button>
-                                <Button Command="{x:Bind ViewModel.Roll.SharpCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0" ToolTipService.ToolTip="Sharp: the chosen notes a semitone up">
+                                <Button Command="{x:Bind ViewModel.Roll.SharpCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0" ToolTipService.ToolTip="Sharp: raise the selected note a semitone">
                                     <Path Data="M6,2 L6,14 M10,2 L10,14 M3,7 L13,5.5 M3,11 L13,9.5" Style="{StaticResource Glyph}" />
                                 </Button>
-                                <Button Command="{x:Bind ViewModel.Roll.SlideCommand, Mode=OneWay}" Padding="6,4,6,4" ToolTipService.ToolTip="Slide: the chosen note glides into the next">
+                                <Button Command="{x:Bind ViewModel.Roll.SlideCommand, Mode=OneWay}" Padding="6,4,6,4" ToolTipService.ToolTip="Slide: glide from the selected note into the next">
                                     <Path Data="M2,12 C5,12 6,5 9,5 L14,5 M11.5,2.5 L14,5 L11.5,7.5" Style="{StaticResource Glyph}" />
                                 </Button>
                             </StackPanel>
-                            <Button Command="{x:Bind ViewModel.Roll.AccentCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0" ToolTipService.ToolTip="Accent: the chosen notes louder">
+                            <Button Command="{x:Bind ViewModel.Roll.AccentCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0" ToolTipService.ToolTip="Accent: play the selected note louder">
                                 <Path Data="M4,4 L12,8 L4,12" Style="{StaticResource Glyph}" />
                             </Button>
-                            <Button Command="{x:Bind ViewModel.Roll.DeleteCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,8,0" ToolTipService.ToolTip="Delete the chosen notes (Delete)">
+                            <Button Command="{x:Bind ViewModel.Roll.DeleteCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,8,0" ToolTipService.ToolTip="Delete the selected note (Delete)">
                                 <Path Data="M4,4 L12,12 M12,4 L4,12" Style="{StaticResource Glyph}" />
                             </Button>
-                            <Button Command="{x:Bind ViewModel.Roll.AddBarCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0" ToolTipService.ToolTip="A bar more at the part's end">
+                            <Button Command="{x:Bind ViewModel.Roll.AddBarCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0" ToolTipService.ToolTip="Add a bar to the end of the part">
                                 <Path Data="M3,2 L3,14 M7,8 L14,8 M10.5,4.5 L10.5,11.5" Style="{StaticResource Glyph}" />
                             </Button>
-                            <Button Command="{x:Bind ViewModel.Roll.RemoveBarCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,8,0" ToolTipService.ToolTip="A bar fewer at the part's end">
+                            <Button Command="{x:Bind ViewModel.Roll.RemoveBarCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,8,0" ToolTipService.ToolTip="Remove the last bar of the part">
                                 <Path Data="M3,2 L3,14 M7,8 L14,8" Style="{StaticResource Glyph}" />
                             </Button>
                             <Button Command="{x:Bind ViewModel.Roll.UndoCommand, Mode=OneWay}" IsEnabled="{x:Bind ViewModel.Roll.CanUndo, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,2,0"
@@ -201,15 +206,15 @@
                                 <Path Data="M11,3.5 L14,6.5 L11,9.5 M14,6.5 L6,6.5 C3.5,6.5 2,8 2,10.25 C2,12.5 3.5,14 6,14 L9,14" Style="{StaticResource Glyph}"
                                       Opacity="{x:Bind views:Display.Used(ViewModel.Roll.CanRedo), Mode=OneWay}" />
                             </Button>
-                            <Button Command="{x:Bind ViewModel.Roll.RevertCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,8,0" ToolTipService.ToolTip="Revert: the part as the file had it when opened">
+                            <Button Command="{x:Bind ViewModel.Roll.RevertCommand, Mode=OneWay}" Padding="6,4,6,4" Margin="0,0,8,0" ToolTipService.ToolTip="Revert the part to how it was when the song was opened">
                                 <Path Data="M2.5,2.5 L2.5,6.5 L6.5,6.5 M3,6.5 C4,4 6,2.5 8.75,2.5 C11.75,2.5 14,5 14,8.25 C14,11.5 11.5,14 8.5,14 C6.5,14 4.75,13 3.75,11.5"
                                       Style="{StaticResource Glyph}" />
                             </Button>
                             <StackPanel Orientation="Horizontal" Visibility="{x:Bind ViewModel.Roll.CanEject, Mode=OneWay}">
                                 <Button Command="{x:Bind ViewModel.Roll.EjectNotationCommand, Mode=OneWay}" Padding="9,4,9,5" Margin="0,0,2,0"
-                                        ToolTipService.ToolTip="Make the part's notes C#, to build any way you like"><TextBlock Text="Eject notation" FontSize="12" /></Button>
+                                        ToolTipService.ToolTip="Convert the part's notes to C#, to generate them in code"><TextBlock Text="Convert notes to C#" FontSize="12" /></Button>
                                 <Button Command="{x:Bind ViewModel.Roll.EjectPlacementCommand, Mode=OneWay}" Padding="9,4,9,5"
-                                        ToolTipService.ToolTip="Make the whole placement C#: its part, condition and fill"><TextBlock Text="Eject placement" FontSize="12" /></Button>
+                                        ToolTipService.ToolTip="Convert the whole part to C#: its notes, condition and fill"><TextBlock Text="Convert part to C#" FontSize="12" /></Button>
                             </StackPanel>
                         </StackPanel>
                         <TextBlock Text="{x:Bind ViewModel.Roll.Hint, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Faint}" Margin="0,5,0,0" />

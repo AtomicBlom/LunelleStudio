@@ -18,7 +18,7 @@ public sealed class RollViewModel : ViewModel
 	private Action<int>? _gesture;
 	private JsonObject? _part;
 	private NotationText? _line;
-	private (int Start, int Grab, bool Resize)? _drag;
+	private (int Start, int Row, int Grab, bool Resize)? _drag;
 
 	internal RollViewModel(Workbench workbench)
 	{
@@ -48,9 +48,9 @@ public sealed class RollViewModel : ViewModel
 	/// <summary>How the roll is worked with the pointer, for the kind of part it shows.</summary>
 	public string Hint => Kind switch
 	{
-		RollKind.Line => "Click to add a note, drag to lengthen or move it; right-click or click it twice to delete. The glyphs mark the note chosen.",
-		RollKind.Beat => "Click a step: x a hit, X an accent, o a ghost note, then off.",
-		RollKind.Strum => "Click a step: D a down stroke, U up, d and u softer, x a mute, _ a hold, then off.",
+		RollKind.Line => "Click to add a note; click above or below where notes start to stack a chord. Drag a note's end to lengthen it (and its chord), or its body to move it. Right-click or double-click to delete. The section's chord notes are highlighted, the root brightest.",
+		RollKind.Beat => "Click a step to cycle it: x hit, X accent, o ghost note, off.",
+		RollKind.Strum => "Click a step to cycle it: D down, U up, d and u soft, x muted, _ stop, off. Each stroke plays the chord at that step.",
 		_ => "",
 	};
 
@@ -80,6 +80,12 @@ public sealed class RollViewModel : ViewModel
 
 	/// <summary>Where the note chosen starts, or -1.</summary>
 	public int Selected { get; private set; } = -1;
+
+	/// <summary>The row of the note chosen (by <see cref="NoteToken.Row"/>), a chord's notes told apart; meaningless while <see cref="Selected"/> is -1.</summary>
+	public int SelectedRow { get; private set; }
+
+	/// <summary>Whether the note shown at <paramref name="step"/> on <paramref name="row"/> (rows from the top) is the one chosen.</summary>
+	public bool IsSelected(int step, int row) => step == Selected && _highRow - row == SelectedRow;
 
 	/// <summary>Counts up each time what it shows changes, for the view to draw again.</summary>
 	public int Version { get; private set => Set(ref field, value); }
@@ -141,6 +147,35 @@ public sealed class RollViewModel : ViewModel
 	internal IReadOnlyList<string> KitPieces { get; set; } = [];
 
 	/// <summary>
+	/// For a line, whether a step's note on a row (by <see cref="NoteToken.Row"/>) is in the chord sounding there: 2 its root,
+	/// 1 another of its notes, 0 neither; and which chord that is, so steps under one chord are told apart from the next.
+	/// </summary>
+	internal (Func<int, object> ChordAt, Func<int, int, int> Tone)? Chords { get; set; }
+
+	/// <summary>A line's rows that are in the chord over each stretch of steps it sounds for: from, to (past the last), row from the top, whether the root.</summary>
+	public IReadOnlyList<(int From, int To, int Row, bool Root)> ChordTones { get; private set; } = [];
+
+	// The rows in each chord's notes, a stretch of steps at a time
+	private IReadOnlyList<(int From, int To, int Row, bool Root)> FindChordTones()
+	{
+		if (Chords is not { } chords || Steps == 0)
+			return [];
+		var found = new List<(int, int, int, bool)>();
+		for (var from = 0; from < Steps;)
+		{
+			var chord = chords.ChordAt(from);
+			var to = from + 1;
+			while (to < Steps && Equals(chords.ChordAt(to), chord))
+				to++;
+			for (var r = 0; r < Rows.Count; r++)
+				if (chords.Tone(from, _highRow - r) is var tone and > 0)
+					found.Add((from, to, r, tone == 2));
+			from = to;
+		}
+		return found;
+	}
+
+	/// <summary>
 	/// Shows a part, <paramref name="edit"/> making a change to it (in the song's file, heard at the next bar), and
 	/// <paramref name="gesture"/> grouping a drag's edits into one to undo (1 to start, 0 to end).
 	/// </summary>
@@ -153,7 +188,7 @@ public sealed class RollViewModel : ViewModel
 		_gesture = gesture;
 		Title = title;
 		StepsPerBar = stepsPerBar;
-		Status = edited ? "edited · undo with Ctrl Z" : "";
+		Status = edited ? "Edited · Ctrl Z to undo" : "";
 		CanUndo = canUndo;
 		CanRedo = canRedo;
 		if (!same)
@@ -168,8 +203,9 @@ public sealed class RollViewModel : ViewModel
 			Steps = _line.Count;
 			var notes = new List<(int, int, int, NoteToken)>();
 			for (var s = 0; s < _line.Count; s++)
-				if (NoteToken.Parse(_line[s]) is { } note)
-					notes.Add((s, RollEdits.LengthOf(_line, s), note.Row, note));
+				if (NoteToken.ParseStack(_line[s]) is { } stack)
+					foreach (var note in stack)
+						notes.Add((s, RollEdits.LengthOf(_line, s), note.Row, note));
 			// Three octaves of degrees, the part's own in the middle, widened to hold any note past them: room to scroll to
 			var low = Math.Min(-7, notes.Count > 0 ? notes.Min(n => n.Item3) - 2 : -7);
 			_highRow = Math.Max(20, notes.Count > 0 ? notes.Max(n => n.Item3) + 2 : 20);
@@ -201,7 +237,7 @@ public sealed class RollViewModel : ViewModel
 		}
 		else
 		{
-			ShowNone("a part of a kind the roll doesn't edit");
+			ShowNone("This kind of part can't be edited in the roll.");
 			return;
 		}
 		Bump();
@@ -209,6 +245,8 @@ public sealed class RollViewModel : ViewModel
 
 	private void Bump()
 	{
+		ChordTones = Kind == RollKind.Line ? FindChordTones() : [];
+
 		Changed(nameof(IsEditable));
 		Changed(nameof(IsLine));
 		Changed(nameof(Hint));
@@ -230,26 +268,29 @@ public sealed class RollViewModel : ViewModel
 				EditNotes(text => text[step] = RollEdits.NextStroke(text[step]), characters: true);
 				return;
 			case RollKind.Line when _line is { } line:
-				var start = RollEdits.NoteAt(line, step);
-				if (start >= 0 && (secondary || (twice && start == Selected)))
+				var noteRow = _highRow - row;
+				var start = RollEdits.NoteAt(line, step, noteRow);
+				if (start >= 0 && (secondary || (twice && start == Selected && noteRow == SelectedRow)))
 				{
 					Selected = -1;
-					EditNotes(text => RollEdits.Delete(text, start), characters: false);
+					EditNotes(text => RollEdits.Delete(text, start, noteRow), characters: false);
 					return;
 				}
 				_gesture?.Invoke(1);
 				if (start >= 0)
 				{
-					Selected = start;
+					(Selected, SelectedRow) = (start, noteRow);
 					var last = start + RollEdits.LengthOf(line, start) - 1;
-					// The last step of a note grabs its end, to lengthen it; anywhere else grabs it to move
-					_drag = (start, step - start, step == last);
+					// The last step of a note grabs its end, to lengthen it (and its chord); anywhere else grabs it to move
+					_drag = (start, noteRow, step - start, step == last);
 					Bump();
 					return;
 				}
-				Selected = step;
-				_drag = (step, 0, true);
-				EditNotes(text => RollEdits.Place(text, step, _highRow - row), characters: false);
+				// Where notes start already, the new one joins them as a chord
+				var joins = NoteToken.ParseStack(line[step]) is not null;
+				(Selected, SelectedRow) = (step, noteRow);
+				_drag = (step, noteRow, 0, !joins);
+				EditNotes(text => RollEdits.Place(text, step, noteRow), characters: false);
 				return;
 		}
 	}
@@ -265,19 +306,18 @@ public sealed class RollViewModel : ViewModel
 		step = Math.Clamp(step, 0, Steps - 1);
 		row = Math.Clamp(row, 0, Rows.Count - 1);
 		var toRow = _highRow - row;
-		var atRow = NoteToken.Parse(_line[drag.Start])?.Row;
-		if (drag.Resize && toRow == atRow)
+		if (drag.Resize && toRow == drag.Row)
 		{
 			if (step >= drag.Start)
 				EditNotes(text => RollEdits.Resize(text, drag.Start, step), characters: false);
 			return;
 		}
 		var to = Math.Clamp(step - drag.Grab, 0, Steps - 1);
-		if (to == drag.Start && atRow == toRow)
+		if (to == drag.Start && drag.Row == toRow)
 			return;
-		EditNotes(text => RollEdits.Move(text, drag.Start, to, toRow), characters: false);
-		_drag = (to, drag.Grab, false);
-		Selected = to;
+		EditNotes(text => RollEdits.Move(text, drag.Start, to, toRow, drag.Row), characters: false);
+		_drag = (to, toRow, drag.Grab, false);
+		(Selected, SelectedRow) = (to, toRow);
 		Bump();
 	}
 
@@ -292,19 +332,19 @@ public sealed class RollViewModel : ViewModel
 
 	private void ChangeNote(Func<NoteToken, NoteToken> change)
 	{
-		if (Kind != RollKind.Line || _line is null || Selected < 0 || NoteToken.Parse(_line[Selected]) is null)
+		if (Kind != RollKind.Line || _line is null || Selected < 0 || NoteToken.ParseStack(_line[Selected]) is null)
 			return;
-		var start = Selected;
-		EditNotes(text => RollEdits.Change(text, start, change), characters: false);
+		var (start, row) = (Selected, SelectedRow);
+		EditNotes(text => RollEdits.Change(text, start, change, row), characters: false);
 	}
 
 	private void DeleteSelected()
 	{
-		if (Kind != RollKind.Line || _line is null || Selected < 0 || NoteToken.Parse(_line[Selected]) is null)
+		if (Kind != RollKind.Line || _line is null || Selected < 0 || NoteToken.ParseStack(_line[Selected]) is null)
 			return;
-		var start = Selected;
+		var (start, row) = (Selected, SelectedRow);
 		Selected = -1;
-		EditNotes(text => RollEdits.Delete(text, start), characters: false);
+		EditNotes(text => RollEdits.Delete(text, start, row), characters: false);
 	}
 
 	private void Bars(bool add)

@@ -25,7 +25,7 @@ internal sealed class SectionHeader : ContentControl
 	private readonly TextBlock _exits = new() { FontSize = 11f, Foreground = Theme.Dim, TextTrimming = TextTrimming.CharacterEllipsis };
 	private readonly TextBlock _next = new() { FontSize = 11f, Foreground = Theme.Accent, Margin = new Thickness(8f, 0f, 0f, 0f) };
 	private readonly ToggleButton _name = new() { Padding = new Thickness(6f, 1f, 8f, 2f) };
-	private readonly TextBlock _queued = new() { Text = "at the next bar", FontSize = 11f, Foreground = Theme.Accent, Margin = new Thickness(8f, 3f, 0f, 0f), Visibility = Visibility.Collapsed };
+	private readonly TextBlock _queued = new() { Text = "Next bar", FontSize = 11f, Foreground = Theme.Accent, Margin = new Thickness(8f, 3f, 0f, 0f), Visibility = Visibility.Collapsed };
 	// The bar cell a left press went down on, which a release over the same cell picks: a right-click or a drag that
 	// ends over a bar picks nothing
 	private Border? _pressed;
@@ -94,10 +94,10 @@ internal sealed class SectionHeader : ContentControl
 			_name.IsChecked = true;
 			section.Inspect();
 		};
-		ToolTipService.SetToolTip(_name, $"Show {section.Name} in the inspector: its bars, chords and exits");
+		ToolTipService.SetToolTip(_name, $"Edit {section.Name}: bars, chords and exits");
 		var play = new Button { Content = Glyphs.Play(10f), Padding = new Thickness(6f, 3f, 6f, 3f), Margin = new Thickness(4f, 0f, 0f, 0f) };
 		play.Click += (_, _) => section.Jump();
-		ToolTipService.SetToolTip(play, section.Index < 9 ? $"Play {section.Name} from the next bar ({section.Index + 1})" : $"Play {section.Name} from the next bar");
+		ToolTipService.SetToolTip(play, section.Index < 9 ? $"Jump to {section.Name} at the next bar ({section.Index + 1})" : $"Jump to {section.Name} at the next bar");
 		top.Children.Add(_name);
 		top.Children.Add(play);
 		top.Children.Add(new TextBlock { Text = section.Detail, FontSize = 11f, Foreground = Theme.Faint, Margin = new Thickness(8f, 4f, 0f, 0f) });
@@ -124,8 +124,8 @@ internal sealed class SectionHeader : ContentControl
 				Child = words,
 			};
 			ToolTipService.SetToolTip(cell, repeat
-				? $"Bar {bar + 1}: the progression again (its bar {at + 1}, {written}); click to change that bar"
-				: $"Bar {bar + 1}: {written}; click to change its chords");
+				? $"Bar {bar + 1}: {written} (repeats bar {at + 1}). Click to edit."
+				: $"Bar {bar + 1}: {written}. Click to edit.");
 			var bar1 = at;
 			cell.AddHandler(PointerPressedEvent, (_, e) =>
 			{
@@ -154,8 +154,8 @@ internal sealed class SectionHeader : ContentControl
 		exits.ColumnDefinitions.Add(GridLength.Auto);
 		_exits.Text = section.ExitsText;
 		ToolTipService.SetToolTip(_exits, section.Exits.Count == 0
-			? "With no exits it plays again: choose the section to give it some"
-			: string.Join("\n", section.Exits.Select((e, i) => e.When is { } when ? $"{i + 1}. to {e.Then} when {when}" : $"{i + 1}. otherwise to {e.Then}")));
+			? "No exits: the section repeats. Select the section to add exits."
+			: string.Join("\n", section.Exits.Select((e, i) => e.When is { } when ? $"{i + 1}. Go to {e.Then} when {when}" : $"{i + 1}. Otherwise go to {e.Then}")));
 		_next.Text = section.NextText;
 		Grid.SetColumn(_next, 1);
 		exits.Children.Add(_exits);

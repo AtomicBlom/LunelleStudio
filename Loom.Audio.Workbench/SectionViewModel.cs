@@ -40,7 +40,7 @@ public sealed class SectionViewModel : ViewModel
 
 	/// <summary>Its exits in a line: "→ open when intensity &gt; 0.7 · → cruise"; "plays again" with none.</summary>
 	public string ExitsText => Exits.Count == 0
-		? "↻ plays again"
+		? "↻ repeats"
 		: string.Join("  ·  ", Exits.Select(e => e.When is { } when ? $"→ {e.Then} when {when}" : $"→ {e.Then}"));
 
 	/// <summary>The width of one of its bars on the ruler.</summary>

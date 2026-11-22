@@ -10,12 +10,19 @@
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<GenerateDocumentationFile>true</GenerateDocumentationFile>
-		<!-- Not packed: an app references the project, as HelloSynth does. -->
-		<IsPackable>false</IsPackable>
+	</PropertyGroup>
+
+	<!-- Packed: it is what a project's workbench extension builds against (IWorkbenchExtension, its context and the
+	     workbench it is handed), at the version of the loom-workbench that loads it, and what an app hosting the workbench
+	     itself takes. -->
+	<PropertyGroup Label="NuGet">
+		<PackageId>Loom.Audio.Workbench</PackageId>
+		<Description>The music workbench for Loom.Audio.Synth: its model, view models and SUIsei views, with no window of its own; the API a workbench extension is written against.</Description>
+		<PackageTags>audio;music;synthesis;workbench;suisei;dotnet</PackageTags>
 	</PropertyGroup>
 
 	<ItemGroup>
-		<InternalsVisibleTo Include="Loom.Tests" />
+		<InternalsVisibleTo Include="Loom.Audio.Workbench.Tests" />
 	</ItemGroup>
 
 	<ItemGroup>

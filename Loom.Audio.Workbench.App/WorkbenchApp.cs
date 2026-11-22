@@ -28,6 +28,11 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 	private WorkbenchState? _restore;
 	private double _sinceSave;
 
+	// The music's audio, through SDL 3 (Program registers it): updated once a frame, paused while the window is off
+	// screen, closed as the window closes. It keeps the default unfocused volume (1): the music plays on while another
+	// window, the editor, has the focus
+	private AudioEngine Audio { get; set; } = null!;
+
 	private string Name => Path.GetFileNameWithoutExtension(projectPath);
 
 	protected override void Configure(AppOptions options)
@@ -35,12 +40,13 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 		options.Title = $"Loom workbench - {Name}";
 		options.Width = 1280;
 		options.Height = 800;
-		// The default unfocused volume (1): the music plays on while the editor has the focus
-		options.Audio = new AudioOptions();
 	}
 
 	protected override void LoadContent()
 	{
+		var audio = new AudioOptions();
+		Audio = new AudioEngine(AudioOutput.Open(audio), audio);
+
 		Engine.DefineTechnique("background", new TechniqueDescriptor("background"));
 		_ui = new UIHost();
 		_painter = UIPainter.Create(Engine, _ui);
@@ -125,16 +131,30 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 		WorkbenchFocus.KeepKeys(_ui.Focus);
 		_ui.Render();
 		_painter.Prepare();
+		Audio.Update();
 	}
+
+	protected override void OnFocusChanged(bool focused) => Audio.SetFocused(focused);
+
+	protected override void OnSuspending() => Audio.Pause();
+
+	protected override void OnResumed() => Audio.Resume();
 
 	protected override void UnloadContent()
 	{
-		if (_restore is null)
-			_state.Save(_workbench.CaptureState());
-		_extensionWatcher?.Dispose();
-		_project?.Dispose();
-		_workbench.Dispose();
-		extension?.Dispose();
+		try
+		{
+			if (_restore is null)
+				_state.Save(_workbench.CaptureState());
+			_extensionWatcher?.Dispose();
+			_project?.Dispose();
+			_workbench.Dispose();
+			extension?.Dispose();
+		}
+		finally
+		{
+			Audio.Dispose();
+		}
 	}
 
 	private FileSystemWatcher? _extensionWatcher;

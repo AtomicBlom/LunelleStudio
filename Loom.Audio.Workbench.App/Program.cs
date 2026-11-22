@@ -1,3 +1,4 @@
+using Loom.Audio.Sdl;
 using Loom.Audio.Workbench;
 using Loom.Audio.Workbench.App;
 using Loom.Audio.Workbench.Projects;
@@ -61,6 +62,8 @@ catch (InvalidOperationException ex)
 {
 	Console.Error.WriteLine($"[workbench] the extension couldn't be loaded, so the workbench opens without it: {ex.Message}");
 }
+
+SdlAudio.Register(); // the music's output, which the app opens as it loads (AudioOutput.Open)
 
 // What the workbench didn't take (the project, "new" and its folder) is the extension's
 LoomApplication.Run(new WorkbenchApp(project, extension, [.. appArgs.Skip(appArgs is ["new", ..] ? 2 : 1)], extension is null ? null : extensionProject), args);

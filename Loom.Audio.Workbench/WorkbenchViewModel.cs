@@ -429,6 +429,13 @@ public sealed class WorkbenchViewModel : ViewModel
 		internal set => Set(ref field, value);
 	} = "";
 
+	/// <summary>Whether the song has any tracks; with none, Arrange offers a button to add the first.</summary>
+	public bool HasTracks
+	{
+		get;
+		internal set => Set(ref field, value);
+	}
+
 	/// <summary>The last build, for the status pill: "built 14:02:31", or what failed.</summary>
 	public string BuildText
 	{

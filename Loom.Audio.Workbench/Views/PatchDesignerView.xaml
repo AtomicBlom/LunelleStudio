@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
-    Patch: the patch designer. Its name, whether it builds and is edited, the patch as its code has it to hear against,
-    + Operator, Revert, Copy C#; what the builder refuses; the operators as a graph in render order; the voice after them
+    Patch: the patch designer. Its name, whether it builds and is edited, the songs it is used in, the patch as its code has
+    it to hear against, + Operator, Revert, Duplicate, Copy C#; what the builder refuses; the operators as a graph in render order; the voice after them
     as a chain; and a scope and spectrum of what is heard. The inspector beside it changes what is chosen.
 -->
 <ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
@@ -25,6 +25,9 @@
                 <TextBlock Text="{x:Bind ViewModel.Designer.Name, Mode=OneWay}" FontSize="16" Foreground="{x:Static views:Theme.Ink}" VerticalAlignment="Center" />
                 <TextBlock Text="{x:Bind ViewModel.Designer.Status, Mode=OneWay}" FontSize="12" VerticalAlignment="Center" Margin="12,0,0,0"
                            Foreground="{x:Bind views:Display.Problem(ViewModel.Designer.HasProblems), Mode=OneWay}" />
+                <TextBlock Text="{x:Bind ViewModel.Designer.UsedBy, Mode=OneWay}" FontSize="12" VerticalAlignment="Center" Margin="12,0,0,0"
+                           Foreground="{x:Static views:Theme.Dim}" TextTrimming="CharacterEllipsis"
+                           ToolTipService.ToolTip="The songs with a track playing this patch. Use Duplicate to change it for one song only." />
             </StackPanel>
             <StackPanel Orientation="Horizontal">
                 <ToggleButton ToolTipService.ToolTip="Hear the patch as it was when opened" IsChecked="{x:Bind ViewModel.Designer.HearOriginal, Mode=TwoWay}" Margin="0,0,6,0" Padding="8,3,8,4">
@@ -35,6 +38,9 @@
                 </ToggleButton>
                 <Button ToolTipService.ToolTip="Revert the patch to how it was when opened" Command="{x:Bind ViewModel.Designer.RevertCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
                     <TextBlock Text="Revert" FontSize="12" />
+                </Button>
+                <Button x:Name="Duplicate" ToolTipService.ToolTip="Make a copy of the patch under a new name, to change without changing the songs that use this one" Margin="0,0,6,0" Padding="8,3,8,4">
+                    <TextBlock Text="Duplicate…" FontSize="12" />
                 </Button>
                 <Button ToolTipService.ToolTip="Copy the patch's C# to the clipboard" Command="{x:Bind ViewModel.Designer.CopyCommand, Mode=OneWay}" Margin="0,0,6,0" Padding="8,3,8,4">
                     <TextBlock Text="Copy C#" FontSize="12" />

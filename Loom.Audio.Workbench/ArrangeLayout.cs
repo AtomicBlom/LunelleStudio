@@ -14,9 +14,6 @@ internal static class ArrangeLayout
 	/// <summary>How tall one part's clip is in a lane: its title row and its passes.</summary>
 	public const float ClipHeight = 58f;
 
-	/// <summary>The row under a cell's parts with a button to add another.</summary>
-	public const float AddRowHeight = 24f;
-
-	/// <summary>A lane tall enough for the most parts its track plays in one section, and a row under them to add another.</summary>
-	public static float LaneHeight(int parts) => 12f + Math.Max(1, parts) * ClipHeight + (parts > 0 ? AddRowHeight : 0f);
+	/// <summary>A lane tall enough for the most parts its track plays in one section.</summary>
+	public static float LaneHeight(int parts) => 12f + Math.Max(1, parts) * ClipHeight;
 }

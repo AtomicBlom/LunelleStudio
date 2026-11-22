@@ -2,7 +2,8 @@
 <!--
     Arrange: the song as a board. Across the top each section's head (its name, a ruler of its bars and chords, its exits),
     down the left each track's head (its hue, mute, solo, gain and meter); both stay put as the lanes under them scroll.
-    Where a lane crosses a section, the parts the track plays there, every pass drawn across the section. Beside the board
+    Where a lane crosses a section, the parts the track plays there, every pass drawn across the section. A track or part
+    is added where the pointer shows a line with a + between them; + Add track shows only while the song has no tracks. Beside the board
     the inspector, for the section or part chosen; under it, past a splitter, the part chosen in the roll.
 -->
 <ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
@@ -57,7 +58,8 @@
             </Button>
             <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.NextText, Mode=OneWay}" FontSize="13" Foreground="{x:Static views:Theme.Dim}"
                        Margin="16,0,0,0" VerticalAlignment="Center" />
-            <Button x:Name="AddTrack" Grid.Column="2" Padding="10,3,10,4" ToolTipService.ToolTip="Add a track. You can also drag a patch or kit from the library onto the board.">
+            <Button x:Name="AddTrack" Grid.Column="2" Padding="10,3,10,4" Visibility="{x:Bind views:Display.Not(ViewModel.HasTracks), Mode=OneWay}"
+                    ToolTipService.ToolTip="Add the first track. You can also drag a patch or kit from the library onto the board.">
                 <TextBlock Text="+ Add track" FontSize="12" />
             </Button>
         </Grid>

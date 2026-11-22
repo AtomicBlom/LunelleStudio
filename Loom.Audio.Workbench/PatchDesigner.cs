@@ -174,6 +174,13 @@ public sealed class PatchDesigner : ViewModel
 		private set => Set(ref field, value);
 	} = "";
 
+	/// <summary>Which songs the patch is used in, said so an edit's reach is clear: "Used in open-road and understory".</summary>
+	public string UsedBy
+	{
+		get;
+		internal set => Set(ref field, value);
+	} = "";
+
 	/// <summary>Whether it differs from the patch as its code has it.</summary>
 	public bool IsDirty
 	{

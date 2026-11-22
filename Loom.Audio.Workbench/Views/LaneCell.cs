@@ -8,8 +8,8 @@ namespace Loom.Audio.Workbench.Views;
 /// <summary>
 /// Where a track's lane crosses a section: each part it plays there as a clip (a dot lit while it plays, its title, which
 /// chooses it, its condition on a chip that opens the condition to change, held on, off or left to its condition), and
-/// under the title its passes across the section; or, where it plays nothing, a button that adds a part. The column is
-/// tinted while its section plays.
+/// under the title its passes across the section. A part is added where the pointer shows a gap for one: a line with a
+/// + above, between or under the parts, or a + in a cell with none. The column is tinted while its section plays.
 /// </summary>
 internal sealed class LaneCell : ContentControl
 {
@@ -48,56 +48,105 @@ internal sealed class LaneCell : ContentControl
 		}
 		Width = cell.Width;
 		Height = track.Height;
-		var column = new StackPanel { Orientation = Orientation.Vertical, Margin = new Thickness(6f, 6f, 6f, 0f) };
+		var column = new StackPanel { Orientation = Orientation.Vertical, Margin = new Thickness(Inset, Inset, Inset, 0f) };
 		foreach (var part in cell.Placements)
-			column.Children.Add(PartClip(part, cell.Width - 12f));
-		column.Children.Add(AddButton(track, cell.Section, compact: cell.Placements.Count > 0));
+			column.Children.Add(PartClip(part, cell.Width - 2f * Inset));
 		_ground.Background = Display.Column(cell.IsCurrent);
 		_ground.BorderBrush = Theme.Line;
 		_ground.BorderThickness = new Thickness(1f, 0f, 0f, 1f);
 		var grid = new Grid();
 		grid.Children.Add(_ground);
 		grid.Children.Add(column);
+		// Parts are added only to a song with a file to write them to
+		if (track.CanEdit)
+			grid.Children.Add(cell.Placements.Count == 0 ? EmptyAdd(track, cell.Section) : Between(track, cell.Section, cell.Placements.Count, cell.Width));
 		Content = grid;
 	}
 
-	// A part added for the track in this section: a beat on a kit's track, otherwise a choice of melody, bass line or strum.
-	// Alone in an empty cell it is a plus; under parts already there, a small "+ Part".
-	private static Button AddButton(TrackViewModel track, int section, bool compact)
+	// The parts' clips sit this far in from the cell's edges
+	private const float Inset = 6f;
+
+	// How near the pointer must come to a gap between parts for the line to show there
+	private const float Reach = 10f;
+
+	// In an empty cell: a + that shows while the pointer is over the cell, adding the track's first part here
+	private UIElement EmptyAdd(TrackViewModel track, int section)
 	{
-		var add = compact
-			? new Button
+		var add = new Button
+		{
+			Content = Glyphs.Plus(12f, Theme.Dim),
+			Padding = new Thickness(8f, 4f, 8f, 4f),
+			HorizontalAlignment = HorizontalAlignment.Left,
+			VerticalAlignment = VerticalAlignment.Top,
+			Margin = new Thickness(Inset, 20f, 0f, 0f),
+			Opacity = 0f,
+		};
+		ToolTipService.SetToolTip(add, Tip(track));
+		var open = false;
+		add.Click += (_, _) =>
+		{
+			open = true;
+			Ask(track, add, kind => track.AddPart(section, kind, 0), () =>
 			{
-				Content = new TextBlock { Text = "+ Part", FontSize = 11f, Foreground = Theme.Dim },
-				Padding = new Thickness(6f, 1f, 7f, 2f),
-				Height = ArrangeLayout.AddRowHeight - 4f,
-				HorizontalAlignment = HorizontalAlignment.Left,
-				Opacity = 0.75f,
-			}
-			: new Button
-			{
-				Content = Glyphs.Plus(12f, Theme.Dim),
-				Padding = new Thickness(8f, 4f, 8f, 4f),
-				Opacity = 0.6f,
-				HorizontalAlignment = HorizontalAlignment.Left,
-				Margin = new Thickness(0f, 14f, 0f, 0f),
-			};
+				open = false;
+				add.Opacity = 0f;
+			});
+		};
+		PointerEntered += (_, _) => add.Opacity = 0.7f;
+		PointerExited += (_, _) =>
+		{
+			if (!open)
+				add.Opacity = 0f;
+		};
+		return add;
+	}
+
+	// Among parts: a line with a + where the pointer comes near a gap (above the first, between two, under the last),
+	// adding a part for the track just there
+	private UIElement Between(TrackViewModel track, int section, int parts, float width)
+	{
+		var line = new InsertLine(Tip(track));
+		var slot = 0;
+		line.Follow(this, at =>
+		{
+			var nearest = Math.Clamp((int)MathF.Round((at.Y - Inset) / ArrangeLayout.ClipHeight), 0, parts);
+			var y = Inset + nearest * ArrangeLayout.ClipHeight;
+			if (MathF.Abs(at.Y - y) > Reach)
+				return null;
+			slot = nearest;
+			return (y, Inset, width - 2f * Inset);
+		});
+		line.Chosen += anchor =>
+		{
+			line.IsHeld = true;
+			var at = slot;
+			Ask(track, anchor, kind => track.AddPart(section, kind, at), line.Release);
+		};
+		return line;
+	}
+
+	private static string Tip(TrackViewModel track) => track.IsKit
+		? $"Add a beat for {track.Name} here"
+		: $"Add a part for {track.Name} here: a melody, a bass line, chords or a strum";
+
+	// What kind of part to add, asked at the anchor: a kit's track has only beats, so it adds one at once
+	private static void Ask(TrackViewModel track, FrameworkElement anchor, Action<NewPartKind> add, Action closed)
+	{
 		if (track.IsKit)
 		{
-			ToolTipService.SetToolTip(add, $"Add a beat for {track.Name} in this section");
-			add.Click += (_, _) => track.AddPart(section);
-			return add;
+			add(NewPartKind.Melody);
+			closed();
+			return;
 		}
-		ToolTipService.SetToolTip(add, $"Add a part for {track.Name} in this section: a melody, a bass line, chords or a strum");
 		var kinds = new MenuFlyout();
 		foreach (var (text, kind) in new[] { ("Melody", NewPartKind.Melody), ("Bass line (follows chords)", NewPartKind.Bass), ("Chords (block chords, as on keys)", NewPartKind.Chords), ("Strum (chords, as on a guitar)", NewPartKind.Strum) })
 		{
 			var item = new MenuFlyoutItem { Text = text };
-			item.Click += (_, _) => track.AddPart(section, kind);
+			item.Click += (_, _) => add(kind);
 			kinds.Items.Add(item);
 		}
-		add.Click += (_, _) => kinds.ShowAt(add);
-		return add;
+		kinds.Closed += (_, _) => closed();
+		kinds.ShowAt(anchor);
 	}
 
 	private static StackPanel PartClip(PlacementViewModel part, float width)

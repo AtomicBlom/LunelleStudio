@@ -392,6 +392,7 @@ public sealed partial class Workbench : IDisposable
 			}
 			ViewModel.Tracks.Add(row);
 		}
+		ViewModel.HasTracks = ViewModel.Tracks.Count > 0;
 		foreach (var cue in song.Cues)
 			if (!ViewModel.Cues.Any(c => c.Cue == cue))
 				ViewModel.Cues.Add(new CueViewModel(this, cue, Player.Get(cue)));
@@ -859,6 +860,8 @@ public sealed partial class Workbench : IDisposable
 			chip.SetMacro(_benchInstrument, new Macro(macro.Index), macro.Value);
 		// The same patch built again after a code change keeps the designer's edits; another opens afresh
 		ViewModel.Designer.Load(patch, _catalog.MacroName, keepEdits: true, names: OpenPatchFile(name));
+
+		ShowPatchUsage(name);
 	}
 
 	/// <summary>Chooses a kit for the bench, whose pads (and keys) play its pieces.</summary>

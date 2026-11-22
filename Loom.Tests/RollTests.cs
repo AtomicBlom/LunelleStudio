@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Loom.Audio.Synth;
 using Loom.Audio.Synth.Chip;
 using Loom.Audio.Synth.Music;
@@ -298,6 +299,75 @@ public class RollTests
 
 		model.Tracks[0].AddPart(0, NewPartKind.Melody);
 		Added().ShouldBeOfType<Line>().IsOverChords.ShouldBeFalse();
+	}
+
+	[Test]
+	public void A_part_and_a_track_go_in_where_the_line_was_shown()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+
+		// Between the lead's two parts in the verse
+		model.Tracks[0].AddPart(0, NewPartKind.Bass, 1);
+		rig.Step(0.5);
+		var parts = JsonNode.Parse(File.ReadAllText(rig.Path))!["sections"]![0]!["parts"]!.AsArray();
+		parts.Count.ShouldBe(3);
+		parts[0]!["notes"]!.GetValue<string>().ShouldBe("1 3 5 3");
+		parts[1]!["overChords"]!.GetValue<bool>().ShouldBeTrue();
+		parts[2]!["notes"]!.GetValue<string>().ShouldBe("1 . . .");
+
+		// Above the lead, then below it
+		model.Tracks[0].AddTrackBeside("click", isKit: false, below: false).ShouldBeNull();
+		model.Tracks.Select(t => t.Name).ShouldBe(["click", "lead"]);
+		model.Tracks[1].AddTrackBeside("click", isKit: false, below: true).ShouldBeNull();
+		model.Tracks.Select(t => t.Name).ShouldBe(["click", "lead", "click 2"]);
+		model.HasTracks.ShouldBeTrue();
+	}
+
+	[Test]
+	public void A_patch_says_which_songs_use_it_and_a_track_gets_a_copy_of_its_own()
+	{
+		using var rig = new Rig();
+		var model = rig.Workbench.ViewModel;
+		var folder = Path.Combine(Path.GetTempPath(), "loom-patches-" + Guid.NewGuid().ToString("N")[..8]);
+		Directory.CreateDirectory(folder);
+		try
+		{
+			var click = Path.Combine(folder, "click.patch.json");
+			File.WriteAllText(click, """{ "format": "loom-patch/1", "name": "click", "operators": [ { "name": "sine1", "kind": "sine", "envelope": "decay 0.01", "level": 0.5 } ], "out": [ { "op": "sine1" } ] }""");
+			var other = Path.Combine(folder, "other.song.json");
+			File.WriteAllText(other, """{ "format": "loom-song/2", "name": "other", "tempo": 100, "scale": "C major", "tracks": [ { "name": "bell", "patch": "click" } ], "sections": [ { "name": "a", "bars": 1, "parts": [] } ] }""");
+			var copy = Path.Combine(folder, "click-first.patch.json");
+			var bindings = new SongBindings { Patch = n => n.StartsWith("click", StringComparison.Ordinal) ? MusicRig.Click : null, Cue = n => n == "energy" ? Energy : null };
+			var catalog = rig.Catalog with
+			{
+				Songs = [.. rig.Catalog.Songs, ("other", () => new Song("other"))],
+				PatchFile = n => n == "click" ? click : n == "click-first" ? copy : null,
+				SongSource = n => n == "other" ? new SongSource(other, bindings) : n == "first" ? new SongSource(rig.Path, bindings) : null,
+			};
+			rig.Workbench.UseCatalog(catalog);
+
+			rig.Workbench.SongsUsing("click").ShouldBe(["first", "other"]);
+			model.Tracks[0].PatchUsedElsewhere.ShouldBe(["other"]);
+			rig.Workbench.SelectPatch(0);
+			model.Designer.UsedBy.ShouldContain("first and other");
+
+			model.Tracks[0].CopyPatchForSong().ShouldBeNull();
+			File.Exists(copy).ShouldBeTrue();
+			JsonNode.Parse(File.ReadAllText(copy))!["name"]!.GetValue<string>().ShouldBe("click-first");
+
+			// Once the project has built with the copy, the track plays it and the other song keeps the original
+			rig.Workbench.UseCatalog(catalog with { Patches = [.. catalog.Patches, ("click-first", () => MusicRig.Click)] });
+			rig.Step(0.5);
+			JsonNode.Parse(File.ReadAllText(rig.Path))!["tracks"]![0]!["patch"]!.GetValue<string>().ShouldBe("click-first");
+			JsonNode.Parse(File.ReadAllText(other))!["tracks"]![0]!["patch"]!.GetValue<string>().ShouldBe("click");
+			model.SelectedPatch.ShouldBe(1);
+			rig.Workbench.SongsUsing("click").ShouldBe(["other"]);
+		}
+		finally
+		{
+			Directory.Delete(folder, recursive: true);
+		}
 	}
 
 	[Test]

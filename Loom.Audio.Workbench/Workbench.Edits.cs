@@ -45,6 +45,9 @@ public sealed partial class Workbench
 			return;
 		_editor.Edit(change);
 		Rebuild(swap: true);
+		// A track given another instrument, added or deleted changes which songs the designer's patch is used in
+		if ((uint)_benchPatch < (uint)_catalog.Patches.Count)
+			ShowPatchUsage(_catalog.Patches[_benchPatch].Name);
 	}
 
 	/// <summary>Sets a section's chords, checked first: the reason they can't be read, or null where they were taken.</summary>
@@ -305,8 +308,11 @@ public sealed partial class Workbench
 	internal void RemoveFill(Placement placement) =>
 		EditPart(placement.Section.Index, IndexIn(placement), part => part.Remove("endWith"));
 
-	/// <summary>Adds a track playing an instrument of the catalog's; the reason it can't be, or null.</summary>
-	internal string? AddTrack(string name, string instrument, bool isKit)
+	/// <summary>
+	/// Adds a track playing an instrument of the catalog's, at <paramref name="at"/> among the tracks (the end without);
+	/// the reason it can't be, or null.
+	/// </summary>
+	internal string? AddTrack(string name, string instrument, bool isKit, int? at = null)
 	{
 		name = name.Trim();
 		if (name.Length == 0)
@@ -317,23 +323,28 @@ public sealed partial class Workbench
 		{
 			var tracks = root["tracks"] as JsonArray ?? [];
 			root["tracks"] = tracks;
-			tracks.Add(new JsonObject { ["name"] = name, [isKit ? "kit" : "patch"] = instrument });
+			var track = new JsonObject { ["name"] = name, [isKit ? "kit" : "patch"] = instrument };
+			if (at is { } place && place >= 0 && place < tracks.Count)
+				tracks.Insert(place, track);
+			else
+				tracks.Add(track);
 		});
 		return null;
 	}
 
 	/// <summary>
-	/// Adds a track playing an instrument dropped on the board, named for it ("warm-pad", then "warm-pad 2" and on), and
-	/// shows it in the inspector; the reason it can't be, or null.
+	/// Adds a track playing an instrument (dropped on the board, or chosen from a + between tracks), named for it
+	/// ("warm-pad", then "warm-pad 2" and on), at <paramref name="at"/> among the tracks (the end without), and shows it in
+	/// the inspector; the reason it can't be, or null.
 	/// </summary>
-	internal string? AddTrackPlaying(string instrument, bool isKit)
+	internal string? AddTrackPlaying(string instrument, bool isKit, int? at = null)
 	{
 		if (!CanEditSong)
 			return "This song is defined in code. Tracks can be added only to songs with a .song.json file.";
 		var name = instrument;
 		for (var n = 2; _song?.Tracks.Any(t => t.Name == name) == true; n++)
 			name = $"{instrument} {n}";
-		if (AddTrack(name, instrument, isKit) is { } why)
+		if (AddTrack(name, instrument, isKit, at) is { } why)
 			return why;
 		if (ViewModel.Tracks.FirstOrDefault(t => t.Name == name) is { } added)
 			Inspect(added);
@@ -394,11 +405,14 @@ public sealed partial class Workbench
 
 	/// <summary>
 	/// Adds an empty part for <paramref name="track"/> in <paramref name="section"/>, a bar long: a line for a patch, a beat
-	/// for a kit, on its first piece. It is chosen, so the roll opens on it.
+	/// for a kit, on its first piece. With <paramref name="slot"/> it goes there among the parts the track already plays in
+	/// the section (0 before the first, their count after the last); without, after every part. It is chosen, so the roll
+	/// opens on it.
 	/// </summary>
-	internal void AddPart(int section, string track, NewPartKind kind = NewPartKind.Melody)
+	internal void AddPart(int section, string track, NewPartKind kind = NewPartKind.Melody, int? slot = null)
 	{
-		if (_editor is null || _song?.Tracks.FirstOrDefault(t => t.Name == track) is not { } playing)
+		if (_editor is null || _song?.Tracks.FirstOrDefault(t => t.Name == track) is not { } playing
+			|| (uint)section >= (uint)_song.Sections.Count)
 			return;
 		var beats = _song.Meter.Beats;
 		string Steps(string each) => string.Join(" ", Enumerable.Repeat(each, beats));
@@ -421,6 +435,10 @@ public sealed partial class Workbench
 				},
 				_ => new JsonObject { ["track"] = track, ["line"] = "quarters", ["notes"] = Steps(".") },
 			};
+		// Where in the file's parts it goes: before the track's part at the slot, or just after its last
+		var own = _song.Sections[section].Placements.Where(p => p.Track.Name == track).ToList();
+		int? before = slot is not { } s || own.Count == 0 ? null
+			: s < own.Count ? IndexIn(own[Math.Max(0, s)]) : IndexIn(own[^1]) + 1;
 		var index = -1;
 		_editor.Edit(root =>
 		{
@@ -428,8 +446,16 @@ public sealed partial class Workbench
 				return;
 			var parts = target["parts"] as JsonArray ?? [];
 			target["parts"] = parts;
-			parts.Add(part);
-			index = parts.Count - 1;
+			if (before is { } at && at >= 0 && at < parts.Count)
+			{
+				parts.Insert(at, part);
+				index = at;
+			}
+			else
+			{
+				parts.Add(part);
+				index = parts.Count - 1;
+			}
 		});
 		Rebuild(swap: true);
 		if (index >= 0 && _song is { } song && index < song.Sections[section].Placements.Count)
@@ -502,6 +528,94 @@ public sealed partial class Workbench
 	}
 
 	/// <summary>
+	/// The catalog's songs with a track playing <paramref name="patch"/>, by name, read from their files (the open song as
+	/// it is being edited); a song that is code alone isn't counted.
+	/// </summary>
+	internal IReadOnlyList<string> SongsUsing(string patch)
+	{
+		var songs = new List<string>();
+		foreach (var (name, _) in _catalog.Songs)
+		{
+			if (_catalog.SongSource(name) is not { } source)
+				continue;
+			try
+			{
+				var text = _editor is { } editor && string.Equals(Path.GetFullPath(editor.Path), Path.GetFullPath(source.Path), StringComparison.OrdinalIgnoreCase)
+					? editor.Text
+					: File.Exists(source.Path) ? File.ReadAllText(source.Path) : null;
+				if (text is not null && JsonNode.Parse(text)?["tracks"] is JsonArray tracks
+					&& tracks.OfType<JsonObject>().Any(t => t["patch"] is JsonValue value && value.TryGetValue<string>(out var used) && used == patch))
+					songs.Add(name);
+			}
+			catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+			{
+				Console.WriteLine($"[workbench] {source.Path} couldn't be read for its patches: {ex.Message}");
+			}
+		}
+		return songs;
+	}
+
+	/// <summary>The songs other than the open one with a track playing <paramref name="patch"/>.</summary>
+	internal IReadOnlyList<string> OtherSongsUsing(string patch)
+	{
+		var open = _songIndex >= 0 ? _catalog.Songs[_songIndex].Name : null;
+		return [.. SongsUsing(patch).Where(s => s != open)];
+	}
+
+	/// <summary>
+	/// Makes a copy of <paramref name="patch"/>'s file as <paramref name="name"/>, opened in the patch designer once the
+	/// project has built with it. Why it can't be, or null.
+	/// </summary>
+	internal string? DuplicatePatch(string patch, string name)
+	{
+		if (_catalog.PatchFile(patch) is not { } source || !File.Exists(source))
+			return $"{patch} is defined in C#, so it has no file to copy. Convert it to a patch file first.";
+		return NewPatch(name, patch);
+	}
+
+	/// <summary>
+	/// Gives <paramref name="track"/> of the open song a copy of its patch of its own: the patch's file copied as
+	/// "patch-song" (with a number after it if that is taken), the track playing the copy, and the copy opened in the patch
+	/// designer, once the project has built with it. Other songs keep the patch as it is. Why it can't be, or null.
+	/// </summary>
+	internal string? CopyPatchForSong(string track)
+	{
+		if (!CanEditSong || _songIndex < 0)
+			return "This song is defined in code. Only songs with a .song.json file can be changed here.";
+		if (_song?.Tracks.FirstOrDefault(t => t.Name == track) is not { Kit: null } playing)
+			return $"{track} plays a kit, not a patch.";
+		var patch = playing.Patch?.Name ?? "";
+		if (PatchFolder() is not { } folder)
+			return "This project has no patch files, so there is no folder for a copy.";
+		var song = FileName(_catalog.Songs[_songIndex].Name) ?? "song";
+		var stem = FileName($"{patch}-{song}") ?? $"patch-{song}";
+		var name = stem;
+		for (var n = 2; File.Exists(Path.Combine(folder, name + ".patch.json")); n++)
+			name = $"{stem}-{n}";
+		if (DuplicatePatch(patch, name) is { } why)
+			return why;
+		_repoint = (_catalog.Songs[_songIndex].Name, track, name);
+		ViewModel.BuildText = $"Copying {patch} as {name} for this song. {track} plays it once the build finishes.";
+		return null;
+	}
+
+	// A track of a song to play a patch copied for it, once the project has built with the copy
+	private (string Song, string Track, string Patch)? _repoint;
+
+	/// <summary>Says in the patch designer which songs the patch shown is used in, so an edit's reach is clear.</summary>
+	private void ShowPatchUsage(string patch)
+	{
+		var songs = SongsUsing(patch);
+		ViewModel.Designer.UsedBy = songs.Count switch
+		{
+			0 => "Not used in any song",
+			1 => $"Used in {songs[0]}",
+			<= 3 => $"Used in {string.Join(", ", songs.Take(songs.Count - 1))} and {songs[^1]}. Edits change every one of them.",
+			_ => $"Used in {songs.Count} songs: {string.Join(", ", songs.Take(3))} and {songs.Count - 3} more. Edits change every one of them.",
+		};
+	}
+
+	/// <summary>
 	/// Makes a song file beside the project's others: one section of four bars, one track on the first patch, nothing played
 	/// yet. The project builds again as it sees the file, and the library lists it. Why it can't, or null.
 	/// </summary>
@@ -538,7 +652,7 @@ public sealed partial class Workbench
 		ViewModel.BuildText = $"Created {name}. It opens when the build finishes.";
 	}
 
-	// The catalog built again: what was just made, opened if it lists it now
+	// The catalog built again: what was just made, opened if it lists it now; a patch copied for a track, given to it first
 	private void OpenAwaited()
 	{
 		if (_awaiting is not { } awaited)
@@ -551,6 +665,12 @@ public sealed partial class Workbench
 		else if (!awaited.Song && Index(_catalog.Patches, awaited.Name) is >= 0 and var patch)
 		{
 			_awaiting = null;
+			if (_repoint is { } repoint && repoint.Patch == awaited.Name)
+			{
+				_repoint = null;
+				if (_songIndex >= 0 && _catalog.Songs[_songIndex].Name == repoint.Song)
+					SetInstrument(repoint.Track, repoint.Patch, isKit: false);
+			}
 			ChoosePatch(patch);
 		}
 	}

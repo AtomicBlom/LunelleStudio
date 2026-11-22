@@ -405,7 +405,21 @@ internal sealed class Inspector : ContentControl
 			if (at >= 0 && Track is { } t && (instruments[at].Name != t.InstrumentName || instruments[at].IsKit != t.IsKit))
 				t.SetInstrument(instruments[at].Name, instruments[at].IsKit);
 		};
-		_column.Children.Add(Group("Instrument", true, Field("Plays", choice), open));
+		var instrument = new List<UIElement> { Field("Plays", choice), open };
+		// A patch other songs play too: an edit to it changes them as well, unless this song's track has a copy of its own
+		if (track.PatchUsedElsewhere is { Count: > 0 } others)
+		{
+			instrument.Add(Note(others.Count == 1
+				? $"{track.InstrumentName} is also used in {others[0]}. Edits to it change that song too."
+				: $"{track.InstrumentName} is also used in {others.Count} other songs ({string.Join(", ", others)}). Edits to it change them too."));
+			var copy = new Button { Content = new TextBlock { Text = "Make a copy for this song", FontSize = 12f }, Padding = new Thickness(10f, 4f, 10f, 5f), HorizontalAlignment = HorizontalAlignment.Left };
+			ToolTipService.SetToolTip(copy, $"Copy {track.InstrumentName} to a new patch for this track alone, and open it to edit. Other songs keep {track.InstrumentName} as it is.");
+			var copyProblem = Problem();
+			copy.Click += (_, _) => Say(copyProblem, Track?.CopyPatchForSong());
+			instrument.Add(copy);
+			instrument.Add(copyProblem);
+		}
+		_column.Children.Add(Group("Instrument", true, [.. instrument]));
 
 		_column.Children.Add(DeleteButton("Delete track", "Delete this track and all of its parts", () => Track?.Delete()));
 	}

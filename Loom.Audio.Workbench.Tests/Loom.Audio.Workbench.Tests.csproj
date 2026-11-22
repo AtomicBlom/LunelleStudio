@@ -9,6 +9,8 @@
     <IsPackable>false</IsPackable>
     <!-- TUnit runs on Microsoft.Testing.Platform, whose source generator emits the executable entry point. -->
     <OutputType>Exe</OutputType>
+    <!-- The generator beside the tests, where the projects MusicProjectTests makes name it (build/Sources.targets) -->
+    <CopyMusicGenerator>true</CopyMusicGenerator>
   </PropertyGroup>
 
   <ItemGroup>
@@ -24,10 +26,16 @@
   <ItemGroup>
     <ProjectReference Include="..\Loom.Audio.Workbench\Loom.Audio.Workbench.csproj" />
     <ProjectReference Include="..\Loom.Audio.Workbench.Projects\Loom.Audio.Workbench.Projects.csproj" />
-    <ProjectReference Include="..\Loom.Audio.Music.Generator\Loom.Audio.Music.Generator.csproj" />
+    <SirrowReference Include="Loom.Audio.Music.Generator" Path="Loom.Audio.Music.Generator\Loom.Audio.Music.Generator.csproj" SourceOnly="true" />
     <ProjectReference Include="..\samples\HelloSynth\HelloSynth.csproj" />
     <!-- The SUIsei adapter, whose input layer WorkbenchFocusTests drives the workbench's keys through -->
-    <ProjectReference Include="..\Loom.UI.SUIsei\Loom.UI.SUIsei.csproj" />
+    <LoomReference Include="Loom.UI.SUIsei" Path="Loom.UI.SUIsei\Loom.UI.SUIsei.csproj" />
+  </ItemGroup>
+
+  <!-- The Sirrow checkout this build took the audio from ("none" for its packages), read back by the tests that make a
+       music project referencing Loom.Audio.Synth's project (MusicProjectTests.SynthProject) -->
+  <ItemGroup>
+    <AssemblyMetadata Include="SirrowSource" Value="$(SirrowSource)" />
   </ItemGroup>
 
 </Project>

@@ -24,7 +24,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Loom.Audio.Workbench\Loom.Audio.Workbench.csproj" />
-		<ProjectReference Include="..\Loom.Audio.Synth\Loom.Audio.Synth.csproj" />
+		<SirrowReference Include="Loom.Audio.Synth" Path="Loom.Audio.Synth\Loom.Audio.Synth.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

@@ -8,7 +8,7 @@
     <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
   </PropertyGroup>
 
-  <ItemGroup Label="Music projects compiled in-process (Loom.Audio.Workbench.Projects)">
+  <ItemGroup Label="Music projects compiled in-process (BinaryVibrance.SirrowStudio.Projects)">
     <PackageVersion Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="4.14.0" />
   </ItemGroup>
 

@@ -8,7 +8,7 @@
 
   <!-- A project referenced from outside the solution being built (the engine's and the audio's, in their checkouts, and
        samples/HelloSynth) builds in the configuration being built. Left to MSBuild, a solution build unsets it for them
-       and they build in Debug, so a Release workbench ran beside a Debug BinaryVibrance.Sirrow.Synth, which a music project built
+       and they build in Debug, so a Release workbench ran beside a Debug BinaryVibrance.Lunelle, which a music project built
        in Release then didn't match. -->
   <PropertyGroup>
     <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>
@@ -20,11 +20,11 @@
   </PropertyGroup>
 
   <PropertyGroup Label="NuGet package metadata (every packable project here)">
-    <Version>$(SirrowStudioVersion)</Version>
+    <Version>$(LunelleStudioVersion)</Version>
     <Authors>AtomicBlom</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/AtomicBlom/SirrowStudio</PackageProjectUrl>
-    <RepositoryUrl>https://github.com/AtomicBlom/SirrowStudio</RepositoryUrl>
+    <PackageProjectUrl>https://github.com/AtomicBlom/LunelleStudio</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/AtomicBlom/LunelleStudio</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <SymbolPackageFormat>snupkg</SymbolPackageFormat>
     <IncludeSymbols>true</IncludeSymbols>

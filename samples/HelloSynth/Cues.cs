@@ -1,4 +1,4 @@
-using BinaryVibrance.Sirrow.Synth.Music;
+using BinaryVibrance.Lunelle.Music;
 
 namespace HelloSynth;
 

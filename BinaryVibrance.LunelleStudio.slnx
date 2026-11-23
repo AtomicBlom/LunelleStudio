@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="BinaryVibrance.LunelleStudio.App/BinaryVibrance.LunelleStudio.App.csproj" />
+  <Project Path="BinaryVibrance.LunelleStudio.Projects/BinaryVibrance.LunelleStudio.Projects.csproj" />
+  <Project Path="BinaryVibrance.LunelleStudio.Tests/BinaryVibrance.LunelleStudio.Tests.csproj" />
+  <Project Path="BinaryVibrance.LunelleStudio/BinaryVibrance.LunelleStudio.csproj" />
+</Solution>

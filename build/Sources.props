@@ -1,14 +1,15 @@
 <Project>
 
   <!--
-    Where the repositories SirrowStudio builds on come from: a checkout of each, built from source, or its packages.
+    Where the repositories LunelleStudio builds on come from: a checkout of each, built from source, or its packages.
     Directory.Build.props imports this; the workbench app imports it itself, before Kaldra's SDK, which needs it.
 
       KaldraSource       The engine: a checkout, its folder ending in a slash. By default
                        ..\Kaldra\ beside this repository, where it is checked out. "none" takes its packages.
       SirrowSource     The audio: by default ..\Sirrow\, where it is checked out. "none" takes its packages.
+      LunelleSource    The synth: by default ..\Lunelle\, where it is checked out. "none" takes its packages.
       VysaraSource     The UI library: by default ..\Vysara\. "none" takes its packages (BinaryVibrance.Vysara and the rest).
-      KaldraPackageVersion, SirrowPackageVersion
+      KaldraPackageVersion, SirrowPackageVersion, LunellePackageVersion
                        The packages' versions, where a source is "none". Vysara's is the engine's (KaldraVysaraVersion).
 
     A machine's own choices go in dev.local.props at this repository's root (untracked, as every *.local.props is):
@@ -20,8 +21,8 @@
         </PropertyGroup>
       </Project>
 
-    or on the command line, as -p:KaldraSource=none. build/Sources.targets turns each KaldraReference, SirrowReference and
-    VysaraReference into a reference to the checkout's project or to the package.
+    or on the command line, as -p:KaldraSource=none. build/Sources.targets turns each KaldraReference, SirrowReference,
+    LunelleReference and VysaraReference into a reference to the checkout's project or to the package.
   -->
   <PropertyGroup Condition="'$(_StudioSourcesProps)' == ''">
     <_StudioSourcesProps>true</_StudioSourcesProps>
@@ -44,6 +45,11 @@
     <SirrowSource Condition="'$(SirrowSource)' != 'none' and !HasTrailingSlash('$(SirrowSource)')">$(SirrowSource)\</SirrowSource>
     <SirrowFromSource Condition="'$(SirrowSource)' != 'none'">true</SirrowFromSource>
 
+    <LunelleSource Condition="'$(LunelleSource)' == '' and Exists('$(_StudioSiblings)Lunelle\BinaryVibrance.Lunelle\BinaryVibrance.Lunelle.csproj')">$(_StudioSiblings)Lunelle\</LunelleSource>
+    <LunelleSource Condition="'$(LunelleSource)' == ''">none</LunelleSource>
+    <LunelleSource Condition="'$(LunelleSource)' != 'none' and !HasTrailingSlash('$(LunelleSource)')">$(LunelleSource)\</LunelleSource>
+    <LunelleFromSource Condition="'$(LunelleSource)' != 'none'">true</LunelleFromSource>
+
     <VysaraSource Condition="'$(VysaraSource)' == '' and Exists('$(_StudioSiblings)Vysara\BinaryVibrance.Vysara\BinaryVibrance.Vysara.csproj')">$(_StudioSiblings)Vysara\</VysaraSource>
     <VysaraSource Condition="'$(VysaraSource)' == ''">none</VysaraSource>
     <VysaraSource Condition="'$(VysaraSource)' != 'none' and !HasTrailingSlash('$(VysaraSource)')">$(VysaraSource)\</VysaraSource>
@@ -51,6 +57,7 @@
 
     <KaldraPackageVersion Condition="'$(KaldraPackageVersion)' == ''">0.1.0-preview.1</KaldraPackageVersion>
     <SirrowPackageVersion Condition="'$(SirrowPackageVersion)' == ''">0.1.0-preview.1</SirrowPackageVersion>
+    <LunellePackageVersion Condition="'$(LunellePackageVersion)' == ''">0.1.0-preview.1</LunellePackageVersion>
     <!-- Read by Kaldra's SDK for the Vysara package an app with UseVysara takes; made at the engine's version -->
     <KaldraVysaraVersion Condition="'$(KaldraVysaraVersion)' == ''">$(KaldraPackageVersion)</KaldraVysaraVersion>
   </PropertyGroup>

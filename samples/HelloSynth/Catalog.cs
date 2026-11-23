@@ -1,5 +1,5 @@
-using BinaryVibrance.Sirrow.Synth.Chip;
-using BinaryVibrance.Sirrow.Synth.Music;
+using BinaryVibrance.Lunelle.Chip;
+using BinaryVibrance.Lunelle.Music;
 
 [assembly: MusicCatalog(typeof(HelloSynth.Catalog))]
 

@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<!-- The music workbench: a Vysara page that plays a song while its code is edited under dotnet watch, rebuilding it
+	     and swapping it in on the next bar. Its model and view models need no window; its views are Vysara XAML. Given a
+	     catalog of songs, patches, kits and cues by the app that hosts it; knows nothing of any game. -->
+	<!-- Vysara's XAML generator, from its checkout; its package carries the same build files, which NuGet imports -->
+	<Import Project="$(VysaraSource)build\Vysara.props" Condition="'$(VysaraFromSource)' == 'true'" />
+
+	<PropertyGroup>
+		<TargetFramework>net11.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+	</PropertyGroup>
+
+	<!-- Packed: it is what a project's workbench extension builds against (IWorkbenchExtension, its context and the
+	     workbench it is handed), at the version of the lunelle-studio that loads it, and what an app hosting the workbench
+	     itself takes. -->
+	<PropertyGroup Label="NuGet">
+		<PackageId>BinaryVibrance.LunelleStudio</PackageId>
+		<Description>The music workbench for BinaryVibrance.Lunelle: its model, view models and Vysara views, with no window of its own; the API a workbench extension is written against.</Description>
+		<PackageTags>audio;music;synthesis;workbench;vysara;dotnet</PackageTags>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<InternalsVisibleTo Include="BinaryVibrance.LunelleStudio.Tests" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<KaldraReference Include="BinaryVibrance.Kaldra.Input" Path="BinaryVibrance.Kaldra.Input\BinaryVibrance.Kaldra.Input.csproj" />
+		<LunelleReference Include="BinaryVibrance.Lunelle" Path="BinaryVibrance.Lunelle\BinaryVibrance.Lunelle.csproj" />
+		<VysaraReference Include="BinaryVibrance.Vysara" Path="BinaryVibrance.Vysara\BinaryVibrance.Vysara.csproj" />
+	</ItemGroup>
+
+	<Import Project="$(VysaraSource)build\Vysara.targets" Condition="'$(VysaraFromSource)' == 'true'" />
+
+</Project>

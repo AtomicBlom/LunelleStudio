@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+    The command palette (Ctrl K): a field, and what it finds by every word typed, the catalog's songs, patches and kits,
+    the song's sections and the commands. Up and Down choose, Enter runs, Escape or a click outside closes.
+-->
+<ContentControl xmlns="https://github.com/AtomicBlom/Vysara/ui"
+                xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                xmlns:wb="using:BinaryVibrance.LunelleStudio"
+                xmlns:views="using:BinaryVibrance.LunelleStudio.Views"
+                x:Class="BinaryVibrance.LunelleStudio.Views.CommandPalette"
+                IsTabStop="False">
+    <Grid>
+        <Border x:Name="Backdrop" Background="{x:Static views:Theme.Backdrop}" />
+        <Border Width="560" VerticalAlignment="Top" Margin="0,90,0,0" Background="{x:Static views:Theme.Panel}"
+                BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1" CornerRadius="10">
+            <StackPanel Margin="10">
+                <TextBlock Text="Find a song, patch, kit, section or command" FontSize="11" Foreground="{x:Static views:Theme.Faint}"
+                           Margin="2,0,0,4" />
+                <TextBox x:Name="Query" Height="32" />
+                <!-- What it finds, scrolling past a window's worth rather than running off the bottom -->
+                <ScrollViewer MaxHeight="460" Margin="0,8,0,0">
+                <ItemsControl ItemsSource="{x:Bind ViewModel.PaletteItems, Mode=OneWay}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="wb:PaletteItemViewModel">
+                            <Button ToolTipService.ToolTip="Open (Enter)" Command="{x:Bind ChooseCommand}" HorizontalAlignment="Stretch" Margin="0,0,0,1"
+                                    Background="{x:Bind views:Display.Highlight(IsSelected), Mode=OneWay}">
+                                <StackPanel Orientation="Horizontal" Margin="6,3,6,4">
+                                    <TextBlock Text="{x:Bind Category}" Width="76" FontSize="12" Foreground="{x:Static views:Theme.Faint}" />
+                                    <TextBlock Text="{x:Bind Text}" FontSize="13" Foreground="{x:Static views:Theme.Ink}" />
+                                </StackPanel>
+                            </Button>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+                </ScrollViewer>
+            </StackPanel>
+        </Border>
+    </Grid>
+</ContentControl>

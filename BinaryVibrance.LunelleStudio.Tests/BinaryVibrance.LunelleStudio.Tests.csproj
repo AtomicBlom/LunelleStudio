@@ -1,0 +1,41 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!-- The workbench's tests: its view models and edits (BinaryVibrance.LunelleStudio), music projects compiled in-process
+       (BinaryVibrance.LunelleStudio.Projects), and its extensions. -->
+  <PropertyGroup>
+    <TargetFramework>net11.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- TUnit runs on Microsoft.Testing.Platform, whose source generator emits the executable entry point. -->
+    <OutputType>Exe</OutputType>
+    <!-- The generator beside the tests, where the projects MusicProjectTests makes name it (build/Sources.targets) -->
+    <CopyMusicGenerator>true</CopyMusicGenerator>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TUnit" />
+    <PackageReference Include="Shouldly" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="TUnit.Core" />
+    <Using Include="Shouldly" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BinaryVibrance.LunelleStudio\BinaryVibrance.LunelleStudio.csproj" />
+    <ProjectReference Include="..\BinaryVibrance.LunelleStudio.Projects\BinaryVibrance.LunelleStudio.Projects.csproj" />
+    <LunelleReference Include="BinaryVibrance.Lunelle.Music.Generator" Path="BinaryVibrance.Lunelle.Music.Generator\BinaryVibrance.Lunelle.Music.Generator.csproj" SourceOnly="true" />
+    <ProjectReference Include="..\samples\HelloSynth\HelloSynth.csproj" />
+    <!-- The Vysara adapter, whose input layer WorkbenchFocusTests drives the workbench's keys through -->
+    <KaldraReference Include="BinaryVibrance.Kaldra.UI.Vysara" Path="BinaryVibrance.Kaldra.UI.Vysara\BinaryVibrance.Kaldra.UI.Vysara.csproj" />
+  </ItemGroup>
+
+  <!-- The Lunelle checkout this build took the synth from ("none" for its packages), read back by the tests that make a
+       music project referencing BinaryVibrance.Lunelle's project (MusicProjectTests.SynthProject) -->
+  <ItemGroup>
+    <AssemblyMetadata Include="LunelleSource" Value="$(LunelleSource)" />
+  </ItemGroup>
+
+</Project>

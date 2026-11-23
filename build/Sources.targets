@@ -5,14 +5,16 @@
     checkout or to the package (build/Sources.props says which):
 
       <KaldraReference Include="BinaryVibrance.Kaldra.Input" Path="BinaryVibrance.Kaldra.Input\BinaryVibrance.Kaldra.Input.csproj" />                    the engine
-      <SirrowReference Include="BinaryVibrance.Sirrow.Synth"
-                       Path="BinaryVibrance.Sirrow.Synth\BinaryVibrance.Sirrow.Synth.csproj" />    the audio
+      <SirrowReference Include="BinaryVibrance.Sirrow.Sdl"
+                       Path="BinaryVibrance.Sirrow.Sdl\BinaryVibrance.Sirrow.Sdl.csproj" />      the audio
+      <LunelleReference Include="BinaryVibrance.Lunelle"
+                        Path="BinaryVibrance.Lunelle\BinaryVibrance.Lunelle.csproj" />            the synth
       <VysaraReference Include="BinaryVibrance.Vysara" Path="BinaryVibrance.Vysara\BinaryVibrance.Vysara.csproj" />
                                                                                                       the UI library
 
     Path is its project's path in the checkout (not Project: a ProjectReference keeps a GUID in that). Any other
     metadata (OutputItemType, ReferenceOutputAssembly) goes with it onto the project reference. SourceOnly="true" marks
-    a reference only a source build needs: the music generator, which the BinaryVibrance.Sirrow.Synth package carries as
+    a reference only a source build needs: the music generator, which the BinaryVibrance.Lunelle package carries as
     its analyzer.
   -->
   <ItemGroup Condition="'$(KaldraFromSource)' == 'true'">
@@ -39,6 +41,18 @@
                       VersionOverride="$(SirrowPackageVersion)" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(LunelleFromSource)' == 'true'">
+    <ProjectReference Include="@(LunelleReference->'$(LunelleSource)%(Path)')" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(LunelleFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' != 'true'">
+    <PackageReference Include="@(LunelleReference)" Exclude="@(LunelleReference->WithMetadataValue('SourceOnly', 'true'))"
+                      Version="$(LunellePackageVersion)" />
+  </ItemGroup>
+  <ItemGroup Condition="'$(LunelleFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' == 'true'">
+    <PackageReference Include="@(LunelleReference)" Exclude="@(LunelleReference->WithMetadataValue('SourceOnly', 'true'))"
+                      VersionOverride="$(LunellePackageVersion)" />
+  </ItemGroup>
+
   <ItemGroup Condition="'$(VysaraFromSource)' == 'true'">
     <ProjectReference Include="@(VysaraReference->'$(VysaraSource)%(Path)')" />
   </ItemGroup>
@@ -51,12 +65,12 @@
 
   <!--
     The music generator's assembly beside a project's output, where CopyMusicGenerator is true: a project
-    sirrow-studio new makes names it there as its analyzer (ProjectTemplate), as it names Sirrow's and the Synth's.
+    lunelle-studio new makes names it there as its analyzer (ProjectTemplate), as it names Sirrow's and Lunelle's.
     From source, the project reference to the generator copies it; from the packages, it is taken out of the
-    BinaryVibrance.Sirrow.Synth package, which carries it as its analyzer.
+    BinaryVibrance.Lunelle package, which carries it as its analyzer.
   -->
-  <ItemGroup Condition="'$(CopyMusicGenerator)' == 'true' and '$(SirrowFromSource)' != 'true'">
-    <None Include="$(NuGetPackageRoot)binaryvibrance.sirrow.synth\$(SirrowPackageVersion)\analyzers\dotnet\cs\BinaryVibrance.Sirrow.Music.Generator.dll"
+  <ItemGroup Condition="'$(CopyMusicGenerator)' == 'true' and '$(LunelleFromSource)' != 'true'">
+    <None Include="$(NuGetPackageRoot)binaryvibrance.lunelle\$(LunellePackageVersion)\analyzers\dotnet\cs\BinaryVibrance.Lunelle.Music.Generator.dll"
           CopyToOutputDirectory="PreserveNewest" Visible="false" />
   </ItemGroup>
 

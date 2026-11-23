@@ -1,4 +1,4 @@
-using BinaryVibrance.Sirrow.Synth.Chip;
+using BinaryVibrance.Lunelle.Chip;
 
 namespace HelloSynth;
 

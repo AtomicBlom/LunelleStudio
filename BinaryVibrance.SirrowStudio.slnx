@@ -1,6 +1,0 @@
-<Solution>
-  <Project Path="BinaryVibrance.SirrowStudio.App/BinaryVibrance.SirrowStudio.App.csproj" />
-  <Project Path="BinaryVibrance.SirrowStudio.Projects/BinaryVibrance.SirrowStudio.Projects.csproj" />
-  <Project Path="BinaryVibrance.SirrowStudio.Tests/BinaryVibrance.SirrowStudio.Tests.csproj" />
-  <Project Path="BinaryVibrance.SirrowStudio/BinaryVibrance.SirrowStudio.csproj" />
-</Solution>

@@ -29,7 +29,7 @@
     <SirrowReference Include="BinaryVibrance.Sirrow.Music.Generator" Path="BinaryVibrance.Sirrow.Music.Generator\BinaryVibrance.Sirrow.Music.Generator.csproj" SourceOnly="true" />
     <ProjectReference Include="..\samples\HelloSynth\HelloSynth.csproj" />
     <!-- The Vysara adapter, whose input layer WorkbenchFocusTests drives the workbench's keys through -->
-    <LoomReference Include="Loom.UI.Vysara" Path="Loom.UI.Vysara\Loom.UI.Vysara.csproj" />
+    <KaldraReference Include="BinaryVibrance.Kaldra.UI.Vysara" Path="BinaryVibrance.Kaldra.UI.Vysara\BinaryVibrance.Kaldra.UI.Vysara.csproj" />
   </ItemGroup>
 
   <!-- The Sirrow checkout this build took the audio from ("none" for its packages), read back by the tests that make a

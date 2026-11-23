@@ -1,7 +1,7 @@
 using System.Numerics;
 using BinaryVibrance.SirrowStudio;
-using Loom.Input;
-using Loom.UI.Vysara;
+using BinaryVibrance.Kaldra.Input;
+using BinaryVibrance.Kaldra.UI.Vysara;
 using Shouldly;
 using BinaryVibrance.Vysara;
 using BinaryVibrance.Vysara.Controls;

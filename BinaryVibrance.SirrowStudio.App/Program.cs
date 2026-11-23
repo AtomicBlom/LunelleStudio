@@ -2,8 +2,8 @@ using BinaryVibrance.Sirrow.Sdl;
 using BinaryVibrance.SirrowStudio;
 using BinaryVibrance.SirrowStudio.App;
 using BinaryVibrance.SirrowStudio.Projects;
-using Loom.Core.Hosting;
-using Loom.Hosting.Desktop;
+using BinaryVibrance.Kaldra.Core.Hosting;
+using BinaryVibrance.Kaldra.Hosting.Desktop;
 
 // sirrow-studio <project.csproj | folder> [--extension <extension.csproj>] [the extension's own options]
 //     the workbench over that music project, with its extension: the one its SirrowStudioExtension property names, or
@@ -66,7 +66,7 @@ catch (InvalidOperationException ex)
 SdlAudio.Register(); // the music's output, which the app opens as it loads (AudioOutput.Open)
 
 // What the workbench didn't take (the project, "new" and its folder) is the extension's
-LoomApplication.Run(new WorkbenchApp(project, extension, [.. appArgs.Skip(appArgs is ["new", ..] ? 2 : 1)], extension is null ? null : extensionProject), args);
+KaldraApplication.Run(new WorkbenchApp(project, extension, [.. appArgs.Skip(appArgs is ["new", ..] ? 2 : 1)], extension is null ? null : extensionProject), args);
 return 0;
 
 // A .csproj as given, or the one in a folder

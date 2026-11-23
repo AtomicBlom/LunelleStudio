@@ -3,7 +3,7 @@
 The music workbench for [Sirrow](https://github.com/AtomicBlom/Sirrow): `sirrow-studio` opens a music project (a
 library whose songs and patches are files Sirrow's generator makes into C#), plays it, compiles it again in-process on
 every save, and swaps the new song in at the next bar. A game adds its own mix and controls through an extension. It was
-split out of the [Loom engine](https://github.com/AtomicBlom/Loom) (now Kaldra).
+split out of the [Kaldra engine](https://github.com/AtomicBlom/Kaldra), once called Loom.
 
 | Project | What it is |
 |---|---|
@@ -22,16 +22,16 @@ Sirrow's `docs/synth.md`, sections 10 and 11, is the guide.
 
 ## Building
 
-SirrowStudio builds on the engine (still Loom's repository, to become Kaldra), Sirrow and Vysara, each from a checkout
+SirrowStudio builds on the engine (Kaldra), Sirrow and Vysara, each from a checkout
 beside this one or from its packages (`build/Sources.props`):
 
 | Property | Default | Is |
 |---|---|---|
-| `LoomSource` | `..\Kaldra\` | the engine's checkout |
+| `KaldraSource` | `..\Kaldra\` | the engine's checkout |
 | `SirrowSource` | `..\Sirrow\` | the audio's checkout |
 | `VysaraSource` | `..\Vysara\` | the UI library's checkout |
 
-`none` for any of them takes its packages, at `LoomPackageVersion` or `SirrowPackageVersion`. A machine's own choices go
+`none` for any of them takes its packages, at `KaldraPackageVersion` or `SirrowPackageVersion`. A machine's own choices go
 in an untracked `dev.local.props` at the top level. With the checkouts beside it:
 
 ```

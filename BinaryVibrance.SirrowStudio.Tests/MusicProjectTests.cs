@@ -202,7 +202,7 @@ public class MusicProjectTests
 		File.ReadAllText(Path.Combine(folder, "Catalog.cs")).ShouldContain("namespace My_Tunes;");
 		File.Exists(Path.Combine(folder, "Songs", "demo.song.json")).ShouldBeTrue();
 
-		// HelloSynth's music, built by the generator the template references from beside Loom
+		// HelloSynth's music, built by the generator the template references from beside Kaldra
 		using var project = await MusicProject.OpenAsync(path, MusicProjectTests.Configured);
 		var build = project.TakeBuild().ShouldNotBeNull();
 		build.Errors.ShouldBeEmpty();

@@ -6,7 +6,7 @@ namespace BinaryVibrance.SirrowStudio.Projects;
 /// <summary>
 /// A music project's workbench extension found, built and loaded: named by the project's <c>SirrowStudioExtension</c>
 /// property (a .csproj, relative to the project) or given outright, built in the workbench's configuration, and loaded
-/// once into the default context, where the music's builds share what it references as they share Loom.
+/// once into the default context, where the music's builds share what it references as they share Kaldra.
 /// </summary>
 public static class WorkbenchExtensions
 {
@@ -33,11 +33,11 @@ public static class WorkbenchExtensions
 	public static IWorkbenchExtension Load(string assemblyPath)
 	{
 		var folder = Path.GetDirectoryName(Path.GetFullPath(assemblyPath))!;
-		// Built against another build of what the host shares (Loom, the workbench), it would find methods missing
+		// Built against another build of what the host shares (Kaldra, the workbench), it would find methods missing
 		var beside = Directory.GetFiles(folder, "*.dll").ToDictionary(f => Path.GetFileNameWithoutExtension(f), f => f, StringComparer.OrdinalIgnoreCase);
 		if (SharedReferences.Mismatch(beside) is { } mismatch)
 			throw new InvalidOperationException($"{Path.GetFileName(assemblyPath)}: {mismatch}");
-		// What the host has (Loom, Vysara) comes from the host; the extension's own references (a game's libraries) from
+		// What the host has (Kaldra, Vysara) comes from the host; the extension's own references (a game's libraries) from
 		// its folder
 		AssemblyLoadContext.Default.Resolving += (context, name) =>
 			Path.Combine(folder, name.Name + ".dll") is var path && File.Exists(path) ? context.LoadFromAssemblyPath(path) : null;

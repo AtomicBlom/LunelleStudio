@@ -12,7 +12,7 @@ namespace BinaryVibrance.SirrowStudio.Tests;
 
 /// <summary>
 /// Extensions: a game's tools in the workbench, found by their assembly's attribute, playing the music into their own
-/// bus, adding controls, kept across every compile of the music and told of each build; one built against another Loom
+/// bus, adding controls, kept across every compile of the music and told of each build; one built against another Kaldra
 /// refused.
 /// </summary>
 public class WorkbenchExtensionTests
@@ -81,7 +81,7 @@ public class WorkbenchExtensionTests
 	}
 
 	[Test]
-	public void An_extension_built_against_another_Loom_is_refused()
+	public void An_extension_built_against_another_Kaldra_is_refused()
 	{
 		var folder = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "sirrow-studio-ext-" + Guid.NewGuid().ToString("N")[..8])).FullName;
 		try

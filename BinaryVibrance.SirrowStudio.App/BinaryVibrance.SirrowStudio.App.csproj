@@ -18,8 +18,8 @@
 		<UseImGui>false</UseImGui>
 	</PropertyGroup>
 
-	<Import Project="$(LoomSource)build\Loom.Sdk\Sdk\Sdk.props" Condition="'$(LoomFromSource)' == 'true'" />
-	<Import Project="Sdk.props" Sdk="Loom.Sdk" Version="$(LoomPackageVersion)" Condition="'$(LoomFromSource)' != 'true'" />
+	<Import Project="$(KaldraSource)build\BinaryVibrance.Kaldra.Sdk\Sdk\Sdk.props" Condition="'$(KaldraFromSource)' == 'true'" />
+	<Import Project="Sdk.props" Sdk="BinaryVibrance.Kaldra.Sdk" Version="$(KaldraPackageVersion)" Condition="'$(KaldraFromSource)' != 'true'" />
 
 	<PropertyGroup>
 		<OutputType>Exe</OutputType>
@@ -28,8 +28,8 @@
 		<Nullable>enable</Nullable>
 		<AssemblyName>sirrow-studio</AssemblyName>
 		<RootNamespace>BinaryVibrance.SirrowStudio.App</RootNamespace>
-		<LoomShaderSourceDir>$(MSBuildProjectDirectory)\Shaders</LoomShaderSourceDir>
-		<!-- On the newest .NET installed, so it can load a project (and an extension) that targets a newer one than Loom -->
+		<KaldraShaderSourceDir>$(MSBuildProjectDirectory)\Shaders</KaldraShaderSourceDir>
+		<!-- On the newest .NET installed, so it can load a project (and an extension) that targets a newer one than Kaldra -->
 		<RollForward>LatestMajor</RollForward>
 		<!-- The generator beside the app, for a project it makes ("new") to name as its analyzer (build/Sources.targets) -->
 		<CopyMusicGenerator>true</CopyMusicGenerator>
@@ -39,7 +39,7 @@
 		<ProjectReference Include="..\BinaryVibrance.SirrowStudio.Projects\BinaryVibrance.SirrowStudio.Projects.csproj" />
 		<!-- The music's output: SDL 3's, registered in Program -->
 		<SirrowReference Include="BinaryVibrance.Sirrow.Sdl" Path="BinaryVibrance.Sirrow.Sdl\BinaryVibrance.Sirrow.Sdl.csproj" />
-		<!-- Beside the app, for a project it makes ("new") to reference as its analyzer, as it references the app's Loom -->
+		<!-- Beside the app, for a project it makes ("new") to reference as its analyzer, as it references the app's Kaldra -->
 		<SirrowReference Include="BinaryVibrance.Sirrow.Music.Generator" Path="BinaryVibrance.Sirrow.Music.Generator\BinaryVibrance.Sirrow.Music.Generator.csproj" SourceOnly="true" />
 	</ItemGroup>
 
@@ -50,7 +50,7 @@
 		<VysaraReference Include="BinaryVibrance.Vysara.Diagnostics.Endpoint" Path="BinaryVibrance.Vysara.Diagnostics.Endpoint\BinaryVibrance.Vysara.Diagnostics.Endpoint.csproj" />
 	</ItemGroup>
 
-	<Import Project="$(LoomSource)build\Loom.Sdk\Sdk\Sdk.targets" Condition="'$(LoomFromSource)' == 'true'" />
-	<Import Project="Sdk.targets" Sdk="Loom.Sdk" Version="$(LoomPackageVersion)" Condition="'$(LoomFromSource)' != 'true'" />
+	<Import Project="$(KaldraSource)build\BinaryVibrance.Kaldra.Sdk\Sdk\Sdk.targets" Condition="'$(KaldraFromSource)' == 'true'" />
+	<Import Project="Sdk.targets" Sdk="BinaryVibrance.Kaldra.Sdk" Version="$(KaldraPackageVersion)" Condition="'$(KaldraFromSource)' != 'true'" />
 
 </Project>

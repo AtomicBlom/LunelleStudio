@@ -456,31 +456,31 @@ public class RollTests
 	public void The_songs_settings_open_in_the_inspector_from_the_transport()
 	{
 		using var rig = new Rig();
-		var host = new Vysara.UIHost();
+		var host = new BinaryVibrance.Vysara.UIHost();
 		var page = new WorkbenchView(rig.Workbench.ViewModel);
-		host.CreateRoot(Vysara.UILayer.Default).Root.Content = page;
+		host.CreateRoot(BinaryVibrance.Vysara.UILayer.Default).Root.Content = page;
 		var surface = new System.Numerics.Vector2(1400f, 900f);
 		host.Tick(0.016, 0f, surface);
 
-		var songButtons = Find<Vysara.Controls.Button>(page).Where(b => Vysara.Controls.ToolTipService.GetToolTip(b) is "Song settings: tempo, key and scale").ToList();
+		var songButtons = Find<BinaryVibrance.Vysara.Controls.Button>(page).Where(b => BinaryVibrance.Vysara.Controls.ToolTipService.GetToolTip(b) is "Song settings: tempo, key and scale").ToList();
 		songButtons.Count.ShouldBe(2);
 		songButtons[0].PerformClick();
 		host.Tick(0.016, 0f, surface);
 
 		rig.Workbench.ViewModel.Inspected.ShouldBeOfType<SongViewModel>();
-		Find<Vysara.Controls.TextBlock>(page).Select(t => t.Text).ShouldContain("Tempo");
+		Find<BinaryVibrance.Vysara.Controls.TextBlock>(page).Select(t => t.Text).ShouldContain("Tempo");
 	}
 
 	// Every element of a kind in a tree
-	private static List<T> Find<T>(Vysara.UIElement top) where T : Vysara.UIElement
+	private static List<T> Find<T>(BinaryVibrance.Vysara.UIElement top) where T : BinaryVibrance.Vysara.UIElement
 	{
 		var found = new List<T>();
-		void Walk(Vysara.UIElement element)
+		void Walk(BinaryVibrance.Vysara.UIElement element)
 		{
 			if (element is T t)
 				found.Add(t);
-			for (var i = 0; i < Vysara.Media.VisualTreeHelper.GetChildrenCount(element); i++)
-				Walk(Vysara.Media.VisualTreeHelper.GetChild(element, i));
+			for (var i = 0; i < BinaryVibrance.Vysara.Media.VisualTreeHelper.GetChildrenCount(element); i++)
+				Walk(BinaryVibrance.Vysara.Media.VisualTreeHelper.GetChild(element, i));
 		}
 		Walk(top);
 		return found;

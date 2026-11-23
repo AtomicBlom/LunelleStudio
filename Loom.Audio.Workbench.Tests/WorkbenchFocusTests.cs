@@ -3,8 +3,8 @@ using Loom.Audio.Workbench;
 using Loom.Input;
 using Loom.UI.Vysara;
 using Shouldly;
-using Vysara;
-using Vysara.Controls;
+using BinaryVibrance.Vysara;
+using BinaryVibrance.Vysara.Controls;
 
 namespace Loom.Tests;
 

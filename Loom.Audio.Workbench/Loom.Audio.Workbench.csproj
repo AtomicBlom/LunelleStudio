@@ -29,7 +29,7 @@
 	<ItemGroup>
 		<LoomReference Include="Loom.Input" Path="Loom.Input\Loom.Input.csproj" />
 		<SirrowReference Include="BinaryVibrance.Sirrow.Synth" Path="BinaryVibrance.Sirrow.Synth\BinaryVibrance.Sirrow.Synth.csproj" />
-		<VysaraReference Include="Vysara" Path="Vysara\Vysara.csproj" />
+		<VysaraReference Include="BinaryVibrance.Vysara" Path="BinaryVibrance.Vysara\BinaryVibrance.Vysara.csproj" />
 	</ItemGroup>
 
 	<Import Project="$(VysaraSource)build\Vysara.targets" Condition="'$(VysaraFromSource)' == 'true'" />

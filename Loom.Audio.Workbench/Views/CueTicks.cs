@@ -2,8 +2,8 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Globalization;
 
-using Vysara;
-using Vysara.Controls;
+using BinaryVibrance.Vysara;
+using BinaryVibrance.Vysara.Controls;
 
 namespace Loom.Audio.Workbench.Views;
 

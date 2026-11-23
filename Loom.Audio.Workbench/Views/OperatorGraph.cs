@@ -4,11 +4,11 @@ using System.Globalization;
 
 using BinaryVibrance.Sirrow.Synth.Chip;
 
-using Vysara;
-using Vysara.Controls;
-using Vysara.Media;
-using Vysara.RoutedEvents;
-using Vysara.Shapes;
+using BinaryVibrance.Vysara;
+using BinaryVibrance.Vysara.Controls;
+using BinaryVibrance.Vysara.Media;
+using BinaryVibrance.Vysara.RoutedEvents;
+using BinaryVibrance.Vysara.Shapes;
 
 namespace Loom.Audio.Workbench.Views;
 

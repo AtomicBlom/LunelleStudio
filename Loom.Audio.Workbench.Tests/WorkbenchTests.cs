@@ -231,9 +231,9 @@ public class WorkbenchTests
 	{
 		using var rig = new Rig();
 		var model = rig.Workbench.ViewModel;
-		var host = new Vysara.UIHost();
+		var host = new BinaryVibrance.Vysara.UIHost();
 		var view = new WorkbenchView(model);
-		host.CreateRoot(Vysara.UILayer.Default).Root.Content = view;
+		host.CreateRoot(BinaryVibrance.Vysara.UILayer.Default).Root.Content = view;
 		var size = new System.Numerics.Vector2(1280f, 800f);
 		void Frame()
 		{

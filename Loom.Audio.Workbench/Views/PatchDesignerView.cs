@@ -1,10 +1,10 @@
 using System.ComponentModel;
 
-using Vysara;
-using Vysara.Controls;
-using Vysara.Controls.Primitives;
-using Vysara.Input;
-using Vysara.RoutedEvents;
+using BinaryVibrance.Vysara;
+using BinaryVibrance.Vysara.Controls;
+using BinaryVibrance.Vysara.Controls.Primitives;
+using BinaryVibrance.Vysara.Input;
+using BinaryVibrance.Vysara.RoutedEvents;
 
 namespace Loom.Audio.Workbench.Views;
 

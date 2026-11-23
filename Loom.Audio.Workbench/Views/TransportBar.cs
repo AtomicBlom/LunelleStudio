@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-using Vysara.Controls;
+using BinaryVibrance.Vysara.Controls;
 
 namespace Loom.Audio.Workbench.Views;
 
@@ -32,7 +32,7 @@ internal sealed partial class TransportBar : ContentControl, INotifyPropertyChan
 	{
 		get
 		{
-			ExtrasRow.Visibility = Vysara.Visibility.Visible;
+			ExtrasRow.Visibility = BinaryVibrance.Vysara.Visibility.Visible;
 			return ExtrasPanel;
 		}
 	}

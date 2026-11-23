@@ -1,6 +1,6 @@
 using Loom.Audio.Workbench.Views;
 
-using Vysara.Controls;
+using BinaryVibrance.Vysara.Controls;
 
 namespace Loom.Audio.Workbench;
 

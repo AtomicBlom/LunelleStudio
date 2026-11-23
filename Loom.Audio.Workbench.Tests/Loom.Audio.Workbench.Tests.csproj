@@ -28,8 +28,8 @@
     <ProjectReference Include="..\Loom.Audio.Workbench.Projects\Loom.Audio.Workbench.Projects.csproj" />
     <SirrowReference Include="Loom.Audio.Music.Generator" Path="Loom.Audio.Music.Generator\Loom.Audio.Music.Generator.csproj" SourceOnly="true" />
     <ProjectReference Include="..\samples\HelloSynth\HelloSynth.csproj" />
-    <!-- The SUIsei adapter, whose input layer WorkbenchFocusTests drives the workbench's keys through -->
-    <LoomReference Include="Loom.UI.SUIsei" Path="Loom.UI.SUIsei\Loom.UI.SUIsei.csproj" />
+    <!-- The Vysara adapter, whose input layer WorkbenchFocusTests drives the workbench's keys through -->
+    <LoomReference Include="Loom.UI.Vysara" Path="Loom.UI.Vysara\Loom.UI.Vysara.csproj" />
   </ItemGroup>
 
   <!-- The Sirrow checkout this build took the audio from ("none" for its packages), read back by the tests that make a

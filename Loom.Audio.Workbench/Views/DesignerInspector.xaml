@@ -4,7 +4,7 @@
     template: a heading, a number on a slider, a choice among options, a switch, or a button. The macros tab ends with
     each macro's live value, as the game would turn it; the code tab shows the C# and copies it.
 -->
-<ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
+<ContentControl xmlns="https://github.com/AtomicBlom/Vysara/ui"
                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                 xmlns:wb="using:Loom.Audio.Workbench"
                 xmlns:views="using:Loom.Audio.Workbench.Views"

@@ -1,9 +1,9 @@
 using System.ComponentModel;
-using SUIsei;
-using SUIsei.Controls;
-using SUIsei.Controls.Primitives;
-using SUIsei.Input;
-using SUIsei.RoutedEvents;
+using Vysara;
+using Vysara.Controls;
+using Vysara.Controls.Primitives;
+using Vysara.Input;
+using Vysara.RoutedEvents;
 
 namespace Loom.Audio.Workbench.Views;
 
@@ -19,7 +19,7 @@ internal sealed class SectionHeader : ContentControl
 	public const float Tall = 86f;
 
 	private readonly List<Border> _cells = [];
-	private readonly SUIsei.Media.TranslateTransform _stay = new();
+	private readonly Vysara.Media.TranslateTransform _stay = new();
 	private ArrangeScroll? _scroll;
 	private readonly Border _playhead = new() { Width = 2f, Height = RulerHeight, Background = Theme.Playhead, IsHitTestVisible = false, HorizontalAlignment = HorizontalAlignment.Left };
 	private readonly TextBlock _exits = new() { FontSize = 11f, Foreground = Theme.Dim, TextTrimming = TextTrimming.CharacterEllipsis };

@@ -1,12 +1,12 @@
 using Loom.Audio.Workbench.Views;
 
-using SUIsei.Controls;
+using Vysara.Controls;
 
 namespace Loom.Audio.Workbench;
 
 /// <summary>
-/// The workbench page, to put in a SUIsei root's content: the transport, sections, cues, tracks and their parts, the patch
-/// bench, the chosen part's pattern and the chip's load, over a <see cref="WorkbenchViewModel"/>. Its parts are SUIsei
+/// The workbench page, to put in a Vysara root's content: the transport, sections, cues, tracks and their parts, the patch
+/// bench, the chosen part's pattern and the chip's load, over a <see cref="WorkbenchViewModel"/>. Its parts are Vysara
 /// XAML, and reload under <c>dotnet watch</c>.
 /// <code>
 /// var workbench = new Workbench(Audio, musicBus, catalog);

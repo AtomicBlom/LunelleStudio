@@ -28,7 +28,7 @@ internal static class SharedReferences
 			if (!loaded.TryGetValue(name, out var assembly))
 				continue;
 			var built = ProjectLoadContext.Implementation(reference);
-			// A library built for several frameworks (SUIsei) gives a project on another framework a build of its own, whose
+			// A library built for several frameworks (Vysara) gives a project on another framework a build of its own, whose
 			// id differs by design: only builds for the same framework are compared
 			if (ModuleId(built) is { } mine && mine.Id != assembly.ManifestModule.ModuleVersionId
 				&& (mine.Framework is null || mine.Framework == assembly.GetCustomAttribute<System.Runtime.Versioning.TargetFrameworkAttribute>()?.FrameworkName))

@@ -1,6 +1,6 @@
 using System.ComponentModel;
-using SUIsei;
-using SUIsei.Controls;
+using Vysara;
+using Vysara.Controls;
 
 namespace Loom.Audio.Workbench.Views;
 

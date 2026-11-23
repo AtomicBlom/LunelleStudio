@@ -4,7 +4,7 @@
     sixteenths per piece, a click turning a step to a hit, an accent, a ghost note or off, looped through the sequencer
     and copied as the Beat.Sixteenths a song would place.
 -->
-<ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
+<ContentControl xmlns="https://github.com/AtomicBlom/Vysara/ui"
                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                 xmlns:wb="using:Loom.Audio.Workbench"
                 xmlns:views="using:Loom.Audio.Workbench.Views"

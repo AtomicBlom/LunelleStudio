@@ -6,7 +6,7 @@
 
       <LoomReference Include="Loom.Input" Path="Loom.Input\Loom.Input.csproj" />           the engine
       <SirrowReference Include="Loom.Audio.Synth" Path="Loom.Audio.Synth\Loom.Audio.Synth.csproj" />   the audio
-      <SUIseiReference Include="SUIsei" Path="SUIsei\SUIsei.csproj" />                    the UI library
+      <VysaraReference Include="Vysara" Path="Vysara\Vysara.csproj" />                    the UI library
 
     Path is its project's path in the checkout (not Project: a ProjectReference keeps a GUID in that). Any other
     metadata (OutputItemType, ReferenceOutputAssembly) goes with it onto the project reference. SourceOnly="true"
@@ -37,14 +37,14 @@
                       VersionOverride="$(SirrowPackageVersion)" />
   </ItemGroup>
 
-  <ItemGroup Condition="'$(SUIseiFromSource)' == 'true'">
-    <ProjectReference Include="@(SUIseiReference->'$(SUIseiSource)%(Path)')" />
+  <ItemGroup Condition="'$(VysaraFromSource)' == 'true'">
+    <ProjectReference Include="@(VysaraReference->'$(VysaraSource)%(Path)')" />
   </ItemGroup>
-  <ItemGroup Condition="'$(SUIseiFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' != 'true'">
-    <PackageReference Include="@(SUIseiReference)" Version="$(LoomSUIseiVersion)" />
+  <ItemGroup Condition="'$(VysaraFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' != 'true'">
+    <PackageReference Include="@(VysaraReference->'BinaryVibrance.%(Identity)')" Version="$(LoomVysaraVersion)" />
   </ItemGroup>
-  <ItemGroup Condition="'$(SUIseiFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' == 'true'">
-    <PackageReference Include="@(SUIseiReference)" VersionOverride="$(LoomSUIseiVersion)" />
+  <ItemGroup Condition="'$(VysaraFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' == 'true'">
+    <PackageReference Include="@(VysaraReference->'BinaryVibrance.%(Identity)')" VersionOverride="$(LoomVysaraVersion)" />
   </ItemGroup>
 
   <!--

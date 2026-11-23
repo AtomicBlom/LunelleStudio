@@ -1,6 +1,6 @@
 <Project>
 
-  <!-- Each project's references into the engine, the audio and SUIsei, as references to their checkouts' projects or to
+  <!-- Each project's references into the engine, the audio and Vysara, as references to their checkouts' projects or to
        their packages -->
   <Import Project="$(MSBuildThisFileDirectory)build\Sources.targets" />
 

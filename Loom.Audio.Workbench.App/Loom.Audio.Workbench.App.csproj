@@ -1,6 +1,6 @@
 <Project>
 
-	<!-- Where the engine, the audio and SUIsei come from (build/Sources.props): first, since it says which SDK to import -->
+	<!-- Where the engine, the audio and Vysara come from (build/Sources.props): first, since it says which SDK to import -->
 	<Import Project="..\build\Sources.props" />
 
 	<!--
@@ -14,7 +14,7 @@
 		<UseVulkan>true</UseVulkan>
 		<UseDirectX12>false</UseDirectX12>
 		<UseWebGPU>false</UseWebGPU>
-		<UseSUIsei>true</UseSUIsei>
+		<UseVysara>true</UseVysara>
 		<UseImGui>false</UseImGui>
 	</PropertyGroup>
 
@@ -44,10 +44,10 @@
 	</ItemGroup>
 
 	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
-		<!-- SUIsei's diagnostics endpoint, which RoseMCP's live UI tools reach the window's tree through; Debug only: the
+		<!-- Vysara's diagnostics endpoint, which RoseMCP's live UI tools reach the window's tree through; Debug only: the
 				 switch, and the endpoint itself, which Program starts -->
-		<RuntimeHostConfigurationOption Include="SUIsei.Diagnostics.Enabled" Value="true" Trim="true" />
-		<SUIseiReference Include="SUIsei.Diagnostics.Endpoint" Path="SUIsei.Diagnostics.Endpoint\SUIsei.Diagnostics.Endpoint.csproj" />
+		<RuntimeHostConfigurationOption Include="Vysara.Diagnostics.Enabled" Value="true" Trim="true" />
+		<VysaraReference Include="Vysara.Diagnostics.Endpoint" Path="Vysara.Diagnostics.Endpoint\Vysara.Diagnostics.Endpoint.csproj" />
 	</ItemGroup>
 
 	<Import Project="$(LoomSource)build\Loom.Sdk\Sdk\Sdk.targets" Condition="'$(LoomFromSource)' == 'true'" />

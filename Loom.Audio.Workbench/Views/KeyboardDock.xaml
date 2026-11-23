@@ -3,7 +3,7 @@
     The keyboard, always docked along the bottom: what it plays (the part chosen's track in Arrange, the patch or kit
     chosen otherwise), how hard, its octave, the chip's load, and two octaves of keys (and A W S E D F T G Y H U J K).
 -->
-<ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
+<ContentControl xmlns="https://github.com/AtomicBlom/Vysara/ui"
                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                 xmlns:views="using:Loom.Audio.Workbench.Views"
                 x:Class="Loom.Audio.Workbench.Views.KeyboardDock"

@@ -3,7 +3,7 @@
     The command palette (Ctrl K): a field, and what it finds by every word typed, the catalog's songs, patches and kits,
     the song's sections and the commands. Up and Down choose, Enter runs, Escape or a click outside closes.
 -->
-<ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
+<ContentControl xmlns="https://github.com/AtomicBlom/Vysara/ui"
                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                 xmlns:wb="using:Loom.Audio.Workbench"
                 xmlns:views="using:Loom.Audio.Workbench.Views"

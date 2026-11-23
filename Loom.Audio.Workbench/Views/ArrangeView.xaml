@@ -6,11 +6,11 @@
     is added where the pointer shows a line with a + between them; + Add track shows only while the song has no tracks. Beside the board
     the inspector, for the section or part chosen; under it, past a splitter, the part chosen in the roll.
 -->
-<ContentControl xmlns="https://github.com/AtomicBlom/SUIsei/ui"
+<ContentControl xmlns="https://github.com/AtomicBlom/Vysara/ui"
                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                 xmlns:wb="using:Loom.Audio.Workbench"
                 xmlns:views="using:Loom.Audio.Workbench.Views"
-                xmlns:suisei="https://github.com/AtomicBlom/SUIsei/extensions"
+                xmlns:vysara="https://github.com/AtomicBlom/Vysara/extensions"
                 x:Class="Loom.Audio.Workbench.Views.ArrangeView"
                 IsTabStop="False">
     <ContentControl.Resources>
@@ -130,7 +130,7 @@
 
         </Grid>
 
-        <suisei:GridSplitter x:Name="Splitter" Grid.Row="2" ResizeDirection="Rows" MinimumTrackSize="120"
+        <vysara:GridSplitter x:Name="Splitter" Grid.Row="2" ResizeDirection="Rows" MinimumTrackSize="120"
                              ToolTipService.ToolTip="Drag to resize the part editor" />
 
         <!-- The part chosen: set apart on its own ground, under a rule in the accent, its title in a bar of its own -->

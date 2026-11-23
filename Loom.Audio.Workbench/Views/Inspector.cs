@@ -1,9 +1,9 @@
 using System.ComponentModel;
 using Loom.Audio.Synth.Music;
-using SUIsei;
-using SUIsei.Controls;
-using SUIsei.Input;
-using SUIsei.RoutedEvents;
+using Vysara;
+using Vysara.Controls;
+using Vysara.Input;
+using Vysara.RoutedEvents;
 
 namespace Loom.Audio.Workbench.Views;
 
@@ -595,5 +595,5 @@ internal sealed class Inspector : ContentControl
 
 	private static TextBlock Note(string text) => new() { Text = text, FontSize = 11f, Foreground = Theme.Faint, TextWrapping = TextWrapping.Wrap, Margin = new Thickness(0f, 0f, 0f, 6f) };
 
-	private static TextBlock Small(string text, SUIsei.Media.Brush brush) => new() { Text = text, FontSize = 12f, Foreground = brush, VerticalAlignment = VerticalAlignment.Center };
+	private static TextBlock Small(string text, Vysara.Media.Brush brush) => new() { Text = text, FontSize = 12f, Foreground = brush, VerticalAlignment = VerticalAlignment.Center };
 }

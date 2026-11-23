@@ -7,9 +7,9 @@
       LoomSource       The engine (Kaldra, still Loom's repository): a checkout, its folder ending in a slash. By default
                        ..\Kaldra\ beside this repository, where it is checked out. "none" takes its packages.
       SirrowSource     The audio: by default ..\Sirrow\, where it is checked out. "none" takes its packages.
-      SUIseiSource     The UI library: by default the SUIsei submodule in the engine's checkout. "none" takes its package.
+      VysaraSource     The UI library: by default ..\Vysara\. "none" takes its packages (BinaryVibrance.Vysara and the rest).
       LoomPackageVersion, SirrowPackageVersion
-                       The packages' versions, where a source is "none". SUIsei's is the engine's (LoomSUIseiVersion).
+                       The packages' versions, where a source is "none". Vysara's is the engine's (LoomVysaraVersion).
 
     A machine's own choices go in dev.local.props at this repository's root (untracked, as every *.local.props is):
 
@@ -21,7 +21,7 @@
       </Project>
 
     or on the command line, as -p:LoomSource=none. build/Sources.targets turns each LoomReference, SirrowReference and
-    SUIseiReference into a reference to the checkout's project or to the package.
+    VysaraReference into a reference to the checkout's project or to the package.
   -->
   <PropertyGroup Condition="'$(_StudioSourcesProps)' == ''">
     <_StudioSourcesProps>true</_StudioSourcesProps>
@@ -44,15 +44,15 @@
     <SirrowSource Condition="'$(SirrowSource)' != 'none' and !HasTrailingSlash('$(SirrowSource)')">$(SirrowSource)\</SirrowSource>
     <SirrowFromSource Condition="'$(SirrowSource)' != 'none'">true</SirrowFromSource>
 
-    <SUIseiSource Condition="'$(SUIseiSource)' == '' and '$(LoomFromSource)' == 'true' and Exists('$(LoomSource)external\SUIsei\SUIsei\SUIsei.csproj')">$(LoomSource)external\SUIsei\</SUIseiSource>
-    <SUIseiSource Condition="'$(SUIseiSource)' == ''">none</SUIseiSource>
-    <SUIseiSource Condition="'$(SUIseiSource)' != 'none' and !HasTrailingSlash('$(SUIseiSource)')">$(SUIseiSource)\</SUIseiSource>
-    <SUIseiFromSource Condition="'$(SUIseiSource)' != 'none'">true</SUIseiFromSource>
+    <VysaraSource Condition="'$(VysaraSource)' == '' and Exists('$(_StudioSiblings)Vysara\Vysara\Vysara.csproj')">$(_StudioSiblings)Vysara\</VysaraSource>
+    <VysaraSource Condition="'$(VysaraSource)' == ''">none</VysaraSource>
+    <VysaraSource Condition="'$(VysaraSource)' != 'none' and !HasTrailingSlash('$(VysaraSource)')">$(VysaraSource)\</VysaraSource>
+    <VysaraFromSource Condition="'$(VysaraSource)' != 'none'">true</VysaraFromSource>
 
     <LoomPackageVersion Condition="'$(LoomPackageVersion)' == ''">0.1.0-preview.1</LoomPackageVersion>
     <SirrowPackageVersion Condition="'$(SirrowPackageVersion)' == ''">0.1.0-preview.1</SirrowPackageVersion>
-    <!-- Read by Loom's SDK for the SUIsei package an app with UseSUIsei takes; made at the engine's version -->
-    <LoomSUIseiVersion Condition="'$(LoomSUIseiVersion)' == ''">$(LoomPackageVersion)</LoomSUIseiVersion>
+    <!-- Read by Loom's SDK for the Vysara package an app with UseVysara takes; made at the engine's version -->
+    <LoomVysaraVersion Condition="'$(LoomVysaraVersion)' == ''">$(LoomPackageVersion)</LoomVysaraVersion>
   </PropertyGroup>
 
 </Project>

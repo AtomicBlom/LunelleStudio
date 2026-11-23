@@ -1,8 +1,8 @@
 using Loom.Audio.Synth;
 
-using SUIsei;
-using SUIsei.Controls;
-using SUIsei.Shapes;
+using Vysara;
+using Vysara.Controls;
+using Vysara.Shapes;
 
 namespace Loom.Audio.Workbench.Views;
 
@@ -72,7 +72,7 @@ internal sealed class ScopeView : ContentControl
 		canvas.Children.Add(name);
 		canvas.Children.Add(line);
 		var panel = new Border { Child = canvas, Background = Theme.Sunk, CornerRadius = new CornerRadius(6), Margin = new Thickness(0f, 0f, 8f, 0f) };
-		SUIsei.Extensions.Clipping.SetClipToBounds(panel, true);
+		Vysara.Extensions.Clipping.SetClipToBounds(panel, true);
 		return panel;
 	}
 

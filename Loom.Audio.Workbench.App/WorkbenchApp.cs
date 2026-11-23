@@ -3,9 +3,9 @@ using Loom.Audio.Workbench.Projects;
 using Loom.Core.Graph;
 using Loom.Core.Hosting;
 using Loom.Core.Materials;
-using Loom.UI.SUIsei;
+using Loom.UI.Vysara;
 
-using SUIsei;
+using Vysara;
 
 namespace Loom.Audio.Workbench.App;
 
@@ -70,7 +70,7 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 		extension?.Attach(new WorkbenchExtensionContext(_workbench, Audio, view.TransportExtras, arguments ?? []));
 		_view.Root.Content = view;
 		WatchExtension();
-		PushInputLayer(new SUIseiInputLayer(_ui));
+		PushInputLayer(new VysaraInputLayer(_ui));
 
 		SetGraph(RenderGraph.Define(g =>
 		{

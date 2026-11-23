@@ -1,6 +1,6 @@
-using SUIsei;
-using SUIsei.Media;
-using Path = SUIsei.Shapes.Path;
+using Vysara;
+using Vysara.Media;
+using Path = Vysara.Shapes.Path;
 
 namespace Loom.Audio.Workbench.Views;
 

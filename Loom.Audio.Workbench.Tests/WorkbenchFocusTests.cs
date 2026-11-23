@@ -1,10 +1,10 @@
 using System.Numerics;
 using Loom.Audio.Workbench;
 using Loom.Input;
-using Loom.UI.SUIsei;
+using Loom.UI.Vysara;
 using Shouldly;
-using SUIsei;
-using SUIsei.Controls;
+using Vysara;
+using Vysara.Controls;
 
 namespace Loom.Tests;
 
@@ -62,7 +62,7 @@ public class WorkbenchFocusTests
 		view.Root.Content = panel;
 		host.Tick(0.016, 0f, Surface);
 		var stack = new InputLayerStack();
-		stack.Push(new SUIseiInputLayer(host));
+		stack.Push(new VysaraInputLayer(host));
 		return (host, stack, button, box);
 	}
 

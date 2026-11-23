@@ -1,5 +1,5 @@
-using SUIsei;
-using SUIsei.Media;
+using Vysara;
+using Vysara.Media;
 
 namespace Loom.Audio.Workbench.Views;
 

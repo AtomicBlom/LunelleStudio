@@ -37,7 +37,7 @@ public static class WorkbenchExtensions
 		var beside = Directory.GetFiles(folder, "*.dll").ToDictionary(f => Path.GetFileNameWithoutExtension(f), f => f, StringComparer.OrdinalIgnoreCase);
 		if (SharedReferences.Mismatch(beside) is { } mismatch)
 			throw new InvalidOperationException($"{Path.GetFileName(assemblyPath)}: {mismatch}");
-		// What the host has (Loom, SUIsei) comes from the host; the extension's own references (a game's libraries) from
+		// What the host has (Loom, Vysara) comes from the host; the extension's own references (a game's libraries) from
 		// its folder
 		AssemblyLoadContext.Default.Resolving += (context, name) =>
 			Path.Combine(folder, name.Name + ".dll") is var path && File.Exists(path) ? context.LoadFromAssemblyPath(path) : null;

@@ -2,8 +2,8 @@ using System.ComponentModel;
 
 using Loom.Audio.Synth.Chip;
 
-using SUIsei;
-using SUIsei.Controls;
+using Vysara;
+using Vysara.Controls;
 
 namespace Loom.Audio.Workbench.Views;
 
@@ -32,7 +32,7 @@ internal sealed partial class Keyboard : ContentControl
 	// was last lit with (so a refresh changes only what moved)
 	private readonly Border[] _keys = new Border[Octaves * 12];
 	private readonly Border?[] _feet = new Border?[Octaves * 12];
-	private readonly SUIsei.Media.Brush?[] _lit = new SUIsei.Media.Brush?[Octaves * 12];
+	private readonly Vysara.Media.Brush?[] _lit = new Vysara.Media.Brush?[Octaves * 12];
 	private int _low;
 	private bool[] _scale = new bool[12];
 
@@ -113,7 +113,7 @@ internal sealed partial class Keyboard : ContentControl
 	// Where the black key after the given number of white keys starts
 	private static float BlackLeft(int whites) => whites * WhiteWidth - BlackWidth / 2f - Gap / 2f;
 
-	private void Add(int k, float x, float width, float height, SUIsei.Media.Brush brush)
+	private void Add(int k, float x, float width, float height, Vysara.Media.Brush brush)
 	{
 		var key = Part(k, x, 0f, width, height, brush);
 		_keys[k] = key;
@@ -138,7 +138,7 @@ internal sealed partial class Keyboard : ContentControl
 	}
 
 	// One piece of key k, pressing it playing the key's note
-	private Border Part(int k, float x, float y, float width, float height, SUIsei.Media.Brush brush)
+	private Border Part(int k, float x, float y, float width, float height, Vysara.Media.Brush brush)
 	{
 		var note = _low + k;
 		var part = new Border

@@ -1,10 +1,10 @@
 using System.ComponentModel;
-using SUIsei;
-using SUIsei.Controls;
-using SUIsei.Controls.Primitives;
-using SUIsei.Input;
-using SUIsei.Media;
-using SUIsei.RoutedEvents;
+using Vysara;
+using Vysara.Controls;
+using Vysara.Controls.Primitives;
+using Vysara.Input;
+using Vysara.Media;
+using Vysara.RoutedEvents;
 
 namespace Loom.Audio.Workbench.Views;
 

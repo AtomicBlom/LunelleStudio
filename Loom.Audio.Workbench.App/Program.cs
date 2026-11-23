@@ -12,8 +12,8 @@ using Loom.Hosting.Desktop;
 //     makes a music project there to start from, and opens it
 // The host's own options still apply (--backend and the rest).
 #if DEBUG
-// SUIsei's diagnostics endpoint, which RoseMCP's live UI tools reach the window's tree through
-SUIsei.DiagnosticsEndpoint.Start();
+// Vysara's diagnostics endpoint, which RoseMCP's live UI tools reach the window's tree through
+Vysara.DiagnosticsEndpoint.Start();
 #endif
 var appArgs = HostOptions.Parse(args).AppArgs.ToList();
 string? extensionProject = null;

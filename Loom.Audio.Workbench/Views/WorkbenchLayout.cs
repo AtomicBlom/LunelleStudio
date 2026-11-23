@@ -2,8 +2,8 @@ using System.ComponentModel;
 
 using System.Numerics;
 
-using SUIsei;
-using SUIsei.Controls;
+using Vysara;
+using Vysara.Controls;
 
 namespace Loom.Audio.Workbench.Views;
 
@@ -12,7 +12,7 @@ namespace Loom.Audio.Workbench.Views;
 /// its XAML. <see cref="WorkbenchView"/> hosts it. A patch or kit dragged out of the library is dropped here: on the
 /// board in Arrange, it adds a track that plays it.
 /// </summary>
-internal sealed partial class WorkbenchLayout : SUIsei.Controls.ContentControl
+internal sealed partial class WorkbenchLayout : Vysara.Controls.ContentControl
 {
 	/// <summary>A page over <paramref name="viewModel"/>.</summary>
 	public WorkbenchLayout(WorkbenchViewModel viewModel)

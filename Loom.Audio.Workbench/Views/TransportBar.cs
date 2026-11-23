@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-using SUIsei.Controls;
+using Vysara.Controls;
 
 namespace Loom.Audio.Workbench.Views;
 
@@ -32,7 +32,7 @@ internal sealed partial class TransportBar : ContentControl, INotifyPropertyChan
 	{
 		get
 		{
-			ExtrasRow.Visibility = SUIsei.Visibility.Visible;
+			ExtrasRow.Visibility = Vysara.Visibility.Visible;
 			return ExtrasPanel;
 		}
 	}

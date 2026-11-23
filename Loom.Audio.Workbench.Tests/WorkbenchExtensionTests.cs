@@ -4,7 +4,7 @@ using Loom.Audio.Synth.Music;
 using Loom.Audio.Workbench;
 using Loom.Audio.Workbench.Projects;
 
-using SUIsei.Controls;
+using Vysara.Controls;
 
 [assembly: WorkbenchExtension(typeof(Loom.Tests.WorkbenchExtensionTests.TestExtension))]
 

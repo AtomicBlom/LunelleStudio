@@ -2,7 +2,7 @@
 
   <Import Project="$(MSBuildThisFileDirectory)Version.props" />
 
-  <!-- Where the engine, the audio and SUIsei come from, for every project here: checkouts, or their packages
+  <!-- Where the engine, the audio and Vysara come from, for every project here: checkouts, or their packages
        (build/Sources.props). The workbench app imports it itself, before Loom's SDK; once is enough. -->
   <Import Project="$(MSBuildThisFileDirectory)build\Sources.props" Condition="'$(_StudioSourcesProps)' == ''" />
 

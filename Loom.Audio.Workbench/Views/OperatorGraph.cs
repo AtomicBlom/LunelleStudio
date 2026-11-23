@@ -4,11 +4,11 @@ using System.Globalization;
 
 using Loom.Audio.Synth.Chip;
 
-using SUIsei;
-using SUIsei.Controls;
-using SUIsei.Media;
-using SUIsei.RoutedEvents;
-using SUIsei.Shapes;
+using Vysara;
+using Vysara.Controls;
+using Vysara.Media;
+using Vysara.RoutedEvents;
+using Vysara.Shapes;
 
 namespace Loom.Audio.Workbench.Views;
 

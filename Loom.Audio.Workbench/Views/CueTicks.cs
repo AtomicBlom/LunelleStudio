@@ -2,8 +2,8 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Globalization;
 
-using SUIsei;
-using SUIsei.Controls;
+using Vysara;
+using Vysara.Controls;
 
 namespace Loom.Audio.Workbench.Views;
 

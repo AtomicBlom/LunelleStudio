@@ -455,31 +455,31 @@ public class RollTests
 	public void The_songs_settings_open_in_the_inspector_from_the_transport()
 	{
 		using var rig = new Rig();
-		var host = new SUIsei.UIHost();
+		var host = new Vysara.UIHost();
 		var page = new WorkbenchView(rig.Workbench.ViewModel);
-		host.CreateRoot(SUIsei.UILayer.Default).Root.Content = page;
+		host.CreateRoot(Vysara.UILayer.Default).Root.Content = page;
 		var surface = new System.Numerics.Vector2(1400f, 900f);
 		host.Tick(0.016, 0f, surface);
 
-		var songButtons = Find<SUIsei.Controls.Button>(page).Where(b => SUIsei.Controls.ToolTipService.GetToolTip(b) is "Song settings: tempo, key and scale").ToList();
+		var songButtons = Find<Vysara.Controls.Button>(page).Where(b => Vysara.Controls.ToolTipService.GetToolTip(b) is "Song settings: tempo, key and scale").ToList();
 		songButtons.Count.ShouldBe(2);
 		songButtons[0].PerformClick();
 		host.Tick(0.016, 0f, surface);
 
 		rig.Workbench.ViewModel.Inspected.ShouldBeOfType<SongViewModel>();
-		Find<SUIsei.Controls.TextBlock>(page).Select(t => t.Text).ShouldContain("Tempo");
+		Find<Vysara.Controls.TextBlock>(page).Select(t => t.Text).ShouldContain("Tempo");
 	}
 
 	// Every element of a kind in a tree
-	private static List<T> Find<T>(SUIsei.UIElement top) where T : SUIsei.UIElement
+	private static List<T> Find<T>(Vysara.UIElement top) where T : Vysara.UIElement
 	{
 		var found = new List<T>();
-		void Walk(SUIsei.UIElement element)
+		void Walk(Vysara.UIElement element)
 		{
 			if (element is T t)
 				found.Add(t);
-			for (var i = 0; i < SUIsei.Media.VisualTreeHelper.GetChildrenCount(element); i++)
-				Walk(SUIsei.Media.VisualTreeHelper.GetChild(element, i));
+			for (var i = 0; i < Vysara.Media.VisualTreeHelper.GetChildrenCount(element); i++)
+				Walk(Vysara.Media.VisualTreeHelper.GetChild(element, i));
 		}
 		Walk(top);
 		return found;

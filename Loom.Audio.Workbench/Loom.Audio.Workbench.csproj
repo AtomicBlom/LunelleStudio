@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-	<!-- The music workbench: a SUIsei page that plays a song while its code is edited under dotnet watch, rebuilding it
-	     and swapping it in on the next bar. Its model and view models need no window; its views are SUIsei XAML. Given a
+	<!-- The music workbench: a Vysara page that plays a song while its code is edited under dotnet watch, rebuilding it
+	     and swapping it in on the next bar. Its model and view models need no window; its views are Vysara XAML. Given a
 	     catalog of songs, patches, kits and cues by the app that hosts it; knows nothing of any game. -->
-	<!-- SUIsei's XAML generator, from its checkout; its package carries the same build files, which NuGet imports -->
-	<Import Project="$(SUIseiSource)build\SUIsei.props" Condition="'$(SUIseiFromSource)' == 'true'" />
+	<!-- Vysara's XAML generator, from its checkout; its package carries the same build files, which NuGet imports -->
+	<Import Project="$(VysaraSource)build\Vysara.props" Condition="'$(VysaraFromSource)' == 'true'" />
 
 	<PropertyGroup>
 		<TargetFramework>net11.0</TargetFramework>
@@ -18,8 +18,8 @@
 	     itself takes. -->
 	<PropertyGroup Label="NuGet">
 		<PackageId>Loom.Audio.Workbench</PackageId>
-		<Description>The music workbench for Loom.Audio.Synth: its model, view models and SUIsei views, with no window of its own; the API a workbench extension is written against.</Description>
-		<PackageTags>audio;music;synthesis;workbench;suisei;dotnet</PackageTags>
+		<Description>The music workbench for Loom.Audio.Synth: its model, view models and Vysara views, with no window of its own; the API a workbench extension is written against.</Description>
+		<PackageTags>audio;music;synthesis;workbench;vysara;dotnet</PackageTags>
 	</PropertyGroup>
 
 	<ItemGroup>
@@ -29,9 +29,9 @@
 	<ItemGroup>
 		<LoomReference Include="Loom.Input" Path="Loom.Input\Loom.Input.csproj" />
 		<SirrowReference Include="Loom.Audio.Synth" Path="Loom.Audio.Synth\Loom.Audio.Synth.csproj" />
-		<SUIseiReference Include="SUIsei" Path="SUIsei\SUIsei.csproj" />
+		<VysaraReference Include="Vysara" Path="Vysara\Vysara.csproj" />
 	</ItemGroup>
 
-	<Import Project="$(SUIseiSource)build\SUIsei.targets" Condition="'$(SUIseiFromSource)' == 'true'" />
+	<Import Project="$(VysaraSource)build\Vysara.targets" Condition="'$(VysaraFromSource)' == 'true'" />
 
 </Project>

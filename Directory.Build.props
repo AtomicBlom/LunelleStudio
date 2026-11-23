@@ -3,7 +3,7 @@
   <Import Project="$(MSBuildThisFileDirectory)Version.props" />
 
   <!-- Where the engine, the audio and Vysara come from, for every project here: checkouts, or their packages
-       (build/Sources.props). The workbench app imports it itself, before Loom's SDK; once is enough. -->
+       (build/Sources.props). The workbench app imports it itself, before Kaldra's SDK; once is enough. -->
   <Import Project="$(MSBuildThisFileDirectory)build\Sources.props" Condition="'$(_StudioSourcesProps)' == ''" />
 
   <!-- A project referenced from outside the solution being built (the engine's and the audio's, in their checkouts, and

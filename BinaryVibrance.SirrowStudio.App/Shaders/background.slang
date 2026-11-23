@@ -1,6 +1,6 @@
 // The workbench's backdrop: one triangle covering the screen, shaded from a deep blue at the top to violet at the bottom.
 
-#include "loom_platform.module.slang"
+#include "kaldra_platform.module.slang"
 
 struct VsOut
 {
@@ -16,8 +16,8 @@ VsOut vertexMain(uint vertexId : SV_VertexID)
 
 	VsOut output;
 	output.uv = uv;
-	// uv.y runs down the screen: LOOM_CLIP_POS takes the target's NDC-Y convention into account.
-	output.position = LOOM_CLIP_POS(uv * 2.0 - 1.0);
+	// uv.y runs down the screen: KALDRA_CLIP_POS takes the target's NDC-Y convention into account.
+	output.position = KALDRA_CLIP_POS(uv * 2.0 - 1.0);
 	return output;
 }
 

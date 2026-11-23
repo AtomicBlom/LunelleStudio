@@ -2,7 +2,7 @@
 
 	<!-- A music project opened from its .csproj and compiled in-process with Roslyn: its compiler command line from a
 	     design-time build, a compilation that a save updates, the result loaded into a collectible context that shares
-	     Loom with the host, and its catalog found by MusicCatalogAttribute. What the workbench reloads by, in place of
+	     Kaldra with the host, and its catalog found by MusicCatalogAttribute. What the workbench reloads by, in place of
 	     dotnet watch. No window: tests drive it as the workbench apps do. -->
 	<PropertyGroup>
 		<TargetFramework>net11.0</TargetFramework>

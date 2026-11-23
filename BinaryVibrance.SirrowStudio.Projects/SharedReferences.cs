@@ -7,8 +7,8 @@ using System.Runtime.Loader;
 namespace BinaryVibrance.SirrowStudio.Projects;
 
 /// <summary>
-/// A build of a project shares what the host has already loaded (Loom above all) rather than loading it again, so each
-/// such reference must be the very build the host runs: a project built against another Loom, or against a reference
+/// A build of a project shares what the host has already loaded (Kaldra above all) rather than loading it again, so each
+/// such reference must be the very build the host runs: a project built against another Kaldra, or against a reference
 /// rebuilt since the host started, would find methods missing or changed. Each is compared by its module's version id.
 /// </summary>
 internal static class SharedReferences
@@ -37,7 +37,7 @@ internal static class SharedReferences
 		return problems.Count == 0
 			? null
 			: "The project builds against assemblies other than the ones this workbench runs, which it shares with the project "
-				+ "rather than loading again. A project built against another Loom can't be opened by this one; a reference "
+				+ "rather than loading again. A project built against another Kaldra can't be opened by this one; a reference "
 				+ "rebuilt since the workbench started needs it restarted.\n" + string.Join("\n", problems);
 	}
 

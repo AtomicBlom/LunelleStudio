@@ -1,9 +1,9 @@
 using BinaryVibrance.Sirrow;
 using BinaryVibrance.SirrowStudio.Projects;
-using Loom.Core.Graph;
-using Loom.Core.Hosting;
-using Loom.Core.Materials;
-using Loom.UI.Vysara;
+using BinaryVibrance.Kaldra.Core.Graph;
+using BinaryVibrance.Kaldra.Core.Hosting;
+using BinaryVibrance.Kaldra.Core.Materials;
+using BinaryVibrance.Kaldra.UI.Vysara;
 
 using BinaryVibrance.Vysara;
 
@@ -15,7 +15,7 @@ namespace BinaryVibrance.SirrowStudio.App;
 /// A project's extension, loaded before the window opens, gives the bus the music plays into and controls of its own,
 /// and is kept across every save. What it was doing is kept beside the project.
 /// </summary>
-public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extension = null, IReadOnlyList<string>? arguments = null, string? extensionProject = null) : LoomApplication
+public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extension = null, IReadOnlyList<string>? arguments = null, string? extensionProject = null) : KaldraApplication
 {
 	private readonly WorkbenchStateFile _state = WorkbenchStateFile.Beside(projectPath);
 	private UIHost _ui = null!;
@@ -179,7 +179,7 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 		_extensionWatcher.Renamed += (_, e) => Changed(e.FullPath);
 	}
 
-	/// <summary>The configuration this was built in, which the project and its extension are built in too, so their builds share its Loom.</summary>
+	/// <summary>The configuration this was built in, which the project and its extension are built in too, so their builds share its Kaldra.</summary>
 	public static string Configuration =>
 #if DEBUG
 		"Debug";

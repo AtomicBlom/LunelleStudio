@@ -4,7 +4,7 @@
     Each reference into another repository, by its package id, as a reference to the project in that repository's
     checkout or to the package (build/Sources.props says which):
 
-      <LoomReference Include="Loom.Input" Path="Loom.Input\Loom.Input.csproj" />                    the engine
+      <KaldraReference Include="BinaryVibrance.Kaldra.Input" Path="BinaryVibrance.Kaldra.Input\BinaryVibrance.Kaldra.Input.csproj" />                    the engine
       <SirrowReference Include="BinaryVibrance.Sirrow.Synth"
                        Path="BinaryVibrance.Sirrow.Synth\BinaryVibrance.Sirrow.Synth.csproj" />    the audio
       <VysaraReference Include="BinaryVibrance.Vysara" Path="BinaryVibrance.Vysara\BinaryVibrance.Vysara.csproj" />
@@ -15,16 +15,16 @@
     a reference only a source build needs: the music generator, which the BinaryVibrance.Sirrow.Synth package carries as
     its analyzer.
   -->
-  <ItemGroup Condition="'$(LoomFromSource)' == 'true'">
-    <ProjectReference Include="@(LoomReference->'$(LoomSource)%(Path)')" />
+  <ItemGroup Condition="'$(KaldraFromSource)' == 'true'">
+    <ProjectReference Include="@(KaldraReference->'$(KaldraSource)%(Path)')" />
   </ItemGroup>
-  <ItemGroup Condition="'$(LoomFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' != 'true'">
-    <PackageReference Include="@(LoomReference)" Exclude="@(LoomReference->WithMetadataValue('SourceOnly', 'true'))"
-                      Version="$(LoomPackageVersion)" />
+  <ItemGroup Condition="'$(KaldraFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' != 'true'">
+    <PackageReference Include="@(KaldraReference)" Exclude="@(KaldraReference->WithMetadataValue('SourceOnly', 'true'))"
+                      Version="$(KaldraPackageVersion)" />
   </ItemGroup>
-  <ItemGroup Condition="'$(LoomFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' == 'true'">
-    <PackageReference Include="@(LoomReference)" Exclude="@(LoomReference->WithMetadataValue('SourceOnly', 'true'))"
-                      VersionOverride="$(LoomPackageVersion)" />
+  <ItemGroup Condition="'$(KaldraFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' == 'true'">
+    <PackageReference Include="@(KaldraReference)" Exclude="@(KaldraReference->WithMetadataValue('SourceOnly', 'true'))"
+                      VersionOverride="$(KaldraPackageVersion)" />
   </ItemGroup>
 
   <ItemGroup Condition="'$(SirrowFromSource)' == 'true'">
@@ -43,10 +43,10 @@
     <ProjectReference Include="@(VysaraReference->'$(VysaraSource)%(Path)')" />
   </ItemGroup>
   <ItemGroup Condition="'$(VysaraFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' != 'true'">
-    <PackageReference Include="@(VysaraReference)" Version="$(LoomVysaraVersion)" />
+    <PackageReference Include="@(VysaraReference)" Version="$(KaldraVysaraVersion)" />
   </ItemGroup>
   <ItemGroup Condition="'$(VysaraFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' == 'true'">
-    <PackageReference Include="@(VysaraReference)" VersionOverride="$(LoomVysaraVersion)" />
+    <PackageReference Include="@(VysaraReference)" VersionOverride="$(KaldraVysaraVersion)" />
   </ItemGroup>
 
   <!--

@@ -60,7 +60,7 @@ internal static class DesignTimeBuild
 
 	/// <summary>
 	/// Builds <paramref name="projectPath"/> and returns its assembly's path (its TargetPath). Its references are taken as
-	/// they were last built rather than built again, since the host's own build made those it shares (Loom), and a
+	/// they were last built rather than built again, since the host's own build made those it shares (Kaldra), and a
 	/// shared project built again, even from the same sources, is another build the host refuses: its sources' paths are
 	/// in it, and a build started from "c:\..." rather than "C:\..." compiles it again. Only a project whose references
 	/// were never built is built with them.

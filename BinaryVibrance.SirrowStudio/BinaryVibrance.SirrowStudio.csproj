@@ -27,7 +27,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<LoomReference Include="Loom.Input" Path="Loom.Input\Loom.Input.csproj" />
+		<KaldraReference Include="BinaryVibrance.Kaldra.Input" Path="BinaryVibrance.Kaldra.Input\BinaryVibrance.Kaldra.Input.csproj" />
 		<SirrowReference Include="BinaryVibrance.Sirrow.Synth" Path="BinaryVibrance.Sirrow.Synth\BinaryVibrance.Sirrow.Synth.csproj" />
 		<VysaraReference Include="BinaryVibrance.Vysara" Path="BinaryVibrance.Vysara\BinaryVibrance.Vysara.csproj" />
 	</ItemGroup>

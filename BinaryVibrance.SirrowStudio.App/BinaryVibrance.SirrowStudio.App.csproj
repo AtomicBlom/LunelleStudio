@@ -1,0 +1,56 @@
+<Project>
+
+	<!-- Where the engine, the audio and Vysara come from (build/Sources.props): first, since it says which SDK to import -->
+	<Import Project="..\build\Sources.props" />
+
+	<!--
+		sirrow-studio: the music workbench over any music project. Give it a .csproj (or the folder it is in) whose assembly
+		names its catalog with [assembly: MusicCatalog(typeof(...))]; it compiles the project with Roslyn, plays it, and
+		compiles it again on every save, the song swapped in at the next bar. "sirrow-studio new <folder>" makes a project
+		to start from. docs/synth.md, section 10, has the rest.
+	-->
+
+	<PropertyGroup>
+		<UseVulkan>true</UseVulkan>
+		<UseDirectX12>false</UseDirectX12>
+		<UseWebGPU>false</UseWebGPU>
+		<UseVysara>true</UseVysara>
+		<UseImGui>false</UseImGui>
+	</PropertyGroup>
+
+	<Import Project="$(LoomSource)build\Loom.Sdk\Sdk\Sdk.props" Condition="'$(LoomFromSource)' == 'true'" />
+	<Import Project="Sdk.props" Sdk="Loom.Sdk" Version="$(LoomPackageVersion)" Condition="'$(LoomFromSource)' != 'true'" />
+
+	<PropertyGroup>
+		<OutputType>Exe</OutputType>
+		<TargetFramework>net11.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+		<AssemblyName>sirrow-studio</AssemblyName>
+		<RootNamespace>BinaryVibrance.SirrowStudio.App</RootNamespace>
+		<LoomShaderSourceDir>$(MSBuildProjectDirectory)\Shaders</LoomShaderSourceDir>
+		<!-- On the newest .NET installed, so it can load a project (and an extension) that targets a newer one than Loom -->
+		<RollForward>LatestMajor</RollForward>
+		<!-- The generator beside the app, for a project it makes ("new") to name as its analyzer (build/Sources.targets) -->
+		<CopyMusicGenerator>true</CopyMusicGenerator>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<ProjectReference Include="..\BinaryVibrance.SirrowStudio.Projects\BinaryVibrance.SirrowStudio.Projects.csproj" />
+		<!-- The music's output: SDL 3's, registered in Program -->
+		<SirrowReference Include="BinaryVibrance.Sirrow.Sdl" Path="BinaryVibrance.Sirrow.Sdl\BinaryVibrance.Sirrow.Sdl.csproj" />
+		<!-- Beside the app, for a project it makes ("new") to reference as its analyzer, as it references the app's Loom -->
+		<SirrowReference Include="BinaryVibrance.Sirrow.Music.Generator" Path="BinaryVibrance.Sirrow.Music.Generator\BinaryVibrance.Sirrow.Music.Generator.csproj" SourceOnly="true" />
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
+		<!-- Vysara's diagnostics endpoint, which RoseMCP's live UI tools reach the window's tree through; Debug only: the
+				 switch, and the endpoint itself, which Program starts -->
+		<RuntimeHostConfigurationOption Include="BinaryVibrance.Vysara.Diagnostics.Enabled" Value="true" Trim="true" />
+		<VysaraReference Include="BinaryVibrance.Vysara.Diagnostics.Endpoint" Path="BinaryVibrance.Vysara.Diagnostics.Endpoint\BinaryVibrance.Vysara.Diagnostics.Endpoint.csproj" />
+	</ItemGroup>
+
+	<Import Project="$(LoomSource)build\Loom.Sdk\Sdk\Sdk.targets" Condition="'$(LoomFromSource)' == 'true'" />
+	<Import Project="Sdk.targets" Sdk="Loom.Sdk" Version="$(LoomPackageVersion)" Condition="'$(LoomFromSource)' != 'true'" />
+
+</Project>

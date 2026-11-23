@@ -51,12 +51,12 @@
 
   <!--
     The music generator's assembly beside a project's output, where CopyMusicGenerator is true: a project
-    loom-workbench new makes names it there as its analyzer (ProjectTemplate), as it names Sirrow's and the Synth's.
+    sirrow-studio new makes names it there as its analyzer (ProjectTemplate), as it names Sirrow's and the Synth's.
     From source, the project reference to the generator copies it; from the packages, it is taken out of the
     BinaryVibrance.Sirrow.Synth package, which carries it as its analyzer.
   -->
   <ItemGroup Condition="'$(CopyMusicGenerator)' == 'true' and '$(SirrowFromSource)' != 'true'">
-    <None Include="$(NuGetPackageRoot)loom.audio.synth\$(SirrowPackageVersion)\analyzers\dotnet\cs\BinaryVibrance.Sirrow.Music.Generator.dll"
+    <None Include="$(NuGetPackageRoot)binaryvibrance.sirrow.synth\$(SirrowPackageVersion)\analyzers\dotnet\cs\BinaryVibrance.Sirrow.Music.Generator.dll"
           CopyToOutputDirectory="PreserveNewest" Visible="false" />
   </ItemGroup>
 

@@ -1,6 +1,0 @@
-<Solution>
-  <Project Path="Loom.Audio.Workbench.App/Loom.Audio.Workbench.App.csproj" />
-  <Project Path="Loom.Audio.Workbench.Projects/Loom.Audio.Workbench.Projects.csproj" />
-  <Project Path="Loom.Audio.Workbench.Tests/Loom.Audio.Workbench.Tests.csproj" />
-  <Project Path="Loom.Audio.Workbench/Loom.Audio.Workbench.csproj" />
-</Solution>

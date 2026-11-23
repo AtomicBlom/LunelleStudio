@@ -1,6 +1,6 @@
-using Vysara;
-using Vysara.Media;
-using Path = Vysara.Shapes.Path;
+using BinaryVibrance.Vysara;
+using BinaryVibrance.Vysara.Media;
+using Path = BinaryVibrance.Vysara.Shapes.Path;
 
 namespace Loom.Audio.Workbench.Views;
 

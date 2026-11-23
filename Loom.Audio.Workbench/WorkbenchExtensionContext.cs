@@ -1,5 +1,5 @@
 using BinaryVibrance.Sirrow;
-using Vysara.Controls;
+using BinaryVibrance.Vysara.Controls;
 
 namespace Loom.Audio.Workbench;
 

@@ -1,5 +1,5 @@
-using Vysara;
-using Vysara.Media;
+using BinaryVibrance.Vysara;
+using BinaryVibrance.Vysara.Media;
 
 namespace Loom.Audio.Workbench.Views;
 

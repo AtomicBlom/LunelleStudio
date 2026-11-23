@@ -1,6 +1,6 @@
 using System.ComponentModel;
-using Vysara;
-using Vysara.Controls;
+using BinaryVibrance.Vysara;
+using BinaryVibrance.Vysara.Controls;
 
 namespace Loom.Audio.Workbench.Views;
 

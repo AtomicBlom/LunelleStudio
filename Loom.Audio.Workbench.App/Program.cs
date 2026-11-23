@@ -13,7 +13,7 @@ using Loom.Hosting.Desktop;
 // The host's own options still apply (--backend and the rest).
 #if DEBUG
 // Vysara's diagnostics endpoint, which RoseMCP's live UI tools reach the window's tree through
-Vysara.DiagnosticsEndpoint.Start();
+BinaryVibrance.Vysara.DiagnosticsEndpoint.Start();
 #endif
 var appArgs = HostOptions.Parse(args).AppArgs.ToList();
 string? extensionProject = null;

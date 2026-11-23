@@ -1,9 +1,9 @@
 using System.ComponentModel;
-using Vysara;
-using Vysara.Controls;
-using Vysara.Controls.Primitives;
-using Vysara.Input;
-using Vysara.RoutedEvents;
+using BinaryVibrance.Vysara;
+using BinaryVibrance.Vysara.Controls;
+using BinaryVibrance.Vysara.Controls.Primitives;
+using BinaryVibrance.Vysara.Input;
+using BinaryVibrance.Vysara.RoutedEvents;
 
 namespace Loom.Audio.Workbench.Views;
 
@@ -43,7 +43,7 @@ internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyCh
 	// The patch or kit a row shows, from an element in it
 	private static ChoiceViewModel? ChoiceOf(object? source)
 	{
-		for (var element = source as UIElement; element is not null; element = Vysara.Media.VisualTreeHelper.GetParent(element))
+		for (var element = source as UIElement; element is not null; element = BinaryVibrance.Vysara.Media.VisualTreeHelper.GetParent(element))
 			if (element is FrameworkElement { Tag: ChoiceViewModel choice })
 				return choice;
 		return null;

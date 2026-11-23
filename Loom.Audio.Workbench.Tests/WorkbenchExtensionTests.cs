@@ -4,7 +4,7 @@ using BinaryVibrance.Sirrow.Synth.Music;
 using Loom.Audio.Workbench;
 using Loom.Audio.Workbench.Projects;
 
-using Vysara.Controls;
+using BinaryVibrance.Vysara.Controls;
 
 [assembly: WorkbenchExtension(typeof(Loom.Tests.WorkbenchExtensionTests.TestExtension))]
 

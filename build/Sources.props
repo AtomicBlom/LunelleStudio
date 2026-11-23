@@ -44,7 +44,7 @@
     <SirrowSource Condition="'$(SirrowSource)' != 'none' and !HasTrailingSlash('$(SirrowSource)')">$(SirrowSource)\</SirrowSource>
     <SirrowFromSource Condition="'$(SirrowSource)' != 'none'">true</SirrowFromSource>
 
-    <VysaraSource Condition="'$(VysaraSource)' == '' and Exists('$(_StudioSiblings)Vysara\Vysara\Vysara.csproj')">$(_StudioSiblings)Vysara\</VysaraSource>
+    <VysaraSource Condition="'$(VysaraSource)' == '' and Exists('$(_StudioSiblings)Vysara\BinaryVibrance.Vysara\BinaryVibrance.Vysara.csproj')">$(_StudioSiblings)Vysara\</VysaraSource>
     <VysaraSource Condition="'$(VysaraSource)' == ''">none</VysaraSource>
     <VysaraSource Condition="'$(VysaraSource)' != 'none' and !HasTrailingSlash('$(VysaraSource)')">$(VysaraSource)\</VysaraSource>
     <VysaraFromSource Condition="'$(VysaraSource)' != 'none'">true</VysaraFromSource>

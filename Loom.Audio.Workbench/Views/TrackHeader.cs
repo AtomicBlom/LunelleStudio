@@ -1,9 +1,9 @@
 using System.ComponentModel;
-using Vysara;
-using Vysara.Controls;
-using Vysara.Controls.Primitives;
-using Vysara.Input;
-using Vysara.RoutedEvents;
+using BinaryVibrance.Vysara;
+using BinaryVibrance.Vysara.Controls;
+using BinaryVibrance.Vysara.Controls.Primitives;
+using BinaryVibrance.Vysara.Input;
+using BinaryVibrance.Vysara.RoutedEvents;
 
 namespace Loom.Audio.Workbench.Views;
 
@@ -17,7 +17,7 @@ internal sealed class TrackHeader : ContentControl
 {
 	public const float HeaderWidth = 176f;
 
-	private readonly Vysara.Media.TranslateTransform _stay = new();
+	private readonly BinaryVibrance.Vysara.Media.TranslateTransform _stay = new();
 	private ArrangeScroll? _scroll;
 	private Border? _frame;
 	private readonly Border _meter = new() { HorizontalAlignment = HorizontalAlignment.Left, CornerRadius = new CornerRadius(2f), Background = Theme.Meter, Height = 4f };

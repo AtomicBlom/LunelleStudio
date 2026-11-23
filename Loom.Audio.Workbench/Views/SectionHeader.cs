@@ -1,9 +1,9 @@
 using System.ComponentModel;
-using Vysara;
-using Vysara.Controls;
-using Vysara.Controls.Primitives;
-using Vysara.Input;
-using Vysara.RoutedEvents;
+using BinaryVibrance.Vysara;
+using BinaryVibrance.Vysara.Controls;
+using BinaryVibrance.Vysara.Controls.Primitives;
+using BinaryVibrance.Vysara.Input;
+using BinaryVibrance.Vysara.RoutedEvents;
 
 namespace Loom.Audio.Workbench.Views;
 
@@ -19,7 +19,7 @@ internal sealed class SectionHeader : ContentControl
 	public const float Tall = 86f;
 
 	private readonly List<Border> _cells = [];
-	private readonly Vysara.Media.TranslateTransform _stay = new();
+	private readonly BinaryVibrance.Vysara.Media.TranslateTransform _stay = new();
 	private ArrangeScroll? _scroll;
 	private readonly Border _playhead = new() { Width = 2f, Height = RulerHeight, Background = Theme.Playhead, IsHitTestVisible = false, HorizontalAlignment = HorizontalAlignment.Left };
 	private readonly TextBlock _exits = new() { FontSize = 11f, Foreground = Theme.Dim, TextTrimming = TextTrimming.CharacterEllipsis };

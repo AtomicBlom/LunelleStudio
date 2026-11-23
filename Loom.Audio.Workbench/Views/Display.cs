@@ -2,7 +2,7 @@ using System.Globalization;
 
 using BinaryVibrance.Sirrow.Synth;
 
-using Vysara.Media;
+using BinaryVibrance.Vysara.Media;
 
 namespace Loom.Audio.Workbench.Views;
 
@@ -64,7 +64,7 @@ internal static class Display
 	public static float Used(bool used) => used ? 1f : 0.45f;
 
 	/// <summary>Shown while there is something to show.</summary>
-	public static Vysara.Visibility Shown(object? something) => something is null ? Vysara.Visibility.Collapsed : Vysara.Visibility.Visible;
+	public static BinaryVibrance.Vysara.Visibility Shown(object? something) => something is null ? BinaryVibrance.Vysara.Visibility.Collapsed : BinaryVibrance.Vysara.Visibility.Visible;
 
 	/// <summary>A kit's pad, pointed at.</summary>
 	public static string PadTip(string piece) => $"Play the {piece}";
@@ -79,7 +79,7 @@ internal static class Display
 	public static string OptionTip(string name) => $"Choose {name}";
 
 	/// <summary>A file's icon by its kind: a song, a patch, a kit's map, code, or any other file.</summary>
-	public static Vysara.Media.Geometry FileIcon(string name) => Vysara.Media.Geometry.Parse(
+	public static BinaryVibrance.Vysara.Media.Geometry FileIcon(string name) => BinaryVibrance.Vysara.Media.Geometry.Parse(
 		name.EndsWith(".song.json", StringComparison.OrdinalIgnoreCase) ? Glyphs.SongData
 		: name.EndsWith(".patch.json", StringComparison.OrdinalIgnoreCase) ? Glyphs.PatchData
 		: name.EndsWith("map.json", StringComparison.OrdinalIgnoreCase) ? Glyphs.KitData
@@ -95,7 +95,7 @@ internal static class Display
 	public static SolidColorBrush RailInk(bool on) => on ? Theme.Accent : Theme.Dim;
 
 	// Where the playhead crosses a column, as a left margin
-	public static Vysara.Thickness Playhead(float x) => new(x, 0f, 0f, 0f);
+	public static BinaryVibrance.Vysara.Thickness Playhead(float x) => new(x, 0f, 0f, 0f);
 
 	public static string Pin(bool pinned) => pinned ? "Unpin" : "Pin";
 
@@ -133,5 +133,5 @@ internal static class Display
 	public static SolidColorBrush Now(bool now) => now ? Theme.Ink : Theme.Line;
 
 	// A beat's first step, set a little apart
-	public static Vysara.Thickness StepGap(bool beat) => new(beat ? 6f : 1f, 0f, 1f, 0f);
+	public static BinaryVibrance.Vysara.Thickness StepGap(bool beat) => new(beat ? 6f : 1f, 0f, 1f, 0f);
 }

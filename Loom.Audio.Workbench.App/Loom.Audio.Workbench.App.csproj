@@ -46,8 +46,8 @@
 	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
 		<!-- Vysara's diagnostics endpoint, which RoseMCP's live UI tools reach the window's tree through; Debug only: the
 				 switch, and the endpoint itself, which Program starts -->
-		<RuntimeHostConfigurationOption Include="Vysara.Diagnostics.Enabled" Value="true" Trim="true" />
-		<VysaraReference Include="Vysara.Diagnostics.Endpoint" Path="Vysara.Diagnostics.Endpoint\Vysara.Diagnostics.Endpoint.csproj" />
+		<RuntimeHostConfigurationOption Include="BinaryVibrance.Vysara.Diagnostics.Enabled" Value="true" Trim="true" />
+		<VysaraReference Include="BinaryVibrance.Vysara.Diagnostics.Endpoint" Path="BinaryVibrance.Vysara.Diagnostics.Endpoint\BinaryVibrance.Vysara.Diagnostics.Endpoint.csproj" />
 	</ItemGroup>
 
 	<Import Project="$(LoomSource)build\Loom.Sdk\Sdk\Sdk.targets" Condition="'$(LoomFromSource)' == 'true'" />

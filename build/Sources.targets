@@ -1,18 +1,19 @@
 <Project>
 
   <!--
-    Each reference into another repository, by its project's name, as a reference to the project in that repository's
+    Each reference into another repository, by its package id, as a reference to the project in that repository's
     checkout or to the package (build/Sources.props says which):
 
-      <LoomReference Include="Loom.Input" Path="Loom.Input\Loom.Input.csproj" />           the engine
-      <SirrowReference Include="BinaryVibrance.Sirrow.Synth" Path="BinaryVibrance.Sirrow.Synth\BinaryVibrance.Sirrow.Synth.csproj" />   the audio
-      <VysaraReference Include="Vysara" Path="Vysara\Vysara.csproj" />                    the UI library
+      <LoomReference Include="Loom.Input" Path="Loom.Input\Loom.Input.csproj" />                    the engine
+      <SirrowReference Include="BinaryVibrance.Sirrow.Synth"
+                       Path="BinaryVibrance.Sirrow.Synth\BinaryVibrance.Sirrow.Synth.csproj" />    the audio
+      <VysaraReference Include="BinaryVibrance.Vysara" Path="BinaryVibrance.Vysara\BinaryVibrance.Vysara.csproj" />
+                                                                                                      the UI library
 
     Path is its project's path in the checkout (not Project: a ProjectReference keeps a GUID in that). Any other
-    metadata (OutputItemType, ReferenceOutputAssembly) goes with it onto the project reference. Vysara's packages are
-    its projects' names under BinaryVibrance (BinaryVibrance.Vysara). SourceOnly="true"
-    marks a reference only a source build needs: the music generator, which the BinaryVibrance.Sirrow.Synth package carries as its
-    analyzer.
+    metadata (OutputItemType, ReferenceOutputAssembly) goes with it onto the project reference. SourceOnly="true" marks
+    a reference only a source build needs: the music generator, which the BinaryVibrance.Sirrow.Synth package carries as
+    its analyzer.
   -->
   <ItemGroup Condition="'$(LoomFromSource)' == 'true'">
     <ProjectReference Include="@(LoomReference->'$(LoomSource)%(Path)')" />
@@ -42,10 +43,10 @@
     <ProjectReference Include="@(VysaraReference->'$(VysaraSource)%(Path)')" />
   </ItemGroup>
   <ItemGroup Condition="'$(VysaraFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' != 'true'">
-    <PackageReference Include="@(VysaraReference->'BinaryVibrance.%(Identity)')" Version="$(LoomVysaraVersion)" />
+    <PackageReference Include="@(VysaraReference)" Version="$(LoomVysaraVersion)" />
   </ItemGroup>
   <ItemGroup Condition="'$(VysaraFromSource)' != 'true' and '$(ManagePackageVersionsCentrally)' == 'true'">
-    <PackageReference Include="@(VysaraReference->'BinaryVibrance.%(Identity)')" VersionOverride="$(LoomVysaraVersion)" />
+    <PackageReference Include="@(VysaraReference)" VersionOverride="$(LoomVysaraVersion)" />
   </ItemGroup>
 
   <!--

@@ -1,7 +1,7 @@
 using System.ComponentModel;
-using Vysara;
-using Vysara.Controls;
-using Vysara.Controls.Primitives;
+using BinaryVibrance.Vysara;
+using BinaryVibrance.Vysara.Controls;
+using BinaryVibrance.Vysara.Controls.Primitives;
 
 namespace Loom.Audio.Workbench.Views;
 
@@ -157,7 +157,7 @@ internal sealed class LaneCell : ContentControl
 		title.ColumnDefinitions.Add(GridLength.Star);
 		title.ColumnDefinitions.Add(GridLength.Auto);
 
-		var dot = new Vysara.Shapes.Ellipse { Width = 7f, Height = 7f, VerticalAlignment = VerticalAlignment.Center, Fill = Display.Lit(part.IsActive) };
+		var dot = new BinaryVibrance.Vysara.Shapes.Ellipse { Width = 7f, Height = 7f, VerticalAlignment = VerticalAlignment.Center, Fill = Display.Lit(part.IsActive) };
 		ToolTipService.SetToolTip(dot, "Playing");
 		title.Children.Add(dot);
 

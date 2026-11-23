@@ -1,6 +1,6 @@
-using Loom.Audio;
-using Loom.Audio.Synth;
-using Loom.Audio.Synth.Music;
+using BinaryVibrance.Sirrow;
+using BinaryVibrance.Sirrow.Synth;
+using BinaryVibrance.Sirrow.Synth.Music;
 using Loom.Audio.Workbench;
 using Loom.Audio.Workbench.Projects;
 
@@ -86,10 +86,10 @@ public class WorkbenchExtensionTests
 		var folder = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), "loom-ext-" + Guid.NewGuid().ToString("N")[..8])).FullName;
 		try
 		{
-			// Another build of Loom.Audio.Synth beside it: any other assembly of the same framework stands in for it
-			var stale = Path.Combine(folder, "Loom.Audio.Synth.dll");
+			// Another build of BinaryVibrance.Sirrow.Synth beside it: any other assembly of the same framework stands in for it
+			var stale = Path.Combine(folder, "BinaryVibrance.Sirrow.Synth.dll");
 			File.Copy(typeof(AudioEngine).Assembly.Location, stale);
-			Should.Throw<InvalidOperationException>(() => WorkbenchExtensions.Load(stale)).Message.ShouldContain("Loom.Audio.Synth: the project's is");
+			Should.Throw<InvalidOperationException>(() => WorkbenchExtensions.Load(stale)).Message.ShouldContain("BinaryVibrance.Sirrow.Synth: the project's is");
 		}
 		finally
 		{

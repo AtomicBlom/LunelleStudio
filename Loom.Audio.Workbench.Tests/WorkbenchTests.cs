@@ -1,6 +1,7 @@
-using Loom.Audio.Synth;
-using Loom.Audio.Synth.Chip;
-using Loom.Audio.Synth.Music;
+using BinaryVibrance.Sirrow;
+using BinaryVibrance.Sirrow.Synth;
+using BinaryVibrance.Sirrow.Synth.Chip;
+using BinaryVibrance.Sirrow.Synth.Music;
 using Loom.Audio.Workbench;
 
 namespace Loom.Tests;

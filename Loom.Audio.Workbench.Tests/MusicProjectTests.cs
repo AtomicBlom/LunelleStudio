@@ -2,9 +2,9 @@ using System.Diagnostics;
 using System.Reflection;
 using System.Runtime.CompilerServices;
 
-using Loom.Audio;
-using Loom.Audio.Synth;
-using Loom.Audio.Synth.Music;
+using BinaryVibrance.Sirrow;
+using BinaryVibrance.Sirrow.Synth;
+using BinaryVibrance.Sirrow.Synth.Music;
 using Loom.Audio.Workbench;
 using Loom.Audio.Workbench.Projects;
 
@@ -16,7 +16,7 @@ namespace Loom.Tests;
 /// </summary>
 public class MusicProjectTests
 {
-	// Loom.Audio.Synth's project in the Sirrow checkout this build took the audio from (build/Sources.props). Built from
+	// BinaryVibrance.Sirrow.Synth's project in the Sirrow checkout this build took the audio from (build/Sources.props). Built from
 	// Sirrow's packages there is no project to reference, so a test making a music project skips.
 	private static string SynthProject()
 	{
@@ -24,8 +24,8 @@ public class MusicProjectTests
 			.FirstOrDefault(a => a.Key == "SirrowSource")?.Value;
 		if (string.IsNullOrEmpty(source) || source == "none")
 			throw new TUnit.Core.Exceptions.SkipTestException(
-				"The audio came from Sirrow's packages: a music project here references Loom.Audio.Synth's project, in a Sirrow checkout.");
-		return Path.GetFullPath(Path.Combine(source, "Loom.Audio.Synth", "Loom.Audio.Synth.csproj"));
+				"The audio came from Sirrow's packages: a music project here references BinaryVibrance.Sirrow.Synth's project, in a Sirrow checkout.");
+		return Path.GetFullPath(Path.Combine(source, "BinaryVibrance.Sirrow.Synth", "BinaryVibrance.Sirrow.Synth.csproj"));
 	}
 
 	// The configuration these tests were built in, for a project's design-time build: left to itself it is Debug, whose
@@ -41,8 +41,8 @@ public class MusicProjectTests
 	};
 
 	internal static string Music(string notes, string extra = "") => $$"""
-		using Loom.Audio.Synth.Chip;
-		using Loom.Audio.Synth.Music;
+		using BinaryVibrance.Sirrow.Synth.Chip;
+		using BinaryVibrance.Sirrow.Synth.Music;
 
 		[assembly: MusicCatalog(typeof(Tunes.Catalog))]
 
@@ -174,12 +174,12 @@ public class MusicProjectTests
 	public void A_project_built_against_another_build_of_what_the_host_shares_is_refused()
 	{
 		var synth = typeof(Song).Assembly.Location;
-		SharedReferences.Mismatch(new Dictionary<string, string> { ["Loom.Audio.Synth"] = synth }).ShouldBeNull();
+		SharedReferences.Mismatch(new Dictionary<string, string> { ["BinaryVibrance.Sirrow.Synth"] = synth }).ShouldBeNull();
 
-		// Another build of Loom.Audio.Synth: any other assembly stands in for it, its module's id differing
+		// Another build of BinaryVibrance.Sirrow.Synth: any other assembly stands in for it, its module's id differing
 		var other = typeof(AudioTap).Assembly.Location;
-		SharedReferences.Mismatch(new Dictionary<string, string> { ["Loom.Audio.Synth"] = other })
-			.ShouldNotBeNull().ShouldContain($"Loom.Audio.Synth: the project's is {other}, the workbench runs {synth}");
+		SharedReferences.Mismatch(new Dictionary<string, string> { ["BinaryVibrance.Sirrow.Synth"] = other })
+			.ShouldNotBeNull().ShouldContain($"BinaryVibrance.Sirrow.Synth: the project's is {other}, the workbench runs {synth}");
 	}
 
 	[Test]

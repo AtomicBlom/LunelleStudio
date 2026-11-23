@@ -1,6 +1,6 @@
 using System.Collections.ObjectModel;
 
-using Loom.Audio.Synth.Chip;
+using BinaryVibrance.Sirrow.Synth.Chip;
 
 namespace Loom.Audio.Workbench;
 

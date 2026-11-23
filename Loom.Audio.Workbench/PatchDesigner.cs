@@ -2,8 +2,8 @@ using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Windows.Input;
 
-using Loom.Audio.Synth.Chip;
-using Loom.Audio.Synth.Dsp;
+using BinaryVibrance.Sirrow.Synth.Chip;
+using BinaryVibrance.Sirrow.Synth.Dsp;
 
 namespace Loom.Audio.Workbench;
 

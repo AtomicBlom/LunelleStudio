@@ -8,7 +8,7 @@
 
   <!-- A project referenced from outside the solution being built (the engine's and the audio's, in their checkouts, and
        samples/HelloSynth) builds in the configuration being built. Left to MSBuild, a solution build unsets it for them
-       and they build in Debug, so a Release workbench ran beside a Debug Loom.Audio.Synth, which a music project built
+       and they build in Debug, so a Release workbench ran beside a Debug BinaryVibrance.Sirrow.Synth, which a music project built
        in Release then didn't match. -->
   <PropertyGroup>
     <ShouldUnsetParentConfigurationAndPlatform>false</ShouldUnsetParentConfigurationAndPlatform>

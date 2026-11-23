@@ -64,7 +64,7 @@ public sealed class MusicCode(Func<IReadOnlyList<string>> sources) : IMusicCode
 			var name = type[(dot + 1)..];
 			var path = Path.Combine(beside, name + ".cs");
 			var made = new StringBuilder();
-			made.Append("using Loom.Audio.Synth.Chip;\nusing Loom.Audio.Synth.Music;\n\n");
+			made.Append("using BinaryVibrance.Sirrow.Synth.Chip;\nusing BinaryVibrance.Sirrow.Synth.Music;\n\n");
 			if (space.Length > 0)
 				made.Append($"namespace {space};\n\n");
 			made.Append($"// What {name}'s music file can't say, as C#: its generated half calls each member here, so the build fails if one\n");

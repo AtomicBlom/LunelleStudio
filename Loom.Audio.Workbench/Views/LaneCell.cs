@@ -187,9 +187,9 @@ internal sealed class LaneCell : ContentControl
 		var states = new StackPanel { Orientation = Orientation.Horizontal };
 		foreach (var (state, text, tip) in new[]
 		{
-			(Loom.Audio.Synth.Music.PlacementState.Auto, "Auto", "Play when the condition is met"),
-			(Loom.Audio.Synth.Music.PlacementState.On, "On", "Always play, ignoring the condition"),
-			(Loom.Audio.Synth.Music.PlacementState.Off, "Off", "Never play, ignoring the condition"),
+			(BinaryVibrance.Sirrow.Synth.Music.PlacementState.Auto, "Auto", "Play when the condition is met"),
+			(BinaryVibrance.Sirrow.Synth.Music.PlacementState.On, "On", "Always play, ignoring the condition"),
+			(BinaryVibrance.Sirrow.Synth.Music.PlacementState.Off, "Off", "Never play, ignoring the condition"),
 		})
 		{
 			var toggle = new ToggleButton { Content = new TextBlock { Text = text, FontSize = 10f }, IsChecked = part.State == state, Padding = new Thickness(5f, 1f, 5f, 2f), Margin = new Thickness(1f, 0f, 0f, 0f) };

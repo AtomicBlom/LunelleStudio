@@ -18,7 +18,7 @@
 	     itself takes. -->
 	<PropertyGroup Label="NuGet">
 		<PackageId>Loom.Audio.Workbench</PackageId>
-		<Description>The music workbench for Loom.Audio.Synth: its model, view models and Vysara views, with no window of its own; the API a workbench extension is written against.</Description>
+		<Description>The music workbench for BinaryVibrance.Sirrow.Synth: its model, view models and Vysara views, with no window of its own; the API a workbench extension is written against.</Description>
 		<PackageTags>audio;music;synthesis;workbench;vysara;dotnet</PackageTags>
 	</PropertyGroup>
 
@@ -28,7 +28,7 @@
 
 	<ItemGroup>
 		<LoomReference Include="Loom.Input" Path="Loom.Input\Loom.Input.csproj" />
-		<SirrowReference Include="Loom.Audio.Synth" Path="Loom.Audio.Synth\Loom.Audio.Synth.csproj" />
+		<SirrowReference Include="BinaryVibrance.Sirrow.Synth" Path="BinaryVibrance.Sirrow.Synth\BinaryVibrance.Sirrow.Synth.csproj" />
 		<VysaraReference Include="Vysara" Path="Vysara\Vysara.csproj" />
 	</ItemGroup>
 

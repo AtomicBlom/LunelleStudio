@@ -43,7 +43,7 @@ public static class ProjectTemplate
 			<Project Sdk="Microsoft.NET.Sdk">
 
 			  <!-- Music written in Loom's workbench: loom-workbench {name}.csproj opens it, plays it, and compiles it again on
-			       every save. Its song and patches are files (Songs/, Patches/) that Loom's music generator makes into C# as it
+			       every save. Its song and patches are files (Songs/, Patches/) that Sirrow's music generator makes into C# as it
 			       builds; what a file can't say (the kit, the cues, the catalog) is C# beside them. Loom is referenced from the
 			       workbench's own folder, so the two always match. -->
 
@@ -56,15 +56,15 @@ public static class ProjectTemplate
 			  </PropertyGroup>
 
 			  <ItemGroup>
-			    <Reference Include="Loom.Audio" HintPath="$(LoomDirectory)Loom.Audio.dll" />
-			    <Reference Include="Loom.Audio.Synth" HintPath="$(LoomDirectory)Loom.Audio.Synth.dll" />
+			    <Reference Include="BinaryVibrance.Sirrow" HintPath="$(LoomDirectory)BinaryVibrance.Sirrow.dll" />
+			    <Reference Include="BinaryVibrance.Sirrow.Synth" HintPath="$(LoomDirectory)BinaryVibrance.Sirrow.Synth.dll" />
 			  </ItemGroup>
 
 			  <ItemGroup>
 			    <AdditionalFiles Include="Patches\*.patch.json;Songs\*.song.json" />
 			    <CompilerVisibleProperty Include="RootNamespace" />
 			    <CompilerVisibleProperty Include="ProjectDir" />
-			    <Analyzer Include="$(LoomDirectory)Loom.Audio.Music.Generator.dll" />
+			    <Analyzer Include="$(LoomDirectory)BinaryVibrance.Sirrow.Music.Generator.dll" />
 			  </ItemGroup>
 
 			</Project>

@@ -30,7 +30,7 @@ public sealed class OperatorNodeViewModel : ViewModel
 	} = "";
 
 	/// <summary>Its kind, for its colour.</summary>
-	public Synth.Chip.OperatorKind Kind { get; internal set; }
+	public BinaryVibrance.Sirrow.Synth.Chip.OperatorKind Kind { get; internal set; }
 
 	/// <summary>Its column: one right of the deepest operator it reads.</summary>
 	public int Column { get; internal set; }

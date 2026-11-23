@@ -30,10 +30,10 @@ public sealed class SectionViewModel : ViewModel
 	public SectionViewModel Self => this;
 
 	/// <summary>Its chords bar by bar as written; fewer than its bars repeat to fill it.</summary>
-	public IReadOnlyList<Loom.Audio.Synth.Music.ChordBar> Progression { get; internal init; } = [];
+	public IReadOnlyList<BinaryVibrance.Sirrow.Synth.Music.ChordBar> Progression { get; internal init; } = [];
 
 	/// <summary>The scale the song plays in, which spells its chords.</summary>
-	public Loom.Audio.Synth.Music.Scale Scale { get; internal init; } = Loom.Audio.Synth.Music.Scale.Major(Loom.Audio.Synth.Music.Note.C);
+	public BinaryVibrance.Sirrow.Synth.Music.Scale Scale { get; internal init; } = BinaryVibrance.Sirrow.Synth.Music.Scale.Major(BinaryVibrance.Sirrow.Synth.Music.Note.C);
 
 	/// <summary>Its exits as a song file writes them, in the order they are tried: a condition (null for always) and where to.</summary>
 	public IReadOnlyList<(string? When, string Then)> Exits { get; internal init; } = [];

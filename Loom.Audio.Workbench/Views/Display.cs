@@ -1,6 +1,6 @@
 using System.Globalization;
 
-using Loom.Audio.Synth;
+using BinaryVibrance.Sirrow.Synth;
 
 using Vysara.Media;
 
@@ -102,15 +102,15 @@ internal static class Display
 	public static string Percent(float value) => $"{value * 100f:0}%";
 
 	// An operator's colour by its kind
-	public static SolidColorBrush Kind(Loom.Audio.Synth.Chip.OperatorKind kind) => kind switch
+	public static SolidColorBrush Kind(BinaryVibrance.Sirrow.Synth.Chip.OperatorKind kind) => kind switch
 	{
-		Loom.Audio.Synth.Chip.OperatorKind.Sine => Theme.KindSine,
-		Loom.Audio.Synth.Chip.OperatorKind.Wave => Theme.KindWave,
-		Loom.Audio.Synth.Chip.OperatorKind.Noise => Theme.KindNoise,
-		Loom.Audio.Synth.Chip.OperatorKind.String => Theme.KindString,
-		Loom.Audio.Synth.Chip.OperatorKind.Modes => Theme.KindModes,
-		Loom.Audio.Synth.Chip.OperatorKind.Tube => Theme.KindTube,
-		Loom.Audio.Synth.Chip.OperatorKind.Sample => Theme.KindSample,
+		BinaryVibrance.Sirrow.Synth.Chip.OperatorKind.Sine => Theme.KindSine,
+		BinaryVibrance.Sirrow.Synth.Chip.OperatorKind.Wave => Theme.KindWave,
+		BinaryVibrance.Sirrow.Synth.Chip.OperatorKind.Noise => Theme.KindNoise,
+		BinaryVibrance.Sirrow.Synth.Chip.OperatorKind.String => Theme.KindString,
+		BinaryVibrance.Sirrow.Synth.Chip.OperatorKind.Modes => Theme.KindModes,
+		BinaryVibrance.Sirrow.Synth.Chip.OperatorKind.Tube => Theme.KindTube,
+		BinaryVibrance.Sirrow.Synth.Chip.OperatorKind.Sample => Theme.KindSample,
 		_ => Theme.KindLevel,
 	};
 

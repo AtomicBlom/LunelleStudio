@@ -1,6 +1,6 @@
 using System.Globalization;
 
-using Loom.Audio.Synth.Music;
+using BinaryVibrance.Sirrow.Synth.Music;
 
 namespace Loom.Audio.Workbench;
 

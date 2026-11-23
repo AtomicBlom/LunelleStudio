@@ -1,7 +1,8 @@
 using System.Text.Json.Nodes;
-using Loom.Audio.Synth;
-using Loom.Audio.Synth.Chip;
-using Loom.Audio.Synth.Music;
+using BinaryVibrance.Sirrow;
+using BinaryVibrance.Sirrow.Synth;
+using BinaryVibrance.Sirrow.Synth.Chip;
+using BinaryVibrance.Sirrow.Synth.Music;
 using Loom.Audio.Workbench;
 using Loom.Audio.Workbench.Projects;
 
@@ -329,14 +330,14 @@ public class RollTests
 	{
 		using var rig = new Rig();
 		var model = rig.Workbench.ViewModel;
-		var folder = Path.Combine(Path.GetTempPath(), "loom-patches-" + Guid.NewGuid().ToString("N")[..8]);
+		var folder = Path.Combine(Path.GetTempPath(), "sirrow-patches-" + Guid.NewGuid().ToString("N")[..8]);
 		Directory.CreateDirectory(folder);
 		try
 		{
 			var click = Path.Combine(folder, "click.patch.json");
-			File.WriteAllText(click, """{ "format": "loom-patch/1", "name": "click", "operators": [ { "name": "sine1", "kind": "sine", "envelope": "decay 0.01", "level": 0.5 } ], "out": [ { "op": "sine1" } ] }""");
+			File.WriteAllText(click, """{ "format": "sirrow-patch/1", "name": "click", "operators": [ { "name": "sine1", "kind": "sine", "envelope": "decay 0.01", "level": 0.5 } ], "out": [ { "op": "sine1" } ] }""");
 			var other = Path.Combine(folder, "other.song.json");
-			File.WriteAllText(other, """{ "format": "loom-song/2", "name": "other", "tempo": 100, "scale": "C major", "tracks": [ { "name": "bell", "patch": "click" } ], "sections": [ { "name": "a", "bars": 1, "parts": [] } ] }""");
+			File.WriteAllText(other, """{ "format": "sirrow-song/2", "name": "other", "tempo": 100, "scale": "C major", "tracks": [ { "name": "bell", "patch": "click" } ], "sections": [ { "name": "a", "bars": 1, "parts": [] } ] }""");
 			var copy = Path.Combine(folder, "click-first.patch.json");
 			var bindings = new SongBindings { Patch = n => n.StartsWith("click", StringComparison.Ordinal) ? MusicRig.Click : null, Cue = n => n == "energy" ? Energy : null };
 			var catalog = rig.Catalog with
@@ -543,7 +544,7 @@ public class RollTests
 	[Test]
 	public void The_patch_designer_writes_its_edits_to_the_patch_file_keeping_its_names()
 	{
-		var path = Path.Combine(Path.GetTempPath(), "loom-patch-" + Guid.NewGuid().ToString("N")[..8] + ".patch.json");
+		var path = Path.Combine(Path.GetTempPath(), "sirrow-patch-" + Guid.NewGuid().ToString("N")[..8] + ".patch.json");
 		var spec = PatchSpec.From(MusicRig.Click);
 		spec.About = "A click, for the test";
 		File.WriteAllText(path, PatchFile.Write(spec, ["blip"]));

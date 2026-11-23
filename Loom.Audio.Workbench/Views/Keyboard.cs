@@ -1,6 +1,6 @@
 using System.ComponentModel;
 
-using Loom.Audio.Synth.Chip;
+using BinaryVibrance.Sirrow.Synth.Chip;
 
 using Vysara;
 using Vysara.Controls;

@@ -280,16 +280,16 @@ public sealed class WorkbenchViewModel : ViewModel
 	public int SampleRate => _workbench.SampleRate;
 
 	/// <summary>Plays a note on the bench (a key of the on-screen keyboard), at <see cref="Velocity"/>; returns it, to let go.</summary>
-	public Synth.Chip.NoteHandle PlayNote(int note) => _workbench.AuditionOn(note, Velocity);
+	public BinaryVibrance.Sirrow.Synth.Chip.NoteHandle PlayNote(int note) => _workbench.AuditionOn(note, Velocity);
 
 	/// <summary>Lets a note from <see cref="PlayNote"/> go.</summary>
-	public void ReleaseNote(Synth.Chip.NoteHandle note) => _workbench.AuditionOff(note);
+	public void ReleaseNote(BinaryVibrance.Sirrow.Synth.Chip.NoteHandle note) => _workbench.AuditionOff(note);
 
 	/// <summary>Hits a pad: a piece of the bench's kit, by its index in <see cref="Pads"/>.</summary>
 	public void HitPad(int index)
 	{
 		if ((uint)index < (uint)Pads.Count)
-			_workbench.AuditionHit(new Synth.Chip.DrumPiece(Pads[index].Piece), Velocity);
+			_workbench.AuditionHit(new BinaryVibrance.Sirrow.Synth.Chip.DrumPiece(Pads[index].Piece), Velocity);
 	}
 
 	/// <summary>What the middle of the window is given to. Setting it acts: the keyboard then plays what the mode has chosen.</summary>

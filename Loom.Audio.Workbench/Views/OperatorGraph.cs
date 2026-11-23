@@ -2,7 +2,7 @@ using System.Collections.Specialized;
 using System.ComponentModel;
 using System.Globalization;
 
-using Loom.Audio.Synth.Chip;
+using BinaryVibrance.Sirrow.Synth.Chip;
 
 using Vysara;
 using Vysara.Controls;

@@ -1,6 +1,6 @@
 # Loom.Audio.Workbench
 
-The music workbench for `Loom.Audio.Synth`: its model, view models and Vysara views, with no window of its own.
+The music workbench for `BinaryVibrance.Sirrow.Synth`: its model, view models and Vysara views, with no window of its own.
 `loom-workbench` (`Loom.Audio.Workbench.App`) is the app that opens a music project in it, compiles the project on every
 save and plays what it built. This library is what that app is made of, and what a project's extension is written
 against.

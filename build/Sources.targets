@@ -1,16 +1,17 @@
 <Project>
 
   <!--
-    Each reference into another repository, by its package id, as a reference to the project in that repository's
+    Each reference into another repository, by its project's name, as a reference to the project in that repository's
     checkout or to the package (build/Sources.props says which):
 
       <LoomReference Include="Loom.Input" Path="Loom.Input\Loom.Input.csproj" />           the engine
-      <SirrowReference Include="Loom.Audio.Synth" Path="Loom.Audio.Synth\Loom.Audio.Synth.csproj" />   the audio
+      <SirrowReference Include="BinaryVibrance.Sirrow.Synth" Path="BinaryVibrance.Sirrow.Synth\BinaryVibrance.Sirrow.Synth.csproj" />   the audio
       <VysaraReference Include="Vysara" Path="Vysara\Vysara.csproj" />                    the UI library
 
     Path is its project's path in the checkout (not Project: a ProjectReference keeps a GUID in that). Any other
-    metadata (OutputItemType, ReferenceOutputAssembly) goes with it onto the project reference. SourceOnly="true"
-    marks a reference only a source build needs: the music generator, which the Loom.Audio.Synth package carries as its
+    metadata (OutputItemType, ReferenceOutputAssembly) goes with it onto the project reference. Vysara's packages are
+    its projects' names under BinaryVibrance (BinaryVibrance.Vysara). SourceOnly="true"
+    marks a reference only a source build needs: the music generator, which the BinaryVibrance.Sirrow.Synth package carries as its
     analyzer.
   -->
   <ItemGroup Condition="'$(LoomFromSource)' == 'true'">
@@ -49,12 +50,12 @@
 
   <!--
     The music generator's assembly beside a project's output, where CopyMusicGenerator is true: a project
-    loom-workbench new makes names it there as its analyzer (ProjectTemplate), as it names Loom.Audio's and the Synth's.
+    loom-workbench new makes names it there as its analyzer (ProjectTemplate), as it names Sirrow's and the Synth's.
     From source, the project reference to the generator copies it; from the packages, it is taken out of the
-    Loom.Audio.Synth package, which carries it as its analyzer.
+    BinaryVibrance.Sirrow.Synth package, which carries it as its analyzer.
   -->
   <ItemGroup Condition="'$(CopyMusicGenerator)' == 'true' and '$(SirrowFromSource)' != 'true'">
-    <None Include="$(NuGetPackageRoot)loom.audio.synth\$(SirrowPackageVersion)\analyzers\dotnet\cs\Loom.Audio.Music.Generator.dll"
+    <None Include="$(NuGetPackageRoot)loom.audio.synth\$(SirrowPackageVersion)\analyzers\dotnet\cs\BinaryVibrance.Sirrow.Music.Generator.dll"
           CopyToOutputDirectory="PreserveNewest" Visible="false" />
   </ItemGroup>
 

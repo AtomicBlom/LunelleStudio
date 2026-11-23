@@ -1,4 +1,4 @@
-using Loom.Audio.Synth;
+using BinaryVibrance.Sirrow.Synth;
 
 using Vysara;
 using Vysara.Controls;

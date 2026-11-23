@@ -39,7 +39,7 @@
     <LoomSource Condition="'$(LoomSource)' != 'none' and !HasTrailingSlash('$(LoomSource)')">$(LoomSource)\</LoomSource>
     <LoomFromSource Condition="'$(LoomSource)' != 'none'">true</LoomFromSource>
 
-    <SirrowSource Condition="'$(SirrowSource)' == '' and Exists('$(_StudioSiblings)Sirrow\Loom.Audio\Loom.Audio.csproj')">$(_StudioSiblings)Sirrow\</SirrowSource>
+    <SirrowSource Condition="'$(SirrowSource)' == '' and Exists('$(_StudioSiblings)Sirrow\BinaryVibrance.Sirrow\BinaryVibrance.Sirrow.csproj')">$(_StudioSiblings)Sirrow\</SirrowSource>
     <SirrowSource Condition="'$(SirrowSource)' == ''">none</SirrowSource>
     <SirrowSource Condition="'$(SirrowSource)' != 'none' and !HasTrailingSlash('$(SirrowSource)')">$(SirrowSource)\</SirrowSource>
     <SirrowFromSource Condition="'$(SirrowSource)' != 'none'">true</SirrowFromSource>

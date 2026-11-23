@@ -14,7 +14,7 @@
 	<!-- Packed: a game's tests open its music project with it, as the workbench does (RubberTrack's StudioReloadTests) -->
 	<PropertyGroup Label="NuGet">
 		<PackageId>Loom.Audio.Workbench.Projects</PackageId>
-		<Description>A music project opened from its .csproj and compiled in-process with Roslyn, recompiled on each save and its catalog loaded: how the Loom.Audio workbench reloads music, with no window.</Description>
+		<Description>A music project opened from its .csproj and compiled in-process with Roslyn, recompiled on each save and its catalog loaded: how the Sirrow workbench reloads music, with no window.</Description>
 		<PackageTags>audio;music;roslyn;hot-reload;dotnet</PackageTags>
 	</PropertyGroup>
 
@@ -24,7 +24,7 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\Loom.Audio.Workbench\Loom.Audio.Workbench.csproj" />
-		<SirrowReference Include="Loom.Audio.Synth" Path="Loom.Audio.Synth\Loom.Audio.Synth.csproj" />
+		<SirrowReference Include="BinaryVibrance.Sirrow.Synth" Path="BinaryVibrance.Sirrow.Synth\BinaryVibrance.Sirrow.Synth.csproj" />
 	</ItemGroup>
 
 	<ItemGroup>

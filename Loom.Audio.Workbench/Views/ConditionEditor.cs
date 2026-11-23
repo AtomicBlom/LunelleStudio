@@ -1,5 +1,5 @@
 using System.Globalization;
-using Loom.Audio.Synth.Music;
+using BinaryVibrance.Sirrow.Synth.Music;
 using Vysara;
 using Vysara.Controls;
 

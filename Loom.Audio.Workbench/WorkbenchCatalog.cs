@@ -1,5 +1,5 @@
-using Loom.Audio.Synth.Chip;
-using Loom.Audio.Synth.Music;
+using BinaryVibrance.Sirrow.Synth.Chip;
+using BinaryVibrance.Sirrow.Synth.Music;
 
 namespace Loom.Audio.Workbench;
 

@@ -1,6 +1,6 @@
 using System.Text.Json.Nodes;
-using Loom.Audio.Synth.Chip;
-using Loom.Audio.Synth.Music;
+using BinaryVibrance.Sirrow.Synth.Chip;
+using BinaryVibrance.Sirrow.Synth.Music;
 
 namespace Loom.Audio.Workbench;
 
@@ -517,12 +517,12 @@ public sealed partial class Workbench
 		else
 			file = new JsonObject
 			{
-				["format"] = "loom-patch/1",
+				["format"] = "sirrow-patch/1",
 				["name"] = stem,
 				["operators"] = new JsonArray(new JsonObject { ["name"] = "sine1", ["kind"] = "sine", ["envelope"] = "adsr 0.01 0.1 0.8 0.2", ["level"] = 0.5 }),
 				["out"] = new JsonArray(new JsonObject { ["op"] = "sine1" }),
 			};
-		File.WriteAllText(path, Synth.Music.SongFile.Write(file));
+		File.WriteAllText(path, BinaryVibrance.Sirrow.Synth.Music.SongFile.Write(file));
 		Awaiting(stem, song: false);
 		return null;
 	}
@@ -631,14 +631,14 @@ public sealed partial class Workbench
 		var patch = _catalog.Patches.Count > 0 ? _catalog.Patches[0].Name : null;
 		var file = new JsonObject
 		{
-			["format"] = Synth.Music.SongFile.Format,
+			["format"] = BinaryVibrance.Sirrow.Synth.Music.SongFile.Format,
 			["name"] = stem,
 			["tempo"] = 110,
 			["scale"] = "C major",
 			["tracks"] = patch is null ? new JsonArray() : new JsonArray(new JsonObject { ["name"] = "lead", ["patch"] = patch }),
 			["sections"] = new JsonArray(new JsonObject { ["name"] = "a", ["bars"] = 4, ["chords"] = "I | IV | V | I", ["parts"] = new JsonArray() }),
 		};
-		File.WriteAllText(path, Synth.Music.SongFile.Write(file));
+		File.WriteAllText(path, BinaryVibrance.Sirrow.Synth.Music.SongFile.Write(file));
 		Awaiting(stem, song: true);
 		return null;
 	}

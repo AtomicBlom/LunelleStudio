@@ -1,6 +1,7 @@
 using System.Text.Json.Nodes;
-using Loom.Audio.Synth.Chip;
-using Loom.Audio.Synth.Music;
+using BinaryVibrance.Sirrow;
+using BinaryVibrance.Sirrow.Synth.Chip;
+using BinaryVibrance.Sirrow.Synth.Music;
 using Loom.Input;
 
 namespace Loom.Audio.Workbench;

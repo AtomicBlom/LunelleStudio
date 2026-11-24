@@ -64,8 +64,11 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 		var settings = StudioSettings.Load();
 		if (settings.Theme is { } theme && !_workbench.SetTheme(theme))
 			Console.Error.WriteLine($"[studio] no theme is called '{theme}': showing {Workbench.ThemeName}");
+		var fonts = new StudioFonts(_ui.Fonts);
+		fonts.Apply();
 		_workbench.ThemeChanged += name =>
 		{
+			fonts.Apply();
 			settings.Theme = name;
 			settings.Save();
 		};

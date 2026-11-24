@@ -35,6 +35,23 @@ public class ThemeTests
 	}
 
 	[Test]
+	public void Slate_names_no_fonts_and_every_font_a_theme_names_is_baked_by_the_app()
+	{
+		ThemeDefinition.Slate.LabelFont.ShouldBeNull();
+		ThemeDefinition.Slate.ReadoutFont.ShouldBeNull();
+
+		// The app bakes each Assets/Fonts/<name>.fontset.json into the atlas a theme names
+		var assets = Path.Combine(RepositoryRoot(), "BinaryVibrance.LunelleStudio.App", "Assets", "Fonts");
+		foreach (var theme in ThemeDefinition.All)
+			foreach (var font in new[] { theme.LabelFont, theme.ReadoutFont })
+				if (font is not null)
+					File.Exists(Path.Combine(assets, $"{font}.fontset.json")).ShouldBeTrue($"{theme.Name} names '{font}'");
+	}
+
+	private static string RepositoryRoot([System.Runtime.CompilerServices.CallerFilePath] string here = "") =>
+		Path.GetFullPath(Path.Combine(Path.GetDirectoryName(here)!, ".."));
+
+	[Test]
 	public void A_lit_colour_gives_that_many_times_its_light()
 	{
 		var orange = HdrColor.FromRgb(255, 138, 61);

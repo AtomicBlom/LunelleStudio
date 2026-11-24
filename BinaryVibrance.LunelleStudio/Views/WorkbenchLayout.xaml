@@ -8,6 +8,7 @@
                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                 xmlns:views="using:BinaryVibrance.LunelleStudio.Views"
                 x:Class="BinaryVibrance.LunelleStudio.Views.WorkbenchLayout"
+                FontFamily="{x:Static views:Theme.Label}"
                 IsTabStop="False">
     <ContentControl.Resources>
         <ResourceDictionary>

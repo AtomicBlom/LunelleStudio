@@ -25,13 +25,13 @@
                     <TextBlock Text="{x:Bind views:Display.PlayLabel(ViewModel.IsPlaying), Mode=OneWay}" FontSize="14" HorizontalAlignment="Center" />
                 </ToggleButton>
                 <!-- As wide as a long position, so nothing after it moves as the song plays -->
-                <TextBlock Text="{x:Bind ViewModel.PositionText, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.Ink}"
+                <TextBlock FontFamily="{x:Static views:Theme.Readout}" Text="{x:Bind ViewModel.PositionText, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.Ink}"
                            VerticalAlignment="Center" Width="230" Margin="0,0,14,0" TextTrimming="CharacterEllipsis" />
                 <Button Command="{x:Bind ViewModel.InspectSongCommand, Mode=OneWay}" Padding="8,2,8,3" VerticalAlignment="Center" Margin="0,0,14,0"
                         ToolTipService.ToolTip="Song settings: tempo, key and scale">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{x:Bind ViewModel.TempoText, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.Dim}" Margin="0,0,12,0" />
-                        <TextBlock Text="{x:Bind ViewModel.ScaleText, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.Dim}" />
+                        <TextBlock FontFamily="{x:Static views:Theme.Readout}" Text="{x:Bind ViewModel.TempoText, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.Dim}" Margin="0,0,12,0" />
+                        <TextBlock FontFamily="{x:Static views:Theme.Readout}" Text="{x:Bind ViewModel.ScaleText, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.Dim}" />
                     </StackPanel>
                 </Button>
                 <ToggleButton ToolTipService.ToolTip="Loop the current section" IsChecked="{x:Bind ViewModel.LoopSection, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,14,0" Padding="8,3,8,4">
@@ -46,7 +46,7 @@
                         <StackPanel Orientation="Horizontal" Margin="8,3,10,4">
                             <Ellipse Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,6,0"
                                      Fill="{x:Bind views:Display.PillInk(ViewModel.HasError), Mode=OneWay}" />
-                            <TextBlock Text="{x:Bind ViewModel.BuildText, Mode=OneWay}" FontSize="12"
+                            <TextBlock FontFamily="{x:Static views:Theme.Readout}" Text="{x:Bind ViewModel.BuildText, Mode=OneWay}" FontSize="12"
                                        Foreground="{x:Bind views:Display.PillInk(ViewModel.HasError), Mode=OneWay}" />
                         </StackPanel>
                     </Border>

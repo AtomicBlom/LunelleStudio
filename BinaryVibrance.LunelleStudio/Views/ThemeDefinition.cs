@@ -55,6 +55,13 @@ internal sealed record ThemeDefinition
 
 	/// <summary>How much of the glow round what is drawn brighter than white is added to the window: 0 for none.</summary>
 	public float Glow { get; init; }
+
+	/// <summary>The font of the workbench's words (<see cref="Theme.Label"/>), by the name the app bakes it under, or
+	/// null for Vysara's own.</summary>
+	public string? LabelFont { get; init; }
+
+	/// <summary>The font of its changing numbers (<see cref="Theme.Readout"/>), or null for Vysara's own.</summary>
+	public string? ReadoutFont { get; init; }
 	public required HdrColor Error { get; init; }
 	public required HdrColor ErrorSoft { get; init; }
 	public required HdrColor Backdrop { get; init; }
@@ -158,6 +165,8 @@ internal sealed record ThemeDefinition
 		Lamp = Lit(Rgb(127, 220, 106), 3f),
 		Level = Lit(Rgb(127, 220, 106), 1.6f),
 		Glow = 0.35f,
+		LabelFont = "archivo-narrow",
+		ReadoutFont = "b612-mono",
 		Error = Rgb(196, 64, 46),
 		ErrorSoft = Rgb(227, 93, 74, 46),
 		Backdrop = Rgb(0, 0, 0, 140),

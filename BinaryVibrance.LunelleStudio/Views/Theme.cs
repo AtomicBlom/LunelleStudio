@@ -76,6 +76,17 @@ internal static class Theme
 	public static SolidColorBrush ChordTone { get; } = new();
 	public static SolidColorBrush ChordRoot { get; } = new();
 
+	/// <summary>
+	/// The family of the workbench's text: set on its root, so every word in it takes it unless it is a
+	/// <see cref="Readout"/>. A name, as Vysara's host fonts know it: the app gives it the theme's
+	/// <see cref="ThemeDefinition.LabelFont"/>, or none, which draws in Vysara's own font.
+	/// </summary>
+	public static FontFamily Label { get; } = new("Label");
+
+	/// <summary>The family of numbers that change as you watch (the position, the tempo, a cue's value): the theme's
+	/// <see cref="ThemeDefinition.ReadoutFont"/>.</summary>
+	public static FontFamily Readout { get; } = new("Readout");
+
 	private static readonly SolidColorBrush[] TrackHues = Brushes(TrackHueCount);
 	private static readonly SolidColorBrush[] TrackHuesSoft = Brushes(TrackHueCount);
 

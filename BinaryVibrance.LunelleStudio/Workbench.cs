@@ -1060,6 +1060,13 @@ public sealed partial class Workbench : IDisposable
 	/// <summary>The name of the theme the workbench shows.</summary>
 	public static string ThemeName => Theme.Current.Name;
 
+	/// <summary>
+	/// The font families the views name, each with the font the theme gives it (the name the app baked it under), or null
+	/// where the theme gives none and the text draws in Vysara's own: for an app to put in its UI host's fonts.
+	/// </summary>
+	public static IReadOnlyList<(string Family, string? Font)> ThemeFonts =>
+		[(Theme.Label.Source, Theme.Current.LabelFont), (Theme.Readout.Source, Theme.Current.ReadoutFont)];
+
 	/// <summary>How much the theme's glow adds round what it draws brighter than white: 0 for none.</summary>
 	public static float ThemeGlow => Theme.Current.Glow;
 

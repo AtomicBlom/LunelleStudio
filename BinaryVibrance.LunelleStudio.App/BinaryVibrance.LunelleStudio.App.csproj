@@ -50,6 +50,21 @@
 		<VysaraReference Include="BinaryVibrance.Vysara.Diagnostics.Endpoint" Path="BinaryVibrance.Vysara.Diagnostics.Endpoint\BinaryVibrance.Vysara.Diagnostics.Endpoint.csproj" />
 	</ItemGroup>
 
+	<!--
+		The themes' typefaces (Assets/Fonts, each under the SIL Open Font License beside it), baked by Vysara's vysara-msdf into
+		atlases under fonts\ beside the app, which StudioFonts loads. Each fontset falls back to Cascadia Code for the symbols
+		its face lacks. Built from Vysara's checkout; a build from its packages has no baker, and the studio's text then draws
+		in Vysara's own font in every theme.
+	-->
+	<PropertyGroup Condition="'$(VysaraFromSource)' == 'true'">
+		<VysaraFontOutputMode>Content</VysaraFontOutputMode>
+	</PropertyGroup>
+	<ItemGroup Condition="'$(VysaraFromSource)' == 'true'">
+		<VysaraFontset Include="Assets\Fonts\*.fontset.json" />
+		<VysaraFontFile Include="Assets\Fonts\*.ttf" />
+	</ItemGroup>
+	<Import Project="$(VysaraSource)build\Vysara.Fonts.targets" Condition="'$(VysaraFromSource)' == 'true'" />
+
 	<Import Project="$(KaldraSource)build\BinaryVibrance.Kaldra.Sdk\Sdk\Sdk.targets" Condition="'$(KaldraFromSource)' == 'true'" />
 	<Import Project="Sdk.targets" Sdk="BinaryVibrance.Kaldra.Sdk" Version="$(KaldraPackageVersion)" Condition="'$(KaldraFromSource)' != 'true'" />
 

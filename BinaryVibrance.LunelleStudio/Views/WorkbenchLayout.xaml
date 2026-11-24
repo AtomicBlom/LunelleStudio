@@ -42,7 +42,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- The rail -->
-            <Border Grid.Column="0" Width="78" Background="{x:Static views:Theme.PanelFace}" BorderBrush="{x:Static views:Theme.Line}"
+            <Border Grid.Column="0" Width="78" Background="{x:Static views:Theme.CaseFace}" BorderBrush="{x:Static views:Theme.CaseLine}"
                     BorderThickness="1" CornerRadius="8">
                 <!-- Each an icon over its name, lit in the accent while it is the one showing, with the theme's lamp beside it -->
                 <StackPanel x:Name="RailModes" Margin="5,6,5,6">

@@ -30,6 +30,21 @@ internal static class Theme
 	public static LinearGradientBrush Key { get; } = Vertical();
 	public static LinearGradientBrush KeyOver { get; } = Vertical();
 
+	/// <summary>
+	/// The case round the views of the song (the transport, the rail, the keyboard dock), as the theme makes it
+	/// (<see cref="ThemeDefinition.Case"/>), or as its panels where it sets none apart: its face and edges, its lettering,
+	/// what stands on it, and its keys.
+	/// </summary>
+	public static LinearGradientBrush CaseFace { get; } = Vertical();
+	public static SolidColorBrush CaseLine { get; } = new();
+	public static SolidColorBrush CaseInk { get; } = new();
+	public static SolidColorBrush CaseDim { get; } = new();
+	public static SolidColorBrush CaseFaint { get; } = new();
+	public static SolidColorBrush CaseRaised { get; } = new();
+	public static LinearGradientBrush CaseKey { get; } = Vertical();
+	public static LinearGradientBrush CaseKeyOver { get; } = Vertical();
+	public static SolidColorBrush CaseKeyInk { get; } = new();
+
 	/// <summary>A toggle that is on; may be brighter than white, to glow.</summary>
 	public static SolidColorBrush KeyLit { get; } = new();
 
@@ -146,6 +161,22 @@ internal static class Theme
 		KeyOver.GradientStops[0].Color = t.KeyFaceOver.Top;
 		KeyOver.GradientStops[1].Color = t.KeyFaceOver.Bottom;
 		KeyLit.Color = t.KeyLit;
+		var c = t.Case;
+		var (caseTop, caseBottom) = c?.Face ?? t.PanelFace;
+		CaseFace.GradientStops[0].Color = caseTop;
+		CaseFace.GradientStops[1].Color = caseBottom;
+		CaseLine.Color = c?.Line ?? t.Line;
+		CaseInk.Color = c?.Ink ?? t.Ink;
+		CaseDim.Color = c?.Dim ?? t.Dim;
+		CaseFaint.Color = c?.Faint ?? t.Faint;
+		CaseRaised.Color = c?.Raised ?? t.Raised;
+		var (keyTop, keyBottom) = c?.KeyFace ?? t.KeyFace;
+		CaseKey.GradientStops[0].Color = keyTop;
+		CaseKey.GradientStops[1].Color = keyBottom;
+		var (overTop, overBottom) = c?.KeyFaceOver ?? t.KeyFaceOver;
+		CaseKeyOver.GradientStops[0].Color = overTop;
+		CaseKeyOver.GradientStops[1].Color = overBottom;
+		CaseKeyInk.Color = c?.KeyInk ?? t.Ink;
 		Window.Color = t.Window;
 		WindowInk.Color = t.WindowInk;
 		WindowDim.Color = t.WindowDim;
@@ -232,13 +263,29 @@ internal static class Theme
 		return resources;
 	}
 
+	/// <summary>
+	/// The keys on the case (<see cref="CaseFace"/>), for the resources of the views it makes, over <see cref="Controls"/>:
+	/// the case's own keys and legends; what a toggle that is on shows, and the rest, as the panels' keys.
+	/// </summary>
+	public static ResourceDictionary CaseControls()
+	{
+		var resources = new ResourceDictionary();
+		resources.Add("ButtonBackground", CaseKey);
+		resources.Add("ButtonBackgroundPointerOver", CaseKeyOver);
+		resources.Add("ButtonForeground", CaseKeyInk);
+		resources.Add("ToggleButtonBackground", CaseKey);
+		resources.Add("ToggleButtonBackgroundPointerOver", CaseKeyOver);
+		resources.Add("ToggleButtonForeground", CaseKeyInk);
+		return resources;
+	}
+
 	/// <summary>Toggles that mark where you are rather than switch something on (the rail's modes, the section playing):
 	/// lit with the accent's tint and their text in the accent, on a clear ground, as the design's rail is.</summary>
 	public static ResourceDictionary Markers()
 	{
 		var resources = new ResourceDictionary();
 		resources.Add("ToggleButtonBackground", Clear);
-		resources.Add("ToggleButtonForeground", Dim);
+		resources.Add("ToggleButtonForeground", CaseDim);
 		resources.Add("ToggleButtonBackgroundChecked", AccentSoft);
 		resources.Add("ToggleButtonForegroundChecked", Accent);
 		return resources;

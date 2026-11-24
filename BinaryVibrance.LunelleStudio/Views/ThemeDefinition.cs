@@ -95,6 +95,12 @@ internal sealed record ThemeDefinition
 	/// null for Vysara's own.</summary>
 	public string? LabelFont { get; init; }
 
+	/// <summary>
+	/// The workbench's case, where the theme sets it apart from its panels: what the transport, the rail and the keyboard
+	/// dock are made of, around the views of the song in the middle. Null for a case like the panels.
+	/// </summary>
+	public CaseLook? Case { get; init; }
+
 	/// <summary>The bold of <see cref="LabelFont"/>: the words on buttons and toggles (Theme.Controls' implicit styles), or
 	/// null, when they take the nearest weight the family has.</summary>
 	public string? LabelBoldFont { get; init; }
@@ -254,8 +260,150 @@ internal sealed record ThemeDefinition
 		],
 	};
 
+	/// <summary>
+	/// Brushed metal and amber: graphite panels milled apart by black seams, amber LEDs and readouts behind dark glass,
+	/// a condensed face for the words and a mono for the figures.
+	/// </summary>
+	public static ThemeDefinition Faceplate { get; } = new()
+	{
+		Name = "Faceplate",
+		Page = Rgb(16, 17, 18),
+		Panel = Rgb(38, 40, 44),
+		PanelFace = (Rgb(43, 45, 50), Rgb(32, 34, 38)),
+		Raised = Rgb(52, 54, 59),
+		RaisedOver = Rgb(63, 65, 71),
+		Sunk = Rgb(24, 25, 28),
+		Rail = Rgb(11, 10, 8),
+		KeyFace = (Rgb(60, 62, 67), Rgb(42, 43, 47)),
+		KeyFaceOver = (Rgb(70, 72, 78), Rgb(50, 51, 56)),
+		KeyLit = Lit(Rgb(255, 173, 59), 1.06f),
+		Window = Rgb(10, 9, 7),
+		WindowInk = Lit(Rgb(255, 173, 59), 1.2f),
+		WindowDim = Rgb(199, 138, 48),
+		RailLamp = Lit(Rgb(255, 173, 59), 2.2f),
+		PartEdge = 0.9f,
+		TrackLampLight = 2.2f,
+		Ink = Rgb(228, 224, 214),
+		Dim = Rgb(155, 151, 140),
+		Faint = Rgb(107, 103, 94),
+		Line = Rgb(0, 0, 0, 200),
+		LineStrong = Rgb(0, 0, 0, 230),
+		Accent = Rgb(255, 173, 59),
+		AccentOver = Rgb(255, 189, 94),
+		AccentPressed = Rgb(255, 205, 128),
+		AccentInk = Rgb(26, 18, 6),
+		AccentWash = 0.5f,
+		Off = Rgb(58, 42, 20),
+		Meter = Rgb(255, 201, 107),
+		Lamp = Lit(Rgb(255, 173, 59), 2.5f),
+		Level = Lit(Rgb(255, 173, 59), 1.5f),
+		Glow = 0.35f,
+		Error = Rgb(208, 64, 46),
+		ErrorSoft = Rgb(227, 93, 74, 46),
+		Backdrop = Rgb(0, 0, 0, 150),
+		Note = Rgb(255, 207, 128),
+		BarLine = Rgb(86, 87, 92),
+		Playhead = Lit(Rgb(255, 173, 59), 2.5f),
+		WhiteKey = Rgb(241, 238, 230),
+		BlackKey = Rgb(18, 18, 19),
+		Drive = Rgb(79, 179, 168),
+		KindSine = Rgb(111, 169, 207),
+		KindWave = Rgb(154, 134, 216),
+		KindNoise = Rgb(160, 158, 150),
+		KindString = Rgb(217, 160, 80),
+		KindModes = Rgb(79, 179, 168),
+		KindTube = Rgb(134, 184, 106),
+		KindLevel = Rgb(210, 206, 196),
+		KindSample = Rgb(207, 127, 176),
+		TrackHues =
+		[
+			Rgb(224, 122, 102), Rgb(79, 179, 168), Rgb(154, 134, 216), Rgb(111, 169, 207),
+			Rgb(134, 184, 106), Rgb(207, 127, 176), Rgb(217, 160, 80), Rgb(141, 149, 216),
+		],
+		LabelFont = "saira-condensed",
+		LabelBoldFont = "saira-condensed-bold",
+		ReadoutFont = "share-tech-mono",
+	};
+
+	/// <summary>
+	/// A piece of test equipment: a warm-grey case with keycaps and dark lettering round the outside, and the song in the
+	/// middle on dark screens set into it, its figures amber.
+	/// </summary>
+	public static ThemeDefinition Bench { get; } = new()
+	{
+		Name = "Bench",
+		Page = Rgb(26, 25, 24),
+		Panel = Rgb(18, 19, 21),
+		PanelFace = (Rgb(21, 22, 24), Rgb(16, 17, 19)),
+		Raised = Rgb(36, 38, 42),
+		RaisedOver = Rgb(46, 48, 53),
+		Sunk = Rgb(14, 15, 16),
+		Rail = Rgb(42, 44, 48),
+		KeyFace = (Rgb(44, 46, 51), Rgb(36, 38, 42)),
+		KeyFaceOver = (Rgb(54, 56, 61), Rgb(44, 46, 51)),
+		KeyLit = Lit(Rgb(232, 101, 31), 1.04f),
+		Window = Rgb(14, 15, 16),
+		WindowInk = Lit(Rgb(255, 176, 112), 1.15f),
+		WindowDim = Rgb(200, 144, 96),
+		RailLamp = Lit(Rgb(232, 101, 31), 2f),
+		PartEdge = 0.9f,
+		TrackLampLight = 2f,
+		Ink = Rgb(228, 226, 220),
+		Dim = Rgb(141, 138, 131),
+		Faint = Rgb(94, 92, 87),
+		Line = Rgb(255, 255, 255, 18),
+		LineStrong = Rgb(255, 255, 255, 30),
+		Accent = Rgb(232, 101, 31),
+		AccentOver = Rgb(240, 122, 56),
+		AccentPressed = Rgb(245, 146, 88),
+		AccentInk = Rgb(255, 244, 234),
+		AccentWash = 0.5f,
+		Off = Rgb(58, 60, 64),
+		Meter = Rgb(155, 227, 107),
+		Lamp = Lit(Rgb(155, 227, 107), 2.5f),
+		Level = Lit(Rgb(155, 227, 107), 1.4f),
+		Glow = 0.3f,
+		Error = Rgb(192, 57, 43),
+		ErrorSoft = Rgb(230, 90, 70, 46),
+		Backdrop = Rgb(0, 0, 0, 140),
+		Note = Rgb(255, 176, 112),
+		BarLine = Rgb(58, 60, 64),
+		Playhead = Lit(Rgb(255, 176, 112), 2.2f),
+		WhiteKey = Rgb(243, 239, 230),
+		BlackKey = Rgb(30, 29, 27),
+		Drive = Rgb(79, 209, 189),
+		KindSine = Rgb(108, 195, 255),
+		KindWave = Rgb(177, 156, 255),
+		KindNoise = Rgb(170, 168, 160),
+		KindString = Rgb(240, 176, 74),
+		KindModes = Rgb(79, 209, 189),
+		KindTube = Rgb(155, 217, 106),
+		KindLevel = Rgb(214, 210, 200),
+		KindSample = Rgb(245, 139, 201),
+		TrackHues =
+		[
+			Rgb(255, 138, 114), Rgb(79, 209, 189), Rgb(177, 156, 255), Rgb(108, 195, 255),
+			Rgb(155, 217, 106), Rgb(245, 139, 201), Rgb(240, 176, 74), Rgb(154, 166, 255),
+		],
+		Case = new CaseLook
+		{
+			Face = (Rgb(195, 189, 176), Rgb(174, 168, 155)),
+			Line = Rgb(110, 105, 95),
+			Ink = Rgb(31, 29, 26),
+			Dim = Rgb(91, 86, 76),
+			Faint = Rgb(119, 113, 106),
+			Raised = Rgb(212, 207, 196),
+			KeyFace = (Rgb(226, 221, 210), Rgb(203, 197, 184)),
+			KeyFaceOver = (Rgb(236, 232, 222), Rgb(214, 209, 197)),
+			KeyInk = Rgb(31, 29, 26),
+		},
+		LabelFont = "archivo-narrow",
+		LabelBoldFont = "archivo-narrow-bold",
+		ReadoutFont = "chivo-mono",
+	};
+
 	/// <summary>Every theme, the first the one a workbench starts in.</summary>
-	public static IReadOnlyList<ThemeDefinition> All { get; } = [Slate, Console];
+	public static IReadOnlyList<ThemeDefinition> All { get; } = [Slate, Console, Faceplate, Bench];
 
 	/// <summary>The theme named <paramref name="name"/> (any case), or null.</summary>
 	public static ThemeDefinition? Find(string? name)

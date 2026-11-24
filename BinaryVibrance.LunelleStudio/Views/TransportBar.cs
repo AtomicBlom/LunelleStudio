@@ -8,7 +8,12 @@ namespace BinaryVibrance.LunelleStudio.Views;
 internal sealed partial class TransportBar : ContentControl, INotifyPropertyChanged
 {
 	/// <summary>A bar with nothing to show until it is given a <see cref="ViewModel"/>.</summary>
-	public TransportBar() => InitializeComponent();
+	public TransportBar()
+	{
+		InitializeComponent();
+		// On the case: its keys, over the panels'
+		(Resources ??= new BinaryVibrance.Vysara.ResourceDictionary()).MergedDictionaries.Add(Theme.CaseControls());
+	}
 
 	/// <inheritdoc/>
 	public event PropertyChangedEventHandler? PropertyChanged;

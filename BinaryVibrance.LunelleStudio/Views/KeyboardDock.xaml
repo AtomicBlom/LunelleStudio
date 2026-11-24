@@ -8,18 +8,18 @@
                 xmlns:views="using:BinaryVibrance.LunelleStudio.Views"
                 x:Class="BinaryVibrance.LunelleStudio.Views.KeyboardDock"
                 IsTabStop="False">
-    <Border Background="{x:Static views:Theme.PanelFace}" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1" CornerRadius="8">
+    <Border Background="{x:Static views:Theme.CaseFace}" BorderBrush="{x:Static views:Theme.CaseLine}" BorderThickness="1" CornerRadius="8">
         <Grid Margin="12,8,12,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="230" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                <TextBlock Text="PLAYS" FontSize="10" Foreground="{x:Static views:Theme.Faint}" />
-                <TextBlock Text="{x:Bind ViewModel.DockLabel, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.Ink}"
+                <TextBlock Text="PLAYS" FontSize="10" Foreground="{x:Static views:Theme.CaseFaint}" />
+                <TextBlock Text="{x:Bind ViewModel.DockLabel, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.CaseInk}"
                            TextTrimming="CharacterEllipsis" Margin="0,2,0,6" />
                 <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="Velocity" FontSize="12" Foreground="{x:Static views:Theme.Dim}" Width="60" VerticalAlignment="Center" />
+                    <TextBlock Text="Velocity" FontSize="12" Foreground="{x:Static views:Theme.CaseDim}" Width="60" VerticalAlignment="Center" />
                     <Slider Minimum="0.05" Maximum="1" StepFrequency="0.01" Width="150" Height="26" Value="{x:Bind ViewModel.Velocity, Mode=TwoWay}"
                             ToolTipService.ToolTip="How hard notes are played, from the computer keyboard or the keys on screen" />
                 </StackPanel>
@@ -27,13 +27,13 @@
                     <Button x:Name="OctaveDown" Padding="7,0,7,2" ToolTipService.ToolTip="Octave down (Z)">
                         <TextBlock Text="−" FontSize="12" />
                     </Button>
-                    <TextBlock Text="{x:Bind views:Display.Octave(ViewModel.Octave), Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Faint}"
+                    <TextBlock Text="{x:Bind views:Display.Octave(ViewModel.Octave), Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.CaseFaint}"
                                Margin="8,0,8,0" VerticalAlignment="Center" />
                     <Button x:Name="OctaveUp" Padding="7,0,7,2" ToolTipService.ToolTip="Octave up (X)">
                         <TextBlock Text="+" FontSize="12" />
                     </Button>
                 </StackPanel>
-                <TextBlock Text="{x:Bind ViewModel.StatsText, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Faint}"
+                <TextBlock Text="{x:Bind ViewModel.StatsText, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.CaseFaint}"
                            Margin="0,2,0,0" TextTrimming="CharacterEllipsis" />
             </StackPanel>
             <views:Keyboard Grid.Column="1" ViewModel="{x:Bind ViewModel, Mode=OneWay}" VerticalAlignment="Center" />

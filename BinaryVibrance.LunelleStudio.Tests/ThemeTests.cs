@@ -117,12 +117,12 @@ public class ThemeTests
 		try
 		{
 			var offered = workbench.PaletteCommands().Where(c => c.Category == "Theme").ToList();
-			offered.Select(c => c.Text).ShouldBe(["Use the Console theme"]);
+			offered.Select(c => c.Text).ShouldBe(["Use the Console theme", "Use the Faceplate theme", "Use the Bench theme"]);
 
 			offered[0].Run();
 			Workbench.ThemeName.ShouldBe("Console");
 			reported.ShouldBe(["Console"]);
-			workbench.PaletteCommands().Where(c => c.Category == "Theme").Select(c => c.Text).ShouldBe(["Use the Slate theme"]);
+			workbench.PaletteCommands().Where(c => c.Category == "Theme").Select(c => c.Text).ShouldBe(["Use the Slate theme", "Use the Faceplate theme", "Use the Bench theme"]);
 
 			workbench.SetTheme("console").ShouldBeTrue();
 			reported.Count.ShouldBe(1);

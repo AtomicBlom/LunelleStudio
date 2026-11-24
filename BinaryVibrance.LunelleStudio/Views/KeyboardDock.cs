@@ -10,6 +10,8 @@ internal sealed partial class KeyboardDock : ContentControl, INotifyPropertyChan
 	public KeyboardDock()
 	{
 		InitializeComponent();
+		// On the case: its keys, over the panels'
+		(Resources ??= new BinaryVibrance.Vysara.ResourceDictionary()).MergedDictionaries.Add(Theme.CaseControls());
 		OctaveDown.Click += (_, _) =>
 		{
 			if (ViewModel is { } model)

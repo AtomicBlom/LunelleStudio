@@ -11,8 +11,8 @@ using BinaryVibrance.Kaldra.Hosting.Desktop;
 // lunelle-studio <folder> --data, or a folder with no .csproj
 //     the workbench over the folder's music files alone (MusicFolder), with no C#: nothing is compiled, and there is no
 //     extension
-// lunelle-studio new <folder>
-//     makes a music project there to start from, and opens it
+// lunelle-studio new <folder> [--data]
+//     makes a music project there to start from, and opens it; with --data, music files alone
 // The host's own options still apply (--backend and the rest).
 #if DEBUG
 // Vysara's diagnostics endpoint, which RoseMCP's live UI tools reach the window's tree through
@@ -33,6 +33,7 @@ try
 {
 	project = appArgs switch
 	{
+		["new", var folder, ..] when filesAlone => ProjectTemplate.CreateData(folder),
 		["new", var folder, ..] => ProjectTemplate.Create(folder),
 		[var path, ..] when filesAlone || WorkbenchFolder.IsFilesAlone(path) => FindFolder(path),
 		[var path, ..] => FindProject(path),

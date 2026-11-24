@@ -106,4 +106,32 @@ public class WorkbenchFolderTests
 		host.Current.ShouldNotBeSameAs(first);
 		host.Current!.Songs.Single().Build().Tempo.ShouldBe(90f);
 	}
+
+	[Test]
+	public void A_new_project_of_files_alone_reads_whole_and_plays_its_kit()
+	{
+		var folder = Path.Combine(Path.GetTempPath(), "lunelle-studio-new-" + Guid.NewGuid().ToString("N")[..8], "Data Tunes");
+		ProjectTemplate.CreateData(folder).ShouldBe(folder);
+		Should.Throw<InvalidOperationException>(() => ProjectTemplate.CreateData(folder));
+		Directory.EnumerateFiles(folder, "*.cs*", SearchOption.AllDirectories).ShouldBeEmpty();
+		WorkbenchFolder.IsFilesAlone(folder).ShouldBeTrue();
+
+		var music = MusicFolder.FromDirectory(folder);
+		music.Name.ShouldBe("Data Tunes");
+		FolderCatalog.Problems(music).ShouldBeEmpty();
+		music.Songs.ShouldHaveSingleItem().Build().Sections.Select(s => s.Name).ShouldBe(["verse", "chorus"]);
+		music.Cues.Select(c => c.Name).ShouldBe(["intensity", "mood"]);
+		var kit = music.Kits.ShouldHaveSingleItem().Build();
+		kit.Name.ShouldBe("demo-kit");
+		kit.Pieces.Select(p => (p.Piece.Id, p.Patch!.Name, p.ChokeGroup)).ShouldBe(
+			[("kick", "kick", 0), ("snare", "snare", 0), ("hat-closed", "closed-hat", 1), ("hat-open", "open-hat", 1)]);
+
+		using var session = new OfflineSession();
+		var chip = new SynthChip(new ChipOptions { SpaceEffects = [], EchoEffects = [] });
+		var drums = chip.AddKit(kit);
+		session.Engine.Play(chip);
+		chip.Hit(drums, Kit.Kick, 0.8f);
+		session.Render(48_000 / 4);
+		session.Left().Max(MathF.Abs).ShouldBeGreaterThan(0.01f);
+	}
 }

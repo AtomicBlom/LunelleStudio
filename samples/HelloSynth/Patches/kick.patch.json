@@ -1,0 +1,8 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "kick",
+  "about": "The demo kit's kick: a sine at 52 Hz dropping two octaves onto it in 40 ms",
+  "operators": [{ "name": "body", "kind": "sine", "fixed": 52, "envelope": "decay 0.3" }],
+  "out": [{ "op": "body" }],
+  "pitchDrop": { "semitones": 24, "seconds": 0.04 }
+}

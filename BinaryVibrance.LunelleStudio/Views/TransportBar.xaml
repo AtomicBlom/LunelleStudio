@@ -8,7 +8,7 @@
                 xmlns:views="using:BinaryVibrance.LunelleStudio.Views"
                 x:Class="BinaryVibrance.LunelleStudio.Views.TransportBar"
                 IsTabStop="False">
-    <Border Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1" CornerRadius="8">
+    <Border Background="{x:Static views:Theme.CaseFace}" BorderBrush="{x:Static views:Theme.CaseLine}" BorderThickness="1" CornerRadius="8">
         <Grid Margin="10,6,10,6">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
@@ -19,24 +19,28 @@
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <StackPanel Grid.Row="0" Grid.Column="0" Orientation="Horizontal">
-                <TextBlock Text="{x:Bind ViewModel.SongName, Mode=OneWay}" FontSize="15" Foreground="{x:Static views:Theme.Ink}"
+                <TextBlock Text="{x:Bind ViewModel.SongName, Mode=OneWay}" FontSize="15" Foreground="{x:Static views:Theme.CaseInk}"
                            VerticalAlignment="Center" Margin="2,0,14,0" />
                 <ToggleButton ToolTipService.ToolTip="Play or stop the song (Space)" IsChecked="{x:Bind ViewModel.IsPlaying, Mode=TwoWay}" Width="72" Margin="0,0,14,0" VerticalAlignment="Center">
                     <TextBlock Text="{x:Bind views:Display.PlayLabel(ViewModel.IsPlaying), Mode=OneWay}" FontSize="14" HorizontalAlignment="Center" />
                 </ToggleButton>
-                <!-- As wide as a long position, so nothing after it moves as the song plays -->
-                <TextBlock Text="{x:Bind ViewModel.PositionText, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.Ink}"
-                           VerticalAlignment="Center" Width="230" Margin="0,0,14,0" TextTrimming="CharacterEllipsis" />
+                <!-- In the theme's readout window, as wide as a long position, so nothing after it moves as the song plays -->
+                <Border Background="{x:Static views:Theme.Window}" CornerRadius="3" Padding="8,2,8,3" Width="280" Margin="0,0,14,0" VerticalAlignment="Center">
+                    <TextBlock FontFamily="{x:Static views:Theme.Readout}" Text="{x:Bind ViewModel.PositionText, Mode=OneWay}" FontSize="14"
+                               Foreground="{x:Static views:Theme.WindowInk}" TextTrimming="CharacterEllipsis" />
+                </Border>
                 <Button Command="{x:Bind ViewModel.InspectSongCommand, Mode=OneWay}" Padding="8,2,8,3" VerticalAlignment="Center" Margin="0,0,14,0"
                         ToolTipService.ToolTip="Song settings: tempo, key and scale">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="{x:Bind ViewModel.TempoText, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.Dim}" Margin="0,0,12,0" />
-                        <TextBlock Text="{x:Bind ViewModel.ScaleText, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.Dim}" />
+                        <TextBlock FontFamily="{x:Static views:Theme.Readout}" Text="{x:Bind ViewModel.TempoText, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.CaseDim}" Margin="0,0,12,0" />
+                        <TextBlock FontFamily="{x:Static views:Theme.Readout}" Text="{x:Bind ViewModel.ScaleText, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.CaseDim}" />
                     </StackPanel>
                 </Button>
                 <ToggleButton ToolTipService.ToolTip="Loop the current section" IsChecked="{x:Bind ViewModel.LoopSection, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,14,0" Padding="8,3,8,4">
                     <TextBlock Text="Loop section" FontSize="12" />
                 </ToggleButton>
+                <!-- The master's level, in a theme with a VU meter (code-behind gives it the view model) -->
+                <views:VuMeter x:Name="Vu" VerticalAlignment="Center" Margin="0,0,14,0" />
             </StackPanel>
             <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
                 <TextBlock Text="{x:Bind ViewModel.Notice, Mode=OneWay}" Visibility="{x:Bind views:Display.Any(ViewModel.Notice), Mode=OneWay}"
@@ -46,7 +50,7 @@
                         <StackPanel Orientation="Horizontal" Margin="8,3,10,4">
                             <Ellipse Width="7" Height="7" VerticalAlignment="Center" Margin="0,0,6,0"
                                      Fill="{x:Bind views:Display.PillInk(ViewModel.HasError), Mode=OneWay}" />
-                            <TextBlock Text="{x:Bind ViewModel.BuildText, Mode=OneWay}" FontSize="12"
+                            <TextBlock FontFamily="{x:Static views:Theme.Readout}" Text="{x:Bind ViewModel.BuildText, Mode=OneWay}" FontSize="12"
                                        Foreground="{x:Bind views:Display.PillInk(ViewModel.HasError), Mode=OneWay}" />
                         </StackPanel>
                     </Border>
@@ -56,10 +60,12 @@
                 </ToggleButton>
             </StackPanel>
             <!-- An app's own controls, on a row of their own across the bar once it has any, scrolling sideways only if even
-                 that is too narrow -->
+                 that is too narrow; lettered in the case's ink unless they say otherwise -->
             <ScrollViewer x:Name="ExtrasRow" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2" Margin="0,6,0,0" Visibility="Collapsed"
                           HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled">
-                <StackPanel x:Name="ExtrasPanel" Orientation="Horizontal" />
+                <ContentControl IsTabStop="False" Foreground="{x:Static views:Theme.CaseInk}">
+                    <StackPanel x:Name="ExtrasPanel" Orientation="Horizontal" />
+                </ContentControl>
             </ScrollViewer>
         </Grid>
     </Border>

@@ -22,9 +22,12 @@ public sealed class SongEditor
 	private double _sinceEdit;
 	private bool _dirty;
 
-	private SongEditor(string path, string text)
+	private readonly IMusicFiles _files;
+
+	private SongEditor(string path, string text, IMusicFiles files)
 	{
 		Path = path;
+		_files = files;
 		_root = Parse(text);
 		_opened = Text;
 		_written = text;
@@ -45,10 +48,14 @@ public sealed class SongEditor
 	/// <summary>Whether an edit waits to be written.</summary>
 	public bool IsDirty => _dirty;
 
-	/// <summary>Opens <paramref name="path"/>.</summary>
+	/// <summary>Opens <paramref name="path"/>, in <paramref name="files"/> (the disk when none is given).</summary>
 	/// <exception cref="IOException">It can't be read.</exception>
 	/// <exception cref="FormatException">It isn't JSON.</exception>
-	public static SongEditor Open(string path) => new(path, File.ReadAllText(path));
+	public static SongEditor Open(string path, IMusicFiles? files = null)
+	{
+		files ??= DiskFiles.Instance;
+		return new(path, files.ReadText(path), files);
+	}
 
 	private static JsonObject Parse(string text)
 	{
@@ -152,7 +159,7 @@ public sealed class SongEditor
 		if (!_dirty)
 			return;
 		var text = Text;
-		File.WriteAllText(Path, text);
+		_files.WriteText(Path, text);
 		_written = text;
 		_dirty = false;
 	}
@@ -166,7 +173,7 @@ public sealed class SongEditor
 		string disk;
 		try
 		{
-			disk = File.ReadAllText(Path);
+			disk = _files.ReadText(Path);
 		}
 		catch (IOException)
 		{

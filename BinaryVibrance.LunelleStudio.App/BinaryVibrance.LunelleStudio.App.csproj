@@ -10,10 +10,26 @@
 		to start from. docs/synth.md, section 10, has the rest.
 	-->
 
-	<PropertyGroup>
+	<!--
+		The same project builds the browser's studio with -r browser-wasm (Kaldra's Sdk.props picks the WebAssembly SDK by
+		the runtime identifier): WebGPU, music files alone kept in the browser's storage, and no Roslyn, so no project with
+		code and no extension. Its output is apart from the desktop's, which it would otherwise overwrite.
+	-->
+	<PropertyGroup Condition="'$(RuntimeIdentifier)' != 'browser-wasm'">
 		<UseVulkan>true</UseVulkan>
 		<UseDirectX12>false</UseDirectX12>
 		<UseWebGPU>false</UseWebGPU>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(RuntimeIdentifier)' == 'browser-wasm'">
+		<UseVulkan>false</UseVulkan>
+		<UseDirectX12>false</UseDirectX12>
+		<UseWebGPU>true</UseWebGPU>
+		<BaseOutputPath>bin\web\</BaseOutputPath>
+		<BaseIntermediateOutputPath>obj\web\</BaseIntermediateOutputPath>
+	</PropertyGroup>
+	<PropertyGroup>
+		<!-- Before Kaldra's props, which name the embedded shaders after it (the browser looks them up by it) -->
+		<AssemblyName>lunelle-studio</AssemblyName>
 		<UseVysara>true</UseVysara>
 		<UseImGui>false</UseImGui>
 	</PropertyGroup>
@@ -26,29 +42,75 @@
 		<TargetFramework>net11.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
-		<AssemblyName>lunelle-studio</AssemblyName>
 		<RootNamespace>BinaryVibrance.LunelleStudio.App</RootNamespace>
 		<KaldraShaderSourceDir>$(MSBuildProjectDirectory)\Shaders</KaldraShaderSourceDir>
 		<!-- On the newest .NET installed, so it can load a project (and an extension) that targets a newer one than Kaldra -->
 		<RollForward>LatestMajor</RollForward>
+		<!-- Keep the other build's output out of the app (the desktop's and the browser's are apart) -->
+		<DefaultItemExcludes>$(DefaultItemExcludes);bin/**;obj/**</DefaultItemExcludes>
+	</PropertyGroup>
+
+	<PropertyGroup Condition="'$(RuntimeIdentifier)' != 'browser-wasm'">
 		<!-- The generator beside the app, for a project it makes ("new") to name as its analyzer (build/Sources.targets) -->
 		<CopyMusicGenerator>true</CopyMusicGenerator>
 	</PropertyGroup>
 
-	<ItemGroup>
+	<ItemGroup Condition="'$(RuntimeIdentifier)' != 'browser-wasm'">
 		<ProjectReference Include="..\BinaryVibrance.LunelleStudio.Projects\BinaryVibrance.LunelleStudio.Projects.csproj" />
 		<!-- The music's output: SDL 3's, registered in Program -->
 		<SirrowReference Include="BinaryVibrance.Sirrow.Sdl" Path="BinaryVibrance.Sirrow.Sdl\BinaryVibrance.Sirrow.Sdl.csproj" />
 		<!-- Beside the app, for a project it makes ("new") to reference as its analyzer, as it references the app's Kaldra -->
 		<LunelleReference Include="BinaryVibrance.Lunelle.Music.Generator" Path="BinaryVibrance.Lunelle.Music.Generator\BinaryVibrance.Lunelle.Music.Generator.csproj" SourceOnly="true" />
+		<Compile Remove="Web\**" />
 	</ItemGroup>
 
-	<ItemGroup Condition="'$(Configuration)' == 'Debug'">
+	<!--
+		The browser's studio: one thread, so the page needs no cross-origin isolation and any static host serves it (the
+		workbench never waits on a thread, and the music mixes on the frame's, as Sirrow.Web plays it). The core
+		workbench (no Roslyn) over the files in the browser's storage (Web/), the music through an AudioWorklet, and the
+		sample's music to start from.
+	-->
+	<PropertyGroup Condition="'$(RuntimeIdentifier)' == 'browser-wasm'">
+		<DefineConstants>$(DefineConstants);LUNELLESTUDIO_WEB</DefineConstants>
+		<InvariantGlobalization>true</InvariantGlobalization>
+		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+	</PropertyGroup>
+	<ItemGroup Condition="'$(RuntimeIdentifier)' == 'browser-wasm'">
+		<ProjectReference Include="..\BinaryVibrance.LunelleStudio\BinaryVibrance.LunelleStudio.csproj" />
+		<SirrowReference Include="BinaryVibrance.Sirrow.Web" Path="BinaryVibrance.Sirrow.Web\BinaryVibrance.Sirrow.Web.csproj" />
+		<Compile Remove="WorkbenchApp.Desktop.cs" />
+		<EmbeddedResource Include="..\samples\HelloSynth\lunelle-project.json" LogicalName="template/%(Filename)%(Extension)" />
+		<EmbeddedResource Include="..\samples\HelloSynth\Songs\*.song.json" LogicalName="template/Songs/%(Filename)%(Extension)" />
+		<EmbeddedResource Include="..\samples\HelloSynth\Patches\*.patch.json" LogicalName="template/Patches/%(Filename)%(Extension)" />
+		<EmbeddedResource Include="..\samples\HelloSynth\Kits\*.kit.json" LogicalName="template/Kits/%(Filename)%(Extension)" />
+		<AssemblyAttribute Include="System.Runtime.Versioning.SupportedOSPlatformAttribute">
+			<_Parameter1>browser</_Parameter1>
+		</AssemblyAttribute>
+	</ItemGroup>
+
+	<ItemGroup Condition="'$(Configuration)' == 'Debug' and '$(RuntimeIdentifier)' != 'browser-wasm'">
 		<!-- Vysara's diagnostics endpoint, which RoseMCP's live UI tools reach the window's tree through; Debug only: the
 				 switch, and the endpoint itself, which Program starts -->
 		<RuntimeHostConfigurationOption Include="BinaryVibrance.Vysara.Diagnostics.Enabled" Value="true" Trim="true" />
 		<VysaraReference Include="BinaryVibrance.Vysara.Diagnostics.Endpoint" Path="BinaryVibrance.Vysara.Diagnostics.Endpoint\BinaryVibrance.Vysara.Diagnostics.Endpoint.csproj" />
 	</ItemGroup>
+
+	<!--
+		The themes' typefaces (Assets/Fonts, each under the SIL Open Font License beside it), baked by Vysara's vysara-msdf into
+		atlases under fonts\ beside the app, which StudioFonts loads. Each fontset falls back to Cascadia Code for the symbols
+		its face lacks. Built from Vysara's checkout; a build from its packages has no baker, and the studio's text then draws
+		in Vysara's own font in every theme.
+	-->
+	<PropertyGroup Condition="'$(VysaraFromSource)' == 'true'">
+		<VysaraFontOutputMode Condition="'$(RuntimeIdentifier)' != 'browser-wasm'">Content</VysaraFontOutputMode>
+		<!-- The browser has no folder beside the app: the atlases are embedded -->
+		<VysaraFontOutputMode Condition="'$(RuntimeIdentifier)' == 'browser-wasm'">Embed</VysaraFontOutputMode>
+	</PropertyGroup>
+	<ItemGroup Condition="'$(VysaraFromSource)' == 'true'">
+		<VysaraFontset Include="Assets\Fonts\*.fontset.json" />
+		<VysaraFontFile Include="Assets\Fonts\*.ttf" />
+	</ItemGroup>
+	<Import Project="$(VysaraSource)build\Vysara.Fonts.targets" Condition="'$(VysaraFromSource)' == 'true'" />
 
 	<Import Project="$(KaldraSource)build\BinaryVibrance.Kaldra.Sdk\Sdk\Sdk.targets" Condition="'$(KaldraFromSource)' == 'true'" />
 	<Import Project="Sdk.targets" Sdk="BinaryVibrance.Kaldra.Sdk" Version="$(KaldraPackageVersion)" Condition="'$(KaldraFromSource)' != 'true'" />

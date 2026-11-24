@@ -206,11 +206,21 @@ public class MusicProjectTests
 		var build = project.TakeBuild().ShouldNotBeNull();
 		build.Errors.ShouldBeEmpty();
 		build.Catalog!.Songs.ShouldHaveSingleItem().Name.ShouldBe("demo");
-		build.Catalog.Patches.Select(p => p.Name).ShouldBe(["electric-piano", "picked-bass", "pluck", "saw-lead"]);
+		build.Catalog.Patches.Select(p => p.Name).ShouldBe(["closed-hat", "electric-piano", "kick", "open-hat", "picked-bass", "pluck", "saw-lead", "snare"]);
+		build.Catalog.Kits.ShouldHaveSingleItem().Build().Pieces.Select(p => p.Patch!.Name).ShouldBe(["kick", "snare", "closed-hat", "open-hat"]);
 		build.Catalog.Cues.Select(c => c.Name).ShouldBe(["intensity", "mood"]);
 		build.Catalog.MacroName!(0).ShouldBe("Macros.Bright");
 		build.Catalog.Songs[0].Build().Sections.Select(s => s.Name).ShouldBe(["verse", "chorus"]);
 		build.Catalog.SongSource("demo").ShouldNotBeNull().Type.ShouldBe("My_Tunes.Songs.Demo");
+
+		// Its lunelle-project.json says the cues and macro its C# does, so it opens as music files alone too
+		var folderMusic = MusicFolder.FromDirectory(folder);
+		folderMusic.Name.ShouldBe("My Tunes");
+		folderMusic.Problems.ShouldBeEmpty();
+		folderMusic.Cues.Select(c => (c.Name, c.GetType().Name)).ShouldBe([("intensity", "Cue"), ("mood", "ChoiceCue")]);
+		((Cue)folderMusic.Cues[0]).Initial.ShouldBe(((Cue)build.Catalog.Cues[0]).Initial);
+		((ChoiceCue)folderMusic.Cues[1]).OptionNames.ShouldBe(build.Catalog.Cues[1].OptionNames);
+		folderMusic.MacroName(0).ShouldBe("bright");
 		build.Release();
 	}
 }

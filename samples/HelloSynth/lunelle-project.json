@@ -1,0 +1,9 @@
+{
+  "format": "lunelle-project/1",
+  "name": "HelloSynth",
+  "cues": [
+    { "name": "intensity", "initial": 0.3 },
+    { "name": "mood", "options": ["Calm", "Bright", "Dark"] }
+  ],
+  "macros": { "bright": 0 }
+}

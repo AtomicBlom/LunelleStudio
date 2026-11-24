@@ -53,9 +53,9 @@ internal static class Display
 	public static SolidColorBrush Column(bool current) => current ? Theme.AccentSoft : Theme.Clear;
 
 	// The build's pill: red while the last build failed
-	public static SolidColorBrush Pill(bool error) => error ? Theme.ErrorSoft : Theme.Raised;
+	public static SolidColorBrush Pill(bool error) => error ? Theme.ErrorSoft : Theme.CaseRaised;
 
-	public static SolidColorBrush PillInk(bool error) => error ? Theme.Error : Theme.Dim;
+	public static SolidColorBrush PillInk(bool error) => error ? Theme.Error : Theme.CaseDim;
 
 	// A palette item, lit while Enter would run it
 	public static SolidColorBrush Highlight(bool selected) => selected ? Theme.AccentSoft : Theme.Clear;
@@ -92,7 +92,10 @@ internal static class Display
 		: "Not used by this song";
 
 	// A rail icon, in the accent while its mode is the one showing
-	public static SolidColorBrush RailInk(bool on) => on ? Theme.Accent : Theme.Dim;
+	public static SolidColorBrush RailInk(bool on) => on ? Theme.Accent : Theme.CaseDim;
+
+	// The lamp beside a rail mode: the theme's while it is the one showing
+	public static SolidColorBrush RailLamp(bool on) => on ? Theme.RailLamp : Theme.Clear;
 
 	// Where the playhead crosses a column, as a left margin
 	public static BinaryVibrance.Vysara.Thickness Playhead(float x) => new(x, 0f, 0f, 0f);

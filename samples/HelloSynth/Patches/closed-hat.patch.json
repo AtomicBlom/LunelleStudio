@@ -1,0 +1,8 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "closed-hat",
+  "about": "The demo kit's closed hat: a tick of noise above 7 kHz",
+  "operators": [{ "name": "noise", "kind": "noise", "envelope": "decay 0.05", "level": 0.45 }],
+  "out": [{ "op": "noise" }],
+  "filter": { "kind": "highPass", "cutoff": 7000 }
+}

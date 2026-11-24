@@ -1,0 +1,11 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "snare",
+  "about": "The demo kit's snare: a 190 Hz tone under a burst of noise, high-passed above 250 Hz",
+  "operators": [
+    { "name": "body", "kind": "sine", "fixed": 190, "envelope": "decay 0.1", "level": 0.5 },
+    { "name": "wires", "kind": "noise", "envelope": "decay 0.18", "level": 0.8 }
+  ],
+  "out": [{ "op": "body" }, { "op": "wires" }],
+  "filter": { "kind": "highPass", "cutoff": 250 }
+}

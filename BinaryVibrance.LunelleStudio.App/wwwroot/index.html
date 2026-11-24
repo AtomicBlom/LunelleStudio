@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <!-- Relative base, so the studio works from whatever path it is served under -->
+  <base href="./" />
+  <title>LunelleStudio</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <link rel="preload" id="webassembly" />
+  <script type="importmap"></script>
+  <style>
+    html, body { margin: 0; height: 100%; background: #14141a; color: #d8d8e0;
+                 font-family: system-ui, sans-serif; overflow: hidden; overscroll-behavior: none; }
+    #kaldra-canvas { display: block; width: 100vw; height: 100vh; width: 100dvw; height: 100dvh; }
+    #status { position: fixed; left: 10px; bottom: 8px; font-size: 12px; opacity: 0.65; pointer-events: none;
+               white-space: pre-wrap; max-width: 90vw; max-height: 40vh; overflow-y: auto; }
+    #status.status-error { background: rgba(20, 12, 14, 0.9); border: 1px solid rgba(255, 100, 100, 0.5);
+               border-radius: 4px; padding: 8px 10px; color: #ffb0b0; pointer-events: auto; }
+  </style>
+  <script type="module" src="main.js"></script>
+</head>
+
+<body>
+  <canvas id="kaldra-canvas"></canvas>
+  <div id="status">loading LunelleStudio…</div>
+</body>
+
+</html>

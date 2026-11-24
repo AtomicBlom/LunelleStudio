@@ -19,10 +19,10 @@ namespace BinaryVibrance.LunelleStudio.Views;
 internal sealed class LaneCell : ContentControl
 {
 	// The parts' clips sit this far in from the cell's edges
-	private const float Inset = 6f;
+	internal const float Inset = 6f;
 	private const float RowHeight = 22f;
 
-	private static readonly BinaryVibrance.Vysara.Media.SolidColorBrush Hover = Theme.Brush(226, 230, 238, 9);
+	private static BinaryVibrance.Vysara.Media.SolidColorBrush Hover => Theme.Hover;
 
 	private readonly Border _ground = new();
 
@@ -169,14 +169,16 @@ internal sealed class LaneCell : ContentControl
 		var strip = new Grid { Width = width, Height = LanePasses.DrawnHeight };
 		strip.Children.Add(passes);
 		strip.Children.Add(marks);
-		var barWidth = part.Bars > 0 ? width / part.Bars : width;
+		// A bar's span on the passes, where the ruler has it (LanePasses.Across)
+		var bars = Math.Max(1, part.Bars);
 		void Place(Border mark, int bar)
 		{
 			mark.Visibility = bar < 0 ? Visibility.Collapsed : Visibility.Visible;
 			if (bar < 0)
 				return;
-			mark.Width = MathF.Max(2f, barWidth - 1f);
-			Canvas.SetLeft(mark, bar * barWidth);
+			var left = LanePasses.Across((float)bar / bars, width);
+			mark.Width = MathF.Max(2f, LanePasses.Across((float)(bar + 1) / bars, width) - left);
+			Canvas.SetLeft(mark, left);
 		}
 		Place(hover, -1);
 		Place(chosen, part.IsSelected ? part.ChosenBar : -1);
@@ -184,12 +186,23 @@ internal sealed class LaneCell : ContentControl
 		var column = new StackPanel { Orientation = Orientation.Vertical };
 		column.Children.Add(row);
 		column.Children.Add(strip);
+		// Its track's hue along its top, in a theme that edges parts, over it rather than above it, so nothing moves
+		var face = new Grid();
+		face.Children.Add(column);
+		face.Children.Add(new Border
+		{
+			Height = 2f,
+			VerticalAlignment = VerticalAlignment.Top,
+			CornerRadius = new CornerRadius(2f, 2f, 0f, 0f),
+			Background = Theme.PartEdge(part.TrackIndex),
+			IsHitTestVisible = false,
+		});
 		var clip = new Border
 		{
 			Height = ArrangeLayout.ClipHeight,
 			CornerRadius = new CornerRadius(5f),
 			Background = part.IsSelected ? Theme.AccentSoft : Theme.Clear,
-			Child = column,
+			Child = face,
 		};
 		var tip = $"{part.Title}: click to edit it, or a bar of it to open the roll there. Right-click for more.";
 		ToolTipService.SetToolTip(clip, tip);
@@ -203,7 +216,7 @@ internal sealed class LaneCell : ContentControl
 			if (e is not PointerRoutedEventArgs p || part.Bars <= 0)
 				return -1;
 			var at = p.GetCurrentPoint(strip).Position;
-			return at.Y < 0f || at.Y > LanePasses.DrawnHeight || at.X < 0f || at.X >= width ? -1 : Math.Clamp((int)(at.X / barWidth), 0, part.Bars - 1);
+			return at.Y < 0f || at.Y > LanePasses.DrawnHeight || at.X < 0f || at.X >= width ? -1 : Math.Clamp((int)(LanePasses.ShareAt(at.X, width) * part.Bars), 0, part.Bars - 1);
 		}
 		var hovering = false;
 		long lastPress = 0;
@@ -261,7 +274,7 @@ internal sealed class LaneCell : ContentControl
 		return clip;
 	}
 
-	private static BinaryVibrance.Vysara.Media.SolidColorBrush Lamp(bool on) => on ? Theme.Meter : Theme.Off;
+	private static BinaryVibrance.Vysara.Media.SolidColorBrush Lamp(bool on) => on ? Theme.Lamp : Theme.Off;
 
 	private static Border Mark(BinaryVibrance.Vysara.Media.Brush brush, float thickness) => new()
 	{

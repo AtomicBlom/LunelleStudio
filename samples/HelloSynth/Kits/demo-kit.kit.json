@@ -1,0 +1,9 @@
+{
+  "name": "demo-kit",
+  "pieces": [
+    { "piece": "kick", "patch": "kick" },
+    { "piece": "snare", "patch": "snare" },
+    { "piece": "hat-closed", "patch": "closed-hat", "choke": 1 },
+    { "piece": "hat-open", "patch": "open-hat", "choke": 1 }
+  ]
+}

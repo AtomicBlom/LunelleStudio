@@ -466,7 +466,7 @@ public sealed partial class Workbench
 			if (at is { } place && place >= 0 && place < tracks.Count)
 				tracks.Insert(place, track);
 			else
-				tracks.Add(track);
+				tracks.Add((JsonNode)track);
 		});
 		return null;
 	}
@@ -592,7 +592,7 @@ public sealed partial class Workbench
 			}
 			else
 			{
-				parts.Add(part);
+				parts.Add((JsonNode)part);
 				index = parts.Count - 1;
 			}
 		});
@@ -645,12 +645,12 @@ public sealed partial class Workbench
 		if (PatchFolder() is not { } folder)
 			return "This project has no patch files, so there is no folder for a new one.";
 		var path = Path.Combine(folder, stem + ".patch.json");
-		if (File.Exists(path))
+		if (Files.Exists(path))
 			return $"{Path.GetFileName(path)} already exists.";
 		JsonObject file;
-		if (copyOf is not null && _catalog.PatchFile(copyOf) is { } source && File.Exists(source))
+		if (copyOf is not null && _catalog.PatchFile(copyOf) is { } source && Files.Exists(source))
 		{
-			file = JsonNode.Parse(File.ReadAllText(source))!.AsObject();
+			file = JsonNode.Parse(Files.ReadText(source))!.AsObject();
 			file["name"] = stem;
 		}
 		else
@@ -661,7 +661,7 @@ public sealed partial class Workbench
 				["operators"] = new JsonArray(new JsonObject { ["name"] = "sine1", ["kind"] = "sine", ["envelope"] = "adsr 0.01 0.1 0.8 0.2", ["level"] = 0.5 }),
 				["out"] = new JsonArray(new JsonObject { ["op"] = "sine1" }),
 			};
-		File.WriteAllText(path, BinaryVibrance.Lunelle.Music.SongFile.Write(file));
+		Files.WriteText(path, BinaryVibrance.Lunelle.Music.SongFile.Write(file));
 		Awaiting(stem, song: false);
 		return null;
 	}
@@ -681,7 +681,7 @@ public sealed partial class Workbench
 			{
 				var text = _editor is { } editor && string.Equals(Path.GetFullPath(editor.Path), Path.GetFullPath(source.Path), StringComparison.OrdinalIgnoreCase)
 					? editor.Text
-					: File.Exists(source.Path) ? File.ReadAllText(source.Path) : null;
+					: Files.Exists(source.Path) ? Files.ReadText(source.Path) : null;
 				if (text is not null && JsonNode.Parse(text)?["tracks"] is JsonArray tracks
 					&& tracks.OfType<JsonObject>().Any(t => t["patch"] is JsonValue value && value.TryGetValue<string>(out var used) && used == patch))
 					songs.Add(name);
@@ -707,7 +707,7 @@ public sealed partial class Workbench
 	/// </summary>
 	internal string? DuplicatePatch(string patch, string name)
 	{
-		if (_catalog.PatchFile(patch) is not { } source || !File.Exists(source))
+		if (_catalog.PatchFile(patch) is not { } source || !Files.Exists(source))
 			return $"{patch} is defined in C#, so it has no file to copy. Convert it to a patch file first.";
 		return NewPatch(name, patch);
 	}
@@ -729,7 +729,7 @@ public sealed partial class Workbench
 		var song = FileName(_catalog.Songs[_songIndex].Name) ?? "song";
 		var stem = FileName($"{patch}-{song}") ?? $"patch-{song}";
 		var name = stem;
-		for (var n = 2; File.Exists(Path.Combine(folder, name + ".patch.json")); n++)
+		for (var n = 2; Files.Exists(Path.Combine(folder, name + ".patch.json")); n++)
 			name = $"{stem}-{n}";
 		if (DuplicatePatch(patch, name) is { } why)
 			return why;
@@ -765,7 +765,7 @@ public sealed partial class Workbench
 		if (SongFolder() is not { } folder)
 			return "This project has no song files, so there is no folder for a new one.";
 		var path = Path.Combine(folder, stem + ".song.json");
-		if (File.Exists(path))
+		if (Files.Exists(path))
 			return $"{Path.GetFileName(path)} already exists.";
 		var patch = _catalog.Patches.Count > 0 ? _catalog.Patches[0].Name : null;
 		var file = new JsonObject
@@ -777,7 +777,7 @@ public sealed partial class Workbench
 			["tracks"] = patch is null ? new JsonArray() : new JsonArray(new JsonObject { ["name"] = "lead", ["patch"] = patch }),
 			["sections"] = new JsonArray(new JsonObject { ["name"] = "a", ["bars"] = 4, ["chords"] = "I | IV | V | I", ["parts"] = new JsonArray() }),
 		};
-		File.WriteAllText(path, BinaryVibrance.Lunelle.Music.SongFile.Write(file));
+		Files.WriteText(path, BinaryVibrance.Lunelle.Music.SongFile.Write(file));
 		Awaiting(stem, song: true);
 		return null;
 	}
@@ -815,10 +815,10 @@ public sealed partial class Workbench
 	}
 
 	private string? PatchFolder() =>
-		_catalog.Patches.Select(p => _catalog.PatchFile(p.Name)).FirstOrDefault(f => f is not null && File.Exists(f)) is { } file ? Path.GetDirectoryName(file) : null;
+		_catalog.Patches.Select(p => _catalog.PatchFile(p.Name)).FirstOrDefault(f => f is not null && Files.Exists(f)) is { } file ? Path.GetDirectoryName(file) : null;
 
 	private string? SongFolder() =>
-		_catalog.Songs.Select(s => _catalog.SongSource(s.Name)?.Path).FirstOrDefault(f => f is not null && File.Exists(f)) is { } file ? Path.GetDirectoryName(file) : null;
+		_catalog.Songs.Select(s => _catalog.SongSource(s.Name)?.Path).FirstOrDefault(f => f is not null && Files.Exists(f)) is { } file ? Path.GetDirectoryName(file) : null;
 
 	// A name as a file's stem: lower case letters, digits and hyphens, or null
 	private static string? FileName(string name)

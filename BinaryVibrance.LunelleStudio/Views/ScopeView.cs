@@ -26,8 +26,8 @@ internal sealed class ScopeView : ContentControl
 	private readonly float[] _bins = new float[Samples / 2 + 1];
 	private readonly Point[] _scopePoints = new Point[ScopePoints];
 	private readonly Point[] _spectrumPoints = new Point[SpectrumPoints];
-	private readonly Polyline _scope = new() { Stroke = Theme.Meter, StrokeThickness = 1.3f };
-	private readonly Polyline _spectrum = new() { Stroke = Theme.Meter, StrokeThickness = 1f };
+	private readonly Polyline _scope = new() { Stroke = Theme.Level, StrokeThickness = 1.3f };
+	private readonly Polyline _spectrum = new() { Stroke = Theme.Level, StrokeThickness = 1f };
 
 	public ScopeView()
 	{

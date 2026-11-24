@@ -11,7 +11,7 @@
                 IsTabStop="False">
     <Grid>
         <Border x:Name="Backdrop" Background="{x:Static views:Theme.Backdrop}" />
-        <Border Width="560" VerticalAlignment="Top" Margin="0,90,0,0" Background="{x:Static views:Theme.Panel}"
+        <Border Width="560" VerticalAlignment="Top" Margin="0,90,0,0" Background="{x:Static views:Theme.PanelFace}"
                 BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1" CornerRadius="10">
             <StackPanel Margin="10">
                 <TextBlock Text="Find a song, patch, kit, section or command" FontSize="11" Foreground="{x:Static views:Theme.Faint}"

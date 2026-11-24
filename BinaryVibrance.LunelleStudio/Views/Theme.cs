@@ -1,51 +1,259 @@
 using BinaryVibrance.Vysara;
+using BinaryVibrance.Vysara.Controls;
 using BinaryVibrance.Vysara.Media;
 
 namespace BinaryVibrance.LunelleStudio.Views;
 
-/// <summary>The workbench's colours, shared by its views: a dark page, light ink, a cool blue accent for what is on, a cyan
-/// playhead, and a hue for each track that its lane, notes and lit keys share.</summary>
+/// <summary>
+/// The workbench's colours, shared by its views: one brush per role (a page, panels, ink, an accent for what is on, a
+/// playhead, a hue for each track that its lane, notes and lit keys share). The brushes are made once and never replaced:
+/// <see cref="Apply"/> puts a <see cref="ThemeDefinition"/>'s colours into them in place, and Vysara repaints every element
+/// showing a brush when its colour changes, so a theme changes the whole workbench at once with no view rebuilt. A view
+/// takes a role's brush and keeps it; it never copies a brush's colour into a brush of its own.
+/// </summary>
 internal static class Theme
 {
-	public static SolidColorBrush Page { get; } = Brush(18, 20, 26);
-	public static SolidColorBrush Panel { get; } = Brush(28, 31, 40);
-	public static SolidColorBrush Ink { get; } = Brush(226, 230, 238);
-	public static SolidColorBrush Dim { get; } = Brush(140, 148, 164);
-	public static SolidColorBrush Accent { get; } = Brush(92, 170, 255);
-	public static SolidColorBrush Off { get; } = Brush(60, 64, 78);
-	public static SolidColorBrush Meter { get; } = Brush(96, 214, 128);
-	public static SolidColorBrush Error { get; } = Brush(150, 40, 44);
-	public static SolidColorBrush WhiteKey { get; } = Brush(232, 232, 236);
-	public static SolidColorBrush BlackKey { get; } = Brush(30, 30, 36);
-	public static SolidColorBrush Note { get; } = Brush(120, 180, 255);
-	public static SolidColorBrush BarLine { get; } = Brush(70, 76, 92);
-	public static SolidColorBrush Playhead { get; } = Brush(95, 240, 230, 230);
-	public static SolidColorBrush Raised { get; } = Brush(37, 41, 54);
-	public static SolidColorBrush Sunk { get; } = Brush(22, 24, 31);
-	public static SolidColorBrush Line { get; } = Brush(226, 230, 238, 30);
-	public static SolidColorBrush LineStrong { get; } = Brush(226, 230, 238, 46);
-	public static SolidColorBrush RaisedOver { get; } = Brush(46, 51, 66);
-	public static SolidColorBrush AccentOver { get; } = Brush(124, 188, 255);
-	public static SolidColorBrush AccentPressed { get; } = Brush(156, 204, 255);
-	public static SolidColorBrush Rail { get; } = Brush(70, 74, 86);
+	/// <summary>How many track hues a theme has; a song's tracks go round them.</summary>
+	public const int TrackHueCount = 8;
+
+	// The accent's faint uses, as shares of opaque
+	private const byte AccentSoftAlpha = 41, StepHitAlpha = 190, StepGhostAlpha = 90, ChordToneAlpha = 26, ChordRootAlpha = 58;
+	private const byte TrackHueSoftAlpha = 38, HoverAlpha = 9;
+
+	public static SolidColorBrush Page { get; } = new();
+	public static SolidColorBrush Panel { get; } = new();
+
+	/// <summary>A panel's face, shaded from its top to its bottom: what the workbench's panels are filled with.</summary>
+	public static LinearGradientBrush PanelFace { get; } = Vertical();
+
+	/// <summary>A button's face, shaded as a key lit from above, and the same under the pointer.</summary>
+	public static LinearGradientBrush Key { get; } = Vertical();
+	public static LinearGradientBrush KeyOver { get; } = Vertical();
+
+	/// <summary>
+	/// The case round the views of the song (the transport, the rail, the keyboard dock), as the theme makes it
+	/// (<see cref="ThemeDefinition.Case"/>), or as its panels where it sets none apart: its face and edges, its lettering,
+	/// what stands on it, and its keys.
+	/// </summary>
+	public static LinearGradientBrush CaseFace { get; } = Vertical();
+	public static SolidColorBrush CaseLine { get; } = new();
+	public static SolidColorBrush CaseInk { get; } = new();
+	public static SolidColorBrush CaseDim { get; } = new();
+	public static SolidColorBrush CaseFaint { get; } = new();
+	public static SolidColorBrush CaseRaised { get; } = new();
+	public static LinearGradientBrush CaseKey { get; } = Vertical();
+	public static LinearGradientBrush CaseKeyOver { get; } = Vertical();
+	public static SolidColorBrush CaseKeyInk { get; } = new();
+
+	/// <summary>A toggle that is on; may be brighter than white, to glow.</summary>
+	public static SolidColorBrush KeyLit { get; } = new();
+
+	/// <summary>Behind a readout, and its figures.</summary>
+	public static SolidColorBrush Window { get; } = new();
+	public static SolidColorBrush WindowInk { get; } = new();
+	public static SolidColorBrush WindowDim { get; } = new();
+
+	/// <summary>Beside the rail's mode that is showing.</summary>
+	public static SolidColorBrush RailLamp { get; } = new();
+
+	/// <summary>The VU meter's face (lit from behind), its scale, its red zone past 0 VU and its needle.</summary>
+	public static SolidColorBrush VuFace { get; } = new();
+	public static SolidColorBrush VuInk { get; } = new();
+	public static SolidColorBrush VuHot { get; } = new();
+	public static SolidColorBrush VuNeedle { get; } = new();
+
+	public static SolidColorBrush Ink { get; } = new();
+	public static SolidColorBrush Dim { get; } = new();
+	public static SolidColorBrush Faint { get; } = new();
+	public static SolidColorBrush Accent { get; } = new();
+	public static SolidColorBrush Off { get; } = new();
+	public static SolidColorBrush Meter { get; } = new();
+
+	/// <summary>A part's lamp while it plays; may be brighter than white, to glow.</summary>
+	public static SolidColorBrush Lamp { get; } = new();
+
+	/// <summary>A level as it moves (a track's meter, the scope); may be brighter than white, to glow.</summary>
+	public static SolidColorBrush Level { get; } = new();
+	public static SolidColorBrush Error { get; } = new();
+	public static SolidColorBrush WhiteKey { get; } = new();
+	public static SolidColorBrush BlackKey { get; } = new();
+	public static SolidColorBrush Note { get; } = new();
+	public static SolidColorBrush BarLine { get; } = new();
+	public static SolidColorBrush Playhead { get; } = new();
+	public static SolidColorBrush Raised { get; } = new();
+	public static SolidColorBrush Sunk { get; } = new();
+	public static SolidColorBrush Line { get; } = new();
+	public static SolidColorBrush LineStrong { get; } = new();
+	public static SolidColorBrush RaisedOver { get; } = new();
+	public static SolidColorBrush AccentOver { get; } = new();
+	public static SolidColorBrush AccentPressed { get; } = new();
+	public static SolidColorBrush Rail { get; } = new();
+	public static SolidColorBrush AccentSoft { get; } = new();
+	public static SolidColorBrush AccentInk { get; } = new();
+	public static SolidColorBrush ErrorSoft { get; } = new();
+	public static SolidColorBrush Backdrop { get; } = new();
+
+	/// <summary>Under the pointer: the ink, barely there.</summary>
+	public static SolidColorBrush Hover { get; } = new();
+
+	public static SolidColorBrush Clear { get; } = new(HdrColor.Transparent);
+
+	// Driving edges, and the colours of the operator kinds in the patch designer's graph
+	public static SolidColorBrush Drive { get; } = new();
+	public static SolidColorBrush KindSine { get; } = new();
+	public static SolidColorBrush KindWave { get; } = new();
+	public static SolidColorBrush KindNoise { get; } = new();
+	public static SolidColorBrush KindString { get; } = new();
+	public static SolidColorBrush KindModes { get; } = new();
+	public static SolidColorBrush KindTube { get; } = new();
+	public static SolidColorBrush KindLevel { get; } = new();
+	public static SolidColorBrush KindSample { get; } = new();
+	public static SolidColorBrush StepHit { get; } = new();
+	public static SolidColorBrush StepGhost { get; } = new();
+	public static SolidColorBrush ChordTone { get; } = new();
+	public static SolidColorBrush ChordRoot { get; } = new();
+
+	/// <summary>
+	/// The family of the workbench's text: set on its root, so every word in it takes it unless it is a
+	/// <see cref="Readout"/>. A name, as Vysara's host fonts know it: the app gives it the theme's
+	/// <see cref="ThemeDefinition.LabelFont"/>, or none, which draws in Vysara's own font.
+	/// </summary>
+	public static FontFamily Label { get; } = new("Label");
+
+	/// <summary>The family of numbers that change as you watch (the position, the tempo, a cue's value): the theme's
+	/// <see cref="ThemeDefinition.ReadoutFont"/>.</summary>
+	public static FontFamily Readout { get; } = new("Readout");
+
+	private static readonly SolidColorBrush[] TrackHues = Brushes(TrackHueCount);
+	private static readonly SolidColorBrush[] TrackHuesSoft = Brushes(TrackHueCount);
+	private static readonly SolidColorBrush[] TrackLamps = Brushes(TrackHueCount);
+	private static readonly SolidColorBrush[] PartEdges = Brushes(TrackHueCount);
+
+	/// <summary>The theme the brushes show.</summary>
+	public static ThemeDefinition Current { get; private set; } = ThemeDefinition.Slate;
+
+	/// <summary>Raised after <see cref="Apply"/> changed the theme, for what a theme sets other than a brush.</summary>
+	public static event Action<ThemeDefinition>? Changed;
+
+	static Theme() => Paint(ThemeDefinition.Slate);
+
+	/// <summary>Show <paramref name="theme"/>: its colours put into every brush, in place. Must be called on the UI thread.</summary>
+	public static void Apply(ThemeDefinition theme)
+	{
+		ArgumentNullException.ThrowIfNull(theme);
+		if (ReferenceEquals(theme, Current))
+			return;
+		Paint(theme);
+		Changed?.Invoke(theme);
+	}
+
+	private static void Paint(ThemeDefinition t)
+	{
+		if (t.TrackHues.Length != TrackHueCount)
+			throw new ArgumentException($"Theme '{t.Name}' has {t.TrackHues.Length} track hues, not {TrackHueCount}.", nameof(t));
+		Current = t;
+		Page.Color = t.Page;
+		Panel.Color = t.Panel;
+		PanelFace.GradientStops[0].Color = t.PanelFace.Top;
+		PanelFace.GradientStops[1].Color = t.PanelFace.Bottom;
+		Key.GradientStops[0].Color = t.KeyFace.Top;
+		Key.GradientStops[1].Color = t.KeyFace.Bottom;
+		KeyOver.GradientStops[0].Color = t.KeyFaceOver.Top;
+		KeyOver.GradientStops[1].Color = t.KeyFaceOver.Bottom;
+		KeyLit.Color = t.KeyLit;
+		var c = t.Case;
+		var (caseTop, caseBottom) = c?.Face ?? t.PanelFace;
+		CaseFace.GradientStops[0].Color = caseTop;
+		CaseFace.GradientStops[1].Color = caseBottom;
+		CaseLine.Color = c?.Line ?? t.Line;
+		CaseInk.Color = c?.Ink ?? t.Ink;
+		CaseDim.Color = c?.Dim ?? t.Dim;
+		CaseFaint.Color = c?.Faint ?? t.Faint;
+		CaseRaised.Color = c?.Raised ?? t.Raised;
+		var (keyTop, keyBottom) = c?.KeyFace ?? t.KeyFace;
+		CaseKey.GradientStops[0].Color = keyTop;
+		CaseKey.GradientStops[1].Color = keyBottom;
+		var (overTop, overBottom) = c?.KeyFaceOver ?? t.KeyFaceOver;
+		CaseKeyOver.GradientStops[0].Color = overTop;
+		CaseKeyOver.GradientStops[1].Color = overBottom;
+		CaseKeyInk.Color = c?.KeyInk ?? t.Ink;
+		Window.Color = t.Window;
+		WindowInk.Color = t.WindowInk;
+		WindowDim.Color = t.WindowDim;
+		RailLamp.Color = t.RailLamp;
+		VuFace.Color = t.VuFace;
+		VuInk.Color = t.VuInk;
+		VuHot.Color = t.VuHot;
+		VuNeedle.Color = t.VuNeedle;
+		Ink.Color = t.Ink;
+		Dim.Color = t.Dim;
+		Faint.Color = t.Faint;
+		Accent.Color = t.Accent;
+		Off.Color = t.Off;
+		Meter.Color = t.Meter;
+		Lamp.Color = t.Lamp;
+		Level.Color = t.Level;
+		Error.Color = t.Error;
+		WhiteKey.Color = t.WhiteKey;
+		BlackKey.Color = t.BlackKey;
+		Note.Color = t.Note;
+		BarLine.Color = t.BarLine;
+		Playhead.Color = t.Playhead;
+		Raised.Color = t.Raised;
+		Sunk.Color = t.Sunk;
+		Line.Color = t.Line;
+		LineStrong.Color = t.LineStrong;
+		RaisedOver.Color = t.RaisedOver;
+		AccentOver.Color = t.AccentOver;
+		AccentPressed.Color = t.AccentPressed;
+		Rail.Color = t.Rail;
+		AccentInk.Color = t.AccentInk;
+		ErrorSoft.Color = t.ErrorSoft;
+		Backdrop.Color = t.Backdrop;
+		Hover.Color = WithAlpha(t.Ink, HoverAlpha);
+		Drive.Color = t.Drive;
+		KindSine.Color = t.KindSine;
+		KindWave.Color = t.KindWave;
+		KindNoise.Color = t.KindNoise;
+		KindString.Color = t.KindString;
+		KindModes.Color = t.KindModes;
+		KindTube.Color = t.KindTube;
+		KindLevel.Color = t.KindLevel;
+		KindSample.Color = t.KindSample;
+		AccentSoft.Color = WithAlpha(t.Accent, AccentSoftAlpha * t.AccentWash);
+		StepHit.Color = WithAlpha(t.Accent, StepHitAlpha);
+		StepGhost.Color = WithAlpha(t.Accent, StepGhostAlpha * t.AccentWash);
+		ChordTone.Color = WithAlpha(t.Accent, ChordToneAlpha * t.AccentWash);
+		ChordRoot.Color = WithAlpha(t.Accent, ChordRootAlpha * t.AccentWash);
+		for (var i = 0; i < TrackHueCount; i++)
+		{
+			TrackHues[i].Color = t.TrackHues[i];
+			TrackHuesSoft[i].Color = WithAlpha(t.TrackHues[i], TrackHueSoftAlpha);
+			PartEdges[i].Color = WithAlpha(t.TrackHues[i], t.TrackHues[i].A * 255f * t.PartEdge);
+			TrackLamps[i].Color = t.TrackLampLight == 1f ? t.TrackHues[i] : ThemeDefinition.Lit(t.TrackHues[i], t.TrackLampLight);
+		}
+	}
 
 	/// <summary>
 	/// The built-in controls in the workbench's colours, under WinUI's lightweight-styling keys, for a view's resources: a
-	/// button raised off its panel, a toggle that is on filled with the accent and its text dark, a slider's fill and thumb
-	/// in the accent.
+	/// button raised off its panel as a key, a toggle that is on lit (the accent) and its text dark, a slider's fill and thumb
+	/// in the accent. And buttons' and toggles' words bold, by implicit styles: the theme's bold where it has one
+	/// (<see cref="ThemeDefinition.LabelBoldFont"/>), its words' nearest weight where it hasn't.
 	/// </summary>
 	public static ResourceDictionary Controls()
 	{
 		var resources = new ResourceDictionary();
-		resources.Add("ButtonBackground", Raised);
-		resources.Add("ButtonBackgroundPointerOver", RaisedOver);
+		resources.Add(Bold(typeof(Button)));
+		resources.Add(Bold(typeof(ToggleButton)));
+		resources.Add("ButtonBackground", Key);
+		resources.Add("ButtonBackgroundPointerOver", KeyOver);
 		resources.Add("ButtonBackgroundPressed", Sunk);
 		resources.Add("ButtonForeground", Ink);
-		resources.Add("ToggleButtonBackground", Raised);
-		resources.Add("ToggleButtonBackgroundPointerOver", RaisedOver);
+		resources.Add("ToggleButtonBackground", Key);
+		resources.Add("ToggleButtonBackgroundPointerOver", KeyOver);
 		resources.Add("ToggleButtonBackgroundPressed", Sunk);
 		resources.Add("ToggleButtonForeground", Ink);
-		resources.Add("ToggleButtonBackgroundChecked", Accent);
+		resources.Add("ToggleButtonBackgroundChecked", KeyLit);
 		resources.Add("ToggleButtonForegroundChecked", AccentInk);
 		resources.Add("SliderTrackFill", Rail);
 		resources.Add("SliderTrackValueFill", Accent);
@@ -55,55 +263,71 @@ internal static class Theme
 		return resources;
 	}
 
+	/// <summary>
+	/// The keys on the case (<see cref="CaseFace"/>), for the resources of the views it makes, over <see cref="Controls"/>:
+	/// the case's own keys and legends; what a toggle that is on shows, and the rest, as the panels' keys.
+	/// </summary>
+	public static ResourceDictionary CaseControls()
+	{
+		var resources = new ResourceDictionary();
+		resources.Add("ButtonBackground", CaseKey);
+		resources.Add("ButtonBackgroundPointerOver", CaseKeyOver);
+		resources.Add("ButtonForeground", CaseKeyInk);
+		resources.Add("ToggleButtonBackground", CaseKey);
+		resources.Add("ToggleButtonBackgroundPointerOver", CaseKeyOver);
+		resources.Add("ToggleButtonForeground", CaseKeyInk);
+		return resources;
+	}
+
 	/// <summary>Toggles that mark where you are rather than switch something on (the rail's modes, the section playing):
 	/// lit with the accent's tint and their text in the accent, on a clear ground, as the design's rail is.</summary>
 	public static ResourceDictionary Markers()
 	{
 		var resources = new ResourceDictionary();
 		resources.Add("ToggleButtonBackground", Clear);
-		resources.Add("ToggleButtonForeground", Dim);
+		resources.Add("ToggleButtonForeground", CaseDim);
 		resources.Add("ToggleButtonBackgroundChecked", AccentSoft);
 		resources.Add("ToggleButtonForegroundChecked", Accent);
 		return resources;
 	}
 
-	public static SolidColorBrush Faint { get; } = Brush(93, 100, 118);
-	public static SolidColorBrush AccentSoft { get; } = Brush(92, 170, 255, 41);
-	public static SolidColorBrush AccentInk { get; } = Brush(11, 22, 38);
-	public static SolidColorBrush ErrorSoft { get; } = Brush(224, 88, 93, 46);
-	public static SolidColorBrush Backdrop { get; } = Brush(0, 0, 0, 120);
-	public static SolidColorBrush Clear { get; } = Brush(0, 0, 0, 0);
-	// Driving edges, and the colours of the operator kinds in the patch designer's graph
-	public static SolidColorBrush Drive { get; } = Brush(79, 209, 197);
-	public static SolidColorBrush KindSine { get; } = Brush(120, 180, 255);
-	public static SolidColorBrush KindWave { get; } = Brush(183, 155, 255);
-	public static SolidColorBrush KindNoise { get; } = Brush(163, 171, 187);
-	public static SolidColorBrush KindString { get; } = Brush(240, 163, 94);
-	public static SolidColorBrush KindModes { get; } = Brush(79, 209, 197);
-	public static SolidColorBrush KindTube { get; } = Brush(132, 217, 126);
-	public static SolidColorBrush KindLevel { get; } = Brush(207, 212, 222);
-	public static SolidColorBrush KindSample { get; } = Brush(255, 143, 177);
-	public static SolidColorBrush StepHit { get; } = Brush(92, 170, 255, 190);
-	public static SolidColorBrush StepGhost { get; } = Brush(92, 170, 255, 90);
-	public static SolidColorBrush ChordTone { get; } = Brush(92, 170, 255, 26);
-	public static SolidColorBrush ChordRoot { get; } = Brush(92, 170, 255, 58);
-
-	// One hue per track, in the order a song makes its tracks, round again past the last: told apart on a dark panel
-	private static readonly SolidColorBrush[] TrackHues =
-	[
-		Brush(255, 138, 122), Brush(79, 209, 197), Brush(181, 156, 255), Brush(127, 211, 255),
-		Brush(132, 217, 126), Brush(242, 138, 208), Brush(240, 176, 104), Brush(158, 170, 255),
-	];
-
-	private static readonly SolidColorBrush[] TrackHuesSoft = [.. TrackHues.Select(h => Brush(Byte(h.Color.R), Byte(h.Color.G), Byte(h.Color.B), 38))];
+	// An implicit style making a control's words bold
+	private static Style Bold(Type control) => new()
+	{
+		TargetType = control,
+		Setters = { new Setter { Property = Control.FontWeightProperty, Value = FontWeights.Bold } },
+	};
 
 	/// <summary>The hue of the track at <paramref name="index"/> in its song: its lane's stripe, its notes, its lit keys.</summary>
-	public static SolidColorBrush TrackHue(int index) => TrackHues[((index % TrackHues.Length) + TrackHues.Length) % TrackHues.Length];
+	public static SolidColorBrush TrackHue(int index) => TrackHues[Wrap(index)];
 
 	/// <summary>The same hue, faint: behind the pass of a track's part that is playing.</summary>
-	public static SolidColorBrush TrackHueSoft(int index) => TrackHuesSoft[((index % TrackHues.Length) + TrackHues.Length) % TrackHues.Length];
+	public static SolidColorBrush TrackHueSoft(int index) => TrackHuesSoft[Wrap(index)];
 
-	private static byte Byte(float channel) => (byte)Math.Clamp(MathF.Round(channel * 255f), 0f, 255f);
+	/// <summary>The same hue along the top of each of the track's parts: clear in a theme with no edge.</summary>
+	public static SolidColorBrush PartEdge(int index) => PartEdges[Wrap(index)];
 
-	public static SolidColorBrush Brush(byte r, byte g, byte b, byte a = 255) => new(HdrColor.FromRgb(r, g, b, a));
+	/// <summary>The same hue where it marks the track's head: lit past white in a theme that glows.</summary>
+	public static SolidColorBrush TrackLamp(int index) => TrackLamps[Wrap(index)];
+
+	private static int Wrap(int index) => ((index % TrackHueCount) + TrackHueCount) % TrackHueCount;
+
+	private static HdrColor WithAlpha(HdrColor colour, float alpha) => colour with { A = alpha / 255f };
+
+	private static SolidColorBrush[] Brushes(int count)
+	{
+		var brushes = new SolidColorBrush[count];
+		for (var i = 0; i < count; i++)
+			brushes[i] = new SolidColorBrush();
+		return brushes;
+	}
+
+	// A face lit from above: two stops, top and bottom, that a theme colours
+	private static LinearGradientBrush Vertical()
+	{
+		var brush = new LinearGradientBrush { StartPoint = new Point(0.5f, 0f), EndPoint = new Point(0.5f, 1f) };
+		brush.GradientStops.Add(new GradientStop { Offset = 0f });
+		brush.GradientStops.Add(new GradientStop { Offset = 1f });
+		return brush;
+	}
 }

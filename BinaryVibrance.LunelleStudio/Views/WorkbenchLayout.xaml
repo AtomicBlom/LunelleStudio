@@ -8,6 +8,7 @@
                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                 xmlns:views="using:BinaryVibrance.LunelleStudio.Views"
                 x:Class="BinaryVibrance.LunelleStudio.Views.WorkbenchLayout"
+                FontFamily="{x:Static views:Theme.Label}"
                 IsTabStop="False">
     <ContentControl.Resources>
         <ResourceDictionary>
@@ -41,46 +42,74 @@
             </Grid.ColumnDefinitions>
 
             <!-- The rail -->
-            <Border Grid.Column="0" Width="78" Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}"
+            <Border Grid.Column="0" Width="78" Background="{x:Static views:Theme.CaseFace}" BorderBrush="{x:Static views:Theme.CaseLine}"
                     BorderThickness="1" CornerRadius="8">
-                <!-- Each an icon over its name, lit in the accent while it is the one showing -->
-                <StackPanel x:Name="RailModes" Margin="5,6,5,6">
-                    <ToggleButton ToolTipService.ToolTip="Library: songs, patches and kits" IsChecked="{x:Bind ViewModel.LibraryOpen, Mode=TwoWay}" HorizontalAlignment="Stretch" Padding="0,8,0,6" Margin="0,0,0,10">
+                <!-- Each an icon over its name, lit in the accent while it is the one showing, with the theme's lamp beside it -->
+                <Grid>
+                    <StackPanel x:Name="RailModes" Margin="5,6,5,6">
+                        <ToggleButton ToolTipService.ToolTip="Library: songs, patches and kits" IsChecked="{x:Bind ViewModel.LibraryOpen, Mode=TwoWay}" HorizontalAlignment="Stretch" Padding="0,8,0,6" Margin="0,0,0,10">
+                            <StackPanel>
+                                <Path Data="M3,4.5 L17,4.5 M3,10 L17,10 M3,15.5 L12,15.5" Style="{StaticResource RailIcon}"
+                                      Stroke="{x:Bind views:Display.RailInk(ViewModel.LibraryOpen), Mode=OneWay}" />
+                                <TextBlock Text="Library" FontSize="10.5" HorizontalAlignment="Center" Margin="0,3,0,0" />
+                            </StackPanel>
+                        </ToggleButton>
+                        <Grid Margin="0,0,0,4">
+                            <ToggleButton ToolTipService.ToolTip="Arrange the song's sections, tracks and parts" IsChecked="{x:Bind ViewModel.IsArrange, Mode=TwoWay}" HorizontalAlignment="Stretch" Padding="0,8,0,6">
+                                <StackPanel>
+                                    <Path Data="M3,4 L8,4 A1,1 0 0 1 9,5 L9,7 A1,1 0 0 1 8,8 L3,8 A1,1 0 0 1 2,7 L2,5 A1,1 0 0 1 3,4 Z M12,4 L17,4 A1,1 0 0 1 18,5 L18,7 A1,1 0 0 1 17,8 L12,8 A1,1 0 0 1 11,7 L11,5 A1,1 0 0 1 12,4 Z M3,12 L11,12 A1,1 0 0 1 12,13 L12,15 A1,1 0 0 1 11,16 L3,16 A1,1 0 0 1 2,15 L2,13 A1,1 0 0 1 3,12 Z"
+                                          Style="{StaticResource RailIcon}" Stroke="{x:Bind views:Display.RailInk(ViewModel.IsArrange), Mode=OneWay}" />
+                                    <TextBlock Text="Arrange" FontSize="10.5" HorizontalAlignment="Center" Margin="0,3,0,0" />
+                                </StackPanel>
+                            </ToggleButton>
+                            <Border Width="3" HorizontalAlignment="Left" Margin="1,12,0,12" CornerRadius="1.5" IsHitTestVisible="False"
+                                    Background="{x:Bind views:Display.RailLamp(ViewModel.IsArrange), Mode=OneWay}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,4">
+                            <ToggleButton ToolTipService.ToolTip="Design the open patch" IsChecked="{x:Bind ViewModel.IsPatch, Mode=TwoWay}" HorizontalAlignment="Stretch" Padding="0,8,0,6">
+                                <StackPanel>
+                                    <Path Data="M6.7,5 A2.2,2.2 0 1 1 2.3,5 A2.2,2.2 0 1 1 6.7,5 Z M6.7,15 A2.2,2.2 0 1 1 2.3,15 A2.2,2.2 0 1 1 6.7,15 Z M17.7,10 A2.2,2.2 0 1 1 13.3,10 A2.2,2.2 0 1 1 17.7,10 Z M6.7,5.6 L13.3,9.2 M6.7,14.4 L13.3,10.8"
+                                          Style="{StaticResource RailIcon}" Stroke="{x:Bind views:Display.RailInk(ViewModel.IsPatch), Mode=OneWay}" />
+                                    <TextBlock Text="Patch" FontSize="10.5" HorizontalAlignment="Center" Margin="0,3,0,0" />
+                                </StackPanel>
+                            </ToggleButton>
+                            <Border Width="3" HorizontalAlignment="Left" Margin="1,12,0,12" CornerRadius="1.5" IsHitTestVisible="False"
+                                    Background="{x:Bind views:Display.RailLamp(ViewModel.IsPatch), Mode=OneWay}" />
+                        </Grid>
+                        <Grid Margin="0,0,0,4">
+                            <ToggleButton ToolTipService.ToolTip="Play the open kit and sketch beats" IsChecked="{x:Bind ViewModel.IsKit, Mode=TwoWay}" HorizontalAlignment="Stretch" Padding="0,8,0,6">
+                                <StackPanel>
+                                    <Path Data="M3.7,2.5 L7.8,2.5 A1.2,1.2 0 0 1 9,3.7 L9,7.8 A1.2,1.2 0 0 1 7.8,9 L3.7,9 A1.2,1.2 0 0 1 2.5,7.8 L2.5,3.7 A1.2,1.2 0 0 1 3.7,2.5 Z M12.2,2.5 L16.3,2.5 A1.2,1.2 0 0 1 17.5,3.7 L17.5,7.8 A1.2,1.2 0 0 1 16.3,9 L12.2,9 A1.2,1.2 0 0 1 11,7.8 L11,3.7 A1.2,1.2 0 0 1 12.2,2.5 Z M3.7,11 L7.8,11 A1.2,1.2 0 0 1 9,12.2 L9,16.3 A1.2,1.2 0 0 1 7.8,17.5 L3.7,17.5 A1.2,1.2 0 0 1 2.5,16.3 L2.5,12.2 A1.2,1.2 0 0 1 3.7,11 Z M12.2,11 L16.3,11 A1.2,1.2 0 0 1 17.5,12.2 L17.5,16.3 A1.2,1.2 0 0 1 16.3,17.5 L12.2,17.5 A1.2,1.2 0 0 1 11,16.3 L11,12.2 A1.2,1.2 0 0 1 12.2,11 Z"
+                                          Style="{StaticResource RailIcon}" Stroke="{x:Bind views:Display.RailInk(ViewModel.IsKit), Mode=OneWay}" />
+                                    <TextBlock Text="Kit" FontSize="10.5" HorizontalAlignment="Center" Margin="0,3,0,0" />
+                                </StackPanel>
+                            </ToggleButton>
+                            <Border Width="3" HorizontalAlignment="Left" Margin="1,12,0,12" CornerRadius="1.5" IsHitTestVisible="False"
+                                    Background="{x:Bind views:Display.RailLamp(ViewModel.IsKit), Mode=OneWay}" />
+                        </Grid>
+                        <Grid Margin="0">
+                            <ToggleButton ToolTipService.ToolTip="View and copy the project's music files" IsChecked="{x:Bind ViewModel.IsFiles, Mode=TwoWay}" HorizontalAlignment="Stretch" Padding="0,8,0,6">
+                                <StackPanel>
+                                    <Path Data="M7,4 C5,4 5,5.5 5,7 C5,8.5 4,10 3,10 C4,10 5,11.5 5,13 C5,14.5 5,16 7,16 M13,4 C15,4 15,5.5 15,7 C15,8.5 16,10 17,10 C16,10 15,11.5 15,13 C15,14.5 15,16 13,16"
+                                          Style="{StaticResource RailIcon}" Stroke="{x:Bind views:Display.RailInk(ViewModel.IsFiles), Mode=OneWay}" />
+                                    <TextBlock Text="Files" FontSize="10.5" HorizontalAlignment="Center" Margin="0,3,0,0" />
+                                </StackPanel>
+                            </ToggleButton>
+                            <Border Width="3" HorizontalAlignment="Left" Margin="1,12,0,12" CornerRadius="1.5" IsHitTestVisible="False"
+                                    Background="{x:Bind views:Display.RailLamp(ViewModel.IsFiles), Mode=OneWay}" />
+                        </Grid>
+                    </StackPanel>
+                    <!-- At the foot: the settings, in a flyout beside the rail (the theme, for now) -->
+                    <Button x:Name="SettingsButton" ToolTipService.ToolTip="Settings: the workbench's theme" VerticalAlignment="Bottom"
+                            HorizontalAlignment="Stretch" Margin="5,0,5,6" Padding="0,8,0,6" Background="{x:Static views:Theme.Clear}"
+                            Foreground="{x:Static views:Theme.CaseDim}">
                         <StackPanel>
-                            <Path Data="M3,4.5 L17,4.5 M3,10 L17,10 M3,15.5 L12,15.5" Style="{StaticResource RailIcon}"
-                                  Stroke="{x:Bind views:Display.RailInk(ViewModel.LibraryOpen), Mode=OneWay}" />
-                            <TextBlock Text="Library" FontSize="10.5" HorizontalAlignment="Center" Margin="0,3,0,0" />
+                            <Path Data="M3,5 L17,5 M3,10 L17,10 M3,15 L17,15 M7,3 L7,7 M13,8 L13,12 M6,13 L6,17" Style="{StaticResource RailIcon}"
+                                  Stroke="{x:Static views:Theme.CaseDim}" />
+                            <TextBlock Text="Settings" FontSize="10.5" HorizontalAlignment="Center" Margin="0,3,0,0" />
                         </StackPanel>
-                    </ToggleButton>
-                    <ToggleButton ToolTipService.ToolTip="Arrange the song's sections, tracks and parts" IsChecked="{x:Bind ViewModel.IsArrange, Mode=TwoWay}" HorizontalAlignment="Stretch" Padding="0,8,0,6" Margin="0,0,0,4">
-                        <StackPanel>
-                            <Path Data="M3,4 L8,4 A1,1 0 0 1 9,5 L9,7 A1,1 0 0 1 8,8 L3,8 A1,1 0 0 1 2,7 L2,5 A1,1 0 0 1 3,4 Z M12,4 L17,4 A1,1 0 0 1 18,5 L18,7 A1,1 0 0 1 17,8 L12,8 A1,1 0 0 1 11,7 L11,5 A1,1 0 0 1 12,4 Z M3,12 L11,12 A1,1 0 0 1 12,13 L12,15 A1,1 0 0 1 11,16 L3,16 A1,1 0 0 1 2,15 L2,13 A1,1 0 0 1 3,12 Z"
-                                  Style="{StaticResource RailIcon}" Stroke="{x:Bind views:Display.RailInk(ViewModel.IsArrange), Mode=OneWay}" />
-                            <TextBlock Text="Arrange" FontSize="10.5" HorizontalAlignment="Center" Margin="0,3,0,0" />
-                        </StackPanel>
-                    </ToggleButton>
-                    <ToggleButton ToolTipService.ToolTip="Design the open patch" IsChecked="{x:Bind ViewModel.IsPatch, Mode=TwoWay}" HorizontalAlignment="Stretch" Padding="0,8,0,6" Margin="0,0,0,4">
-                        <StackPanel>
-                            <Path Data="M6.7,5 A2.2,2.2 0 1 1 2.3,5 A2.2,2.2 0 1 1 6.7,5 Z M6.7,15 A2.2,2.2 0 1 1 2.3,15 A2.2,2.2 0 1 1 6.7,15 Z M17.7,10 A2.2,2.2 0 1 1 13.3,10 A2.2,2.2 0 1 1 17.7,10 Z M6.7,5.6 L13.3,9.2 M6.7,14.4 L13.3,10.8"
-                                  Style="{StaticResource RailIcon}" Stroke="{x:Bind views:Display.RailInk(ViewModel.IsPatch), Mode=OneWay}" />
-                            <TextBlock Text="Patch" FontSize="10.5" HorizontalAlignment="Center" Margin="0,3,0,0" />
-                        </StackPanel>
-                    </ToggleButton>
-                    <ToggleButton ToolTipService.ToolTip="Play the open kit and sketch beats" IsChecked="{x:Bind ViewModel.IsKit, Mode=TwoWay}" HorizontalAlignment="Stretch" Padding="0,8,0,6" Margin="0,0,0,4">
-                        <StackPanel>
-                            <Path Data="M3.7,2.5 L7.8,2.5 A1.2,1.2 0 0 1 9,3.7 L9,7.8 A1.2,1.2 0 0 1 7.8,9 L3.7,9 A1.2,1.2 0 0 1 2.5,7.8 L2.5,3.7 A1.2,1.2 0 0 1 3.7,2.5 Z M12.2,2.5 L16.3,2.5 A1.2,1.2 0 0 1 17.5,3.7 L17.5,7.8 A1.2,1.2 0 0 1 16.3,9 L12.2,9 A1.2,1.2 0 0 1 11,7.8 L11,3.7 A1.2,1.2 0 0 1 12.2,2.5 Z M3.7,11 L7.8,11 A1.2,1.2 0 0 1 9,12.2 L9,16.3 A1.2,1.2 0 0 1 7.8,17.5 L3.7,17.5 A1.2,1.2 0 0 1 2.5,16.3 L2.5,12.2 A1.2,1.2 0 0 1 3.7,11 Z M12.2,11 L16.3,11 A1.2,1.2 0 0 1 17.5,12.2 L17.5,16.3 A1.2,1.2 0 0 1 16.3,17.5 L12.2,17.5 A1.2,1.2 0 0 1 11,16.3 L11,12.2 A1.2,1.2 0 0 1 12.2,11 Z"
-                                  Style="{StaticResource RailIcon}" Stroke="{x:Bind views:Display.RailInk(ViewModel.IsKit), Mode=OneWay}" />
-                            <TextBlock Text="Kit" FontSize="10.5" HorizontalAlignment="Center" Margin="0,3,0,0" />
-                        </StackPanel>
-                    </ToggleButton>
-                    <ToggleButton ToolTipService.ToolTip="View and copy the project's music files" IsChecked="{x:Bind ViewModel.IsFiles, Mode=TwoWay}" HorizontalAlignment="Stretch" Padding="0,8,0,6">
-                        <StackPanel>
-                            <Path Data="M7,4 C5,4 5,5.5 5,7 C5,8.5 4,10 3,10 C4,10 5,11.5 5,13 C5,14.5 5,16 7,16 M13,4 C15,4 15,5.5 15,7 C15,8.5 16,10 17,10 C16,10 15,11.5 15,13 C15,14.5 15,16 13,16"
-                                  Style="{StaticResource RailIcon}" Stroke="{x:Bind views:Display.RailInk(ViewModel.IsFiles), Mode=OneWay}" />
-                            <TextBlock Text="Files" FontSize="10.5" HorizontalAlignment="Center" Margin="0,3,0,0" />
-                        </StackPanel>
-                    </ToggleButton>
-                </StackPanel>
+                    </Button>
+                </Grid>
             </Border>
 
             <!-- The library, pinned as a column -->
@@ -111,13 +140,13 @@
             </Grid>
 
             <!-- The cues beside Arrange -->
-            <Border Grid.Column="3" Width="300" Margin="8,0,0,0" Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}"
+            <Border Grid.Column="3" Width="300" Margin="8,0,0,0" Background="{x:Static views:Theme.PanelFace}" BorderBrush="{x:Static views:Theme.Line}"
                     BorderThickness="1" CornerRadius="8" Visibility="{x:Bind ViewModel.IsArrange, Mode=OneWay}">
                 <views:CuePanel ViewModel="{x:Bind ViewModel}" />
             </Border>
 
             <!-- The patch designer's inspector beside Patch -->
-            <Border Grid.Column="3" Width="360" Margin="8,0,0,0" Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}"
+            <Border Grid.Column="3" Width="360" Margin="8,0,0,0" Background="{x:Static views:Theme.PanelFace}" BorderBrush="{x:Static views:Theme.Line}"
                     BorderThickness="1" CornerRadius="8" Visibility="{x:Bind ViewModel.IsPatch, Mode=OneWay}">
                 <views:DesignerInspector ViewModel="{x:Bind ViewModel}" />
             </Border>

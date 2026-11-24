@@ -3,6 +3,8 @@ using BinaryVibrance.Sirrow;
 using BinaryVibrance.Lunelle.Chip;
 using BinaryVibrance.Lunelle.Music;
 using BinaryVibrance.Kaldra.Input;
+using BinaryVibrance.LunelleStudio.Views;
+using BinaryVibrance.Vysara;
 
 namespace BinaryVibrance.LunelleStudio;
 
@@ -58,6 +60,12 @@ public sealed partial class Workbench : IDisposable
 	/// The host sets it: a desktop app to its window's clipboard.
 	/// </summary>
 	public Func<string, bool>? CopyText { get; set; }
+
+	/// <summary>
+	/// Where the project's songs and patches are read and written: the disk unless the host keeps them elsewhere (a
+	/// browser's storage). Set before the first song is opened.
+	/// </summary>
+	public IMusicFiles Files { get; init; } = DiskFiles.Instance;
 
 	internal int ReadScope(Span<float> into) => _tap.Read(into);
 
@@ -148,7 +156,7 @@ public sealed partial class Workbench : IDisposable
 		_bus = bus;
 		_catalog = catalog;
 		Player = new MusicPlayer(audio, bus);
-		ViewModel = new WorkbenchViewModel(this);
+		ViewModel = new WorkbenchViewModel(this) { HasVuMeter = Theme.Current.VuMeter };
 		audio.AddEffect(bus, _tap);
 		ViewModel.Designer.Built += OnDesignerBuilt;
 		ViewModel.Designer.CopyRequested += OnCopyRequested;
@@ -253,6 +261,17 @@ public sealed partial class Workbench : IDisposable
 		}
 		ViewModel.Error = string.Join("\n", errors.Take(8)) + (errors.Count > 8 ? $"\n… and {errors.Count - 8} more" : "");
 		ViewModel.BuildText = "Build failed · last build still playing";
+	}
+
+	/// <summary>
+	/// Shows a project of files alone read again in the build pill (<see cref="FolderCatalog"/>): how long it took, and what
+	/// it said of files left out or code that plays nothing, everything else playing as read.
+	/// </summary>
+	public void ReportRead(IReadOnlyList<string> problems, TimeSpan took)
+	{
+		ArgumentNullException.ThrowIfNull(problems);
+		ViewModel.Error = problems.Count == 0 ? "" : string.Join("\n", problems.Take(8)) + (problems.Count > 8 ? $"\n… and {problems.Count - 8} more" : "");
+		ViewModel.BuildText = $"read {DateTime.Now:HH:mm:ss} in {took.TotalMilliseconds:0} ms" + (problems.Count == 0 ? "" : $" · {problems.Count} to look at");
 	}
 
 	/// <summary>Chooses a song and builds it; if one was playing, it plays.</summary>
@@ -677,7 +696,24 @@ public sealed partial class Workbench : IDisposable
 			RefreshSketch();
 			ViewModel.RaiseRefreshed();
 		}
+		ShowMasterLevel(deltaSeconds);
 		ViewModel.RaiseFrame();
+	}
+
+	// The VU meter's needle: 0 VU at a peak of −10 dBFS, the dial −20 to +3 VU. The needle answers as a VU meter's does,
+	// about 300 ms to settle, so it shows the music's loudness rather than every transient.
+	private const float VuZeroDbfs = -10f, VuFloor = -20f, VuCeiling = 3f, VuSettleSeconds = 0.065f;
+	private float _vuLinear;
+
+	private void ShowMasterLevel(double deltaSeconds)
+	{
+		if (!ViewModel.HasVuMeter)
+			return;
+		var peak = _audio.Stats.Peak;
+		var ease = 1f - MathF.Exp(-(float)deltaSeconds / VuSettleSeconds);
+		_vuLinear += (peak - _vuLinear) * ease;
+		var vu = AudioAnalysis.ToDb(MathF.Max(_vuLinear, 1e-6f)) - VuZeroDbfs;
+		ViewModel.MasterLevel = Math.Clamp((vu - VuFloor) / (VuCeiling - VuFloor), 0f, 1f);
 	}
 
 	private void Refresh()
@@ -1048,6 +1084,53 @@ public sealed partial class Workbench : IDisposable
 		yield return new PaletteItemViewModel("Mode", "Arrange", () => SetMode(WorkbenchMode.Arrange));
 		yield return new PaletteItemViewModel("Mode", "Patch", () => SetMode(WorkbenchMode.Patch));
 		yield return new PaletteItemViewModel("Mode", "Kit", () => SetMode(WorkbenchMode.Kit));
+		foreach (var theme in ThemeDefinition.All)
+			if (!ReferenceEquals(theme, Theme.Current))
+			{
+				var name = theme.Name;
+				yield return new PaletteItemViewModel("Theme", $"Use the {name} theme", () => SetTheme(name));
+			}
+	}
+
+	/// <summary>The name of the theme the workbench shows.</summary>
+	public static string ThemeName => Theme.Current.Name;
+
+	/// <summary>
+	/// The font families the views name, each weight with the font the theme gives it (the name the app baked it under),
+	/// or null where the theme gives none: for an app to put in its UI host's fonts. A family whose normal weight has no font
+	/// draws in Vysara's own; a bold with none takes the family's nearest weight.
+	/// </summary>
+	public static IReadOnlyList<(string Family, FontWeight Weight, string? Font)> ThemeFonts =>
+	[
+		(Theme.Label.Source, FontWeights.Normal, Theme.Current.LabelFont),
+		(Theme.Label.Source, FontWeights.Bold, Theme.Current.LabelBoldFont),
+		(Theme.Readout.Source, FontWeights.Normal, Theme.Current.ReadoutFont),
+	];
+
+	/// <summary>How much the theme's glow adds round what it draws brighter than white: 0 for none.</summary>
+	public static float ThemeGlow => Theme.Current.Glow;
+
+	/// <summary>Every theme's name, the first the one a workbench starts in.</summary>
+	public static IReadOnlyList<string> ThemeNames { get; } = [.. ThemeDefinition.All.Select(t => t.Name)];
+
+	/// <summary>Raised when the theme changes, with its name: for an app to keep the choice.</summary>
+	public event Action<string>? ThemeChanged;
+
+	/// <summary>
+	/// Shows the theme named <paramref name="name"/> (any case), recolouring every view in place; returns false, changing
+	/// nothing, when there is no such theme. The theme is the whole app's, as the views' brushes are shared.
+	/// </summary>
+	public bool SetTheme(string name)
+	{
+		if (ThemeDefinition.Find(name) is not { } theme)
+			return false;
+		if (!ReferenceEquals(theme, Theme.Current))
+		{
+			Theme.Apply(theme);
+			ViewModel.HasVuMeter = theme.VuMeter;
+			ThemeChanged?.Invoke(theme.Name);
+		}
+		return true;
 	}
 
 	/// <summary>Starts a note on the bench's patch (or hits the kit's piece the note falls on); returns it, to let go.</summary>
@@ -1329,7 +1412,7 @@ public sealed partial class Workbench : IDisposable
 		try
 		{
 			_editor?.Save();
-			_editor = SongEditor.Open(_source.Path);
+			_editor = SongEditor.Open(_source.Path, Files);
 		}
 		catch (Exception ex) when (ex is IOException or FormatException or UnauthorizedAccessException)
 		{
@@ -1524,7 +1607,7 @@ public sealed partial class Workbench : IDisposable
 		{
 			try
 			{
-				var text = File.ReadAllText(_patchFile);
+				var text = Files.ReadText(_patchFile);
 				_patchCode = System.Text.Json.Nodes.JsonNode.Parse(text)?["code"]?.GetValue<string>();
 				if (_patchCode is null)
 				{
@@ -1555,9 +1638,9 @@ public sealed partial class Workbench : IDisposable
 		var text = PatchFile.Write(spec, ViewModel.Designer.Names);
 		try
 		{
-			if (!File.Exists(_patchFile) || File.ReadAllText(_patchFile) != text)
+			if (!Files.Exists(_patchFile) || Files.ReadText(_patchFile) != text)
 			{
-				File.WriteAllText(_patchFile, text);
+				Files.WriteText(_patchFile, text);
 				ViewModel.BuildText = $"saved {Path.GetFileName(_patchFile)} {DateTime.Now:HH:mm:ss}";
 			}
 		}
@@ -1696,7 +1779,7 @@ public sealed partial class Workbench : IDisposable
 			+ PatchCode.Write(designer.Spec, property, designer.Names, _catalog.MacroName)
 				.Replace($"public static Patch {property} =>", $"public static partial Patch {property} =>", StringComparison.Ordinal);
 		var (file, line) = Code.AddMember(type, Path.GetDirectoryName(_patchFile)!, code);
-		File.WriteAllText(_patchFile, $"{{\n  \"format\": \"{PatchFile.Format}\",\n  \"name\": \"{designer.Spec.Name}\",\n  \"code\": \"{property}\"\n}}\n");
+		Files.WriteText(_patchFile, $"{{\n  \"format\": \"{PatchFile.Format}\",\n  \"name\": \"{designer.Spec.Name}\",\n  \"code\": \"{property}\"\n}}\n");
 		_patchCode = property;
 		designer.ShowCode(true, false);
 		ViewModel.BuildText = $"Converted to C# in {Path.GetFileName(file)}:{line} · building";
@@ -1712,7 +1795,7 @@ public sealed partial class Workbench : IDisposable
 		var removed = _catalog.PatchesType is { } type ? Code?.RemoveMember(type, property) : null;
 		var spec = PatchSpec.From(patch);
 		var names = removed is null ? null : VariableNames(removed, spec.Operators.Count);
-		File.WriteAllText(_patchFile, PatchFile.Write(spec, names));
+		Files.WriteText(_patchFile, PatchFile.Write(spec, names));
 		_patchCode = null;
 		ViewModel.Designer.Load(patch, _catalog.MacroName, names: names);
 		ViewModel.Designer.ShowCode(false, Code is not null && _catalog.PatchesType is not null);
@@ -1760,7 +1843,7 @@ public sealed partial class Workbench : IDisposable
 		string text;
 		try
 		{
-			text = File.ReadAllText(entry.Path);
+			text = Files.ReadText(entry.Path);
 		}
 		catch (IOException ex)
 		{

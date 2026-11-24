@@ -19,7 +19,7 @@ internal sealed class TrackHeader : ContentControl
 	private readonly BinaryVibrance.Vysara.Media.TranslateTransform _stay = new();
 	private ArrangeScroll? _scroll;
 	private Border? _frame;
-	private readonly Border _meter = new() { HorizontalAlignment = HorizontalAlignment.Left, CornerRadius = new CornerRadius(2f), Background = Theme.Meter, Height = 4f };
+	private readonly Border _meter = new() { HorizontalAlignment = HorizontalAlignment.Left, CornerRadius = new CornerRadius(2f), Background = Theme.Level, Height = 4f };
 
 	public TrackHeader()
 	{
@@ -81,7 +81,7 @@ internal sealed class TrackHeader : ContentControl
 		var grid = new Grid();
 		grid.ColumnDefinitions.Add(GridLength.Pixels(4f));
 		grid.ColumnDefinitions.Add(GridLength.Star);
-		grid.Children.Add(new Border { Background = Theme.TrackHue(track.Index), CornerRadius = new CornerRadius(2f), Margin = new Thickness(0f, 8f, 0f, 8f) });
+		grid.Children.Add(new Border { Background = Theme.TrackLamp(track.Index), CornerRadius = new CornerRadius(2f), Margin = new Thickness(0f, 8f, 0f, 8f) });
 
 		var column = new StackPanel { Orientation = Orientation.Vertical, Margin = new Thickness(10f, 7f, 8f, 6f) };
 		var top = new Grid();

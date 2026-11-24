@@ -14,13 +14,7 @@ public static class Catalog
 {
 	public static IReadOnlyList<(string Name, Func<Song> Build)> Songs { get; } = [("demo", HelloSynth.Songs.Demo.Build)];
 
-	public static IReadOnlyList<(string Name, Func<Patch> Build)> Patches { get; } =
-	[
-		("electric-piano", () => HelloSynth.Patches.ElectricPiano),
-		("picked-bass", () => HelloSynth.Patches.PickedBass),
-		("pluck", () => HelloSynth.Patches.Pluck),
-		("saw-lead", () => HelloSynth.Patches.SawLead),
-	];
+	public static IReadOnlyList<(string Name, Func<Patch> Build)> Patches { get; } = HelloSynth.Patches.Files;
 
 	public static IReadOnlyList<(string Name, Func<DrumKit> Build)> Kits { get; } = [("demo-kit", () => HelloSynth.Kits.DemoKit)];
 

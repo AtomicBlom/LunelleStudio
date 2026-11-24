@@ -16,7 +16,7 @@
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
-        <Border Grid.Column="0" Margin="0,0,10,0" Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1" CornerRadius="8">
+        <Border Grid.Column="0" Margin="0,0,10,0" Background="{x:Static views:Theme.PanelFace}" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1" CornerRadius="8">
             <ListView x:Name="FileList" Margin="4,6,4,6" ItemsSource="{x:Bind ViewModel.Files.Files, Mode=OneWay}" IsItemClickEnabled="True"
                       SelectedIndex="{x:Bind ViewModel.Files.ShownIndex, Mode=TwoWay}">
                 <ListView.ItemTemplate>

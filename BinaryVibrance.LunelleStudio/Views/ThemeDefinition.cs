@@ -27,6 +27,24 @@ internal sealed record ThemeDefinition
 	public required HdrColor Sunk { get; init; }
 	public required HdrColor Rail { get; init; }
 
+	/// <summary>A button's face, top to bottom (a key moulded and lit from above, or the same twice for a flat one), and
+	/// under the pointer.</summary>
+	public required (HdrColor Top, HdrColor Bottom) KeyFace { get; init; }
+	public required (HdrColor Top, HdrColor Bottom) KeyFaceOver { get; init; }
+
+	/// <summary>A toggle that is on: in a theme that glows, a push-button lit from inside, brighter than white.</summary>
+	public required HdrColor KeyLit { get; init; }
+
+	/// <summary>Behind a readout (the transport's position): a display's dark glass, or clear.</summary>
+	public required HdrColor Window { get; init; }
+
+	/// <summary>A readout's figures in their <see cref="Window"/>.</summary>
+	public required HdrColor WindowInk { get; init; }
+
+	/// <summary>How many times its light a track's hue has where it marks the track's head: past white, a lamp that
+	/// glows in the track's colour; 1 for the hue as it is.</summary>
+	public float TrackLampLight { get; init; } = 1f;
+
 	public required HdrColor Ink { get; init; }
 	public required HdrColor Dim { get; init; }
 	public required HdrColor Faint { get; init; }
@@ -99,6 +117,11 @@ internal sealed record ThemeDefinition
 		RaisedOver = Rgb(46, 51, 66),
 		Sunk = Rgb(22, 24, 31),
 		Rail = Rgb(70, 74, 86),
+		KeyFace = (Rgb(37, 41, 54), Rgb(37, 41, 54)),
+		KeyFaceOver = (Rgb(46, 51, 66), Rgb(46, 51, 66)),
+		KeyLit = Rgb(92, 170, 255),
+		Window = Rgb(0, 0, 0, 0),
+		WindowInk = Rgb(226, 230, 238),
 		Ink = Rgb(226, 230, 238),
 		Dim = Rgb(140, 148, 164),
 		Faint = Rgb(93, 100, 118),
@@ -150,6 +173,12 @@ internal sealed record ThemeDefinition
 		RaisedOver = Rgb(70, 66, 61),
 		Sunk = Rgb(29, 28, 26),
 		Rail = Rgb(22, 21, 18),
+		KeyFace = (Rgb(66, 62, 57), Rgb(46, 43, 40)),
+		KeyFaceOver = (Rgb(78, 74, 68), Rgb(56, 53, 49)),
+		KeyLit = Lit(Rgb(255, 138, 61), 1.25f),
+		Window = Rgb(16, 20, 14),
+		WindowInk = Lit(Rgb(201, 240, 178), 1.2f),
+		TrackLampLight = 2.2f,
 		Ink = Rgb(236, 230, 216),
 		Dim = Rgb(163, 155, 138),
 		Faint = Rgb(112, 105, 92),

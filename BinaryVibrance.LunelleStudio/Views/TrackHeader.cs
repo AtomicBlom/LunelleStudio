@@ -81,7 +81,7 @@ internal sealed class TrackHeader : ContentControl
 		var grid = new Grid();
 		grid.ColumnDefinitions.Add(GridLength.Pixels(4f));
 		grid.ColumnDefinitions.Add(GridLength.Star);
-		grid.Children.Add(new Border { Background = Theme.TrackHue(track.Index), CornerRadius = new CornerRadius(2f), Margin = new Thickness(0f, 8f, 0f, 8f) });
+		grid.Children.Add(new Border { Background = Theme.TrackLamp(track.Index), CornerRadius = new CornerRadius(2f), Margin = new Thickness(0f, 8f, 0f, 8f) });
 
 		var column = new StackPanel { Orientation = Orientation.Vertical, Margin = new Thickness(10f, 7f, 8f, 6f) };
 		var top = new Grid();

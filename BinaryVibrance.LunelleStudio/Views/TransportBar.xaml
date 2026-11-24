@@ -24,9 +24,11 @@
                 <ToggleButton ToolTipService.ToolTip="Play or stop the song (Space)" IsChecked="{x:Bind ViewModel.IsPlaying, Mode=TwoWay}" Width="72" Margin="0,0,14,0" VerticalAlignment="Center">
                     <TextBlock Text="{x:Bind views:Display.PlayLabel(ViewModel.IsPlaying), Mode=OneWay}" FontSize="14" HorizontalAlignment="Center" />
                 </ToggleButton>
-                <!-- As wide as a long position, so nothing after it moves as the song plays -->
-                <TextBlock FontFamily="{x:Static views:Theme.Readout}" Text="{x:Bind ViewModel.PositionText, Mode=OneWay}" FontSize="14" Foreground="{x:Static views:Theme.Ink}"
-                           VerticalAlignment="Center" Width="230" Margin="0,0,14,0" TextTrimming="CharacterEllipsis" />
+                <!-- In the theme's readout window, as wide as a long position, so nothing after it moves as the song plays -->
+                <Border Background="{x:Static views:Theme.Window}" CornerRadius="3" Padding="8,2,8,3" Width="280" Margin="0,0,14,0" VerticalAlignment="Center">
+                    <TextBlock FontFamily="{x:Static views:Theme.Readout}" Text="{x:Bind ViewModel.PositionText, Mode=OneWay}" FontSize="14"
+                               Foreground="{x:Static views:Theme.WindowInk}" TextTrimming="CharacterEllipsis" />
+                </Border>
                 <Button Command="{x:Bind ViewModel.InspectSongCommand, Mode=OneWay}" Padding="8,2,8,3" VerticalAlignment="Center" Margin="0,0,14,0"
                         ToolTipService.ToolTip="Song settings: tempo, key and scale">
                     <StackPanel Orientation="Horizontal">

@@ -32,6 +32,15 @@ public class ThemeTests
 		slate.Glow.ShouldBe(0f);
 		slate.Lamp.ShouldBe(slate.Meter);
 		slate.Level.ShouldBe(slate.Meter);
+		slate.TrackLampLight.ShouldBe(1f);
+		// Its keys flat, a toggle that is on filled with the accent, no window behind a readout
+		slate.KeyFace.Top.ShouldBe(slate.Raised);
+		slate.KeyFace.Bottom.ShouldBe(slate.Raised);
+		slate.KeyFaceOver.Top.ShouldBe(slate.RaisedOver);
+		slate.KeyFaceOver.Bottom.ShouldBe(slate.RaisedOver);
+		slate.KeyLit.ShouldBe(slate.Accent);
+		slate.Window.A.ShouldBe(0f);
+		slate.WindowInk.ShouldBe(slate.Ink);
 	}
 
 	[Test]

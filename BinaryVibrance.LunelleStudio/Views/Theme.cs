@@ -25,6 +25,17 @@ internal static class Theme
 	/// <summary>A panel's face, shaded from its top to its bottom: what the workbench's panels are filled with.</summary>
 	public static LinearGradientBrush PanelFace { get; } = Vertical();
 
+	/// <summary>A button's face, shaded as a key lit from above, and the same under the pointer.</summary>
+	public static LinearGradientBrush Key { get; } = Vertical();
+	public static LinearGradientBrush KeyOver { get; } = Vertical();
+
+	/// <summary>A toggle that is on; may be brighter than white, to glow.</summary>
+	public static SolidColorBrush KeyLit { get; } = new();
+
+	/// <summary>Behind a readout, and its figures.</summary>
+	public static SolidColorBrush Window { get; } = new();
+	public static SolidColorBrush WindowInk { get; } = new();
+
 	public static SolidColorBrush Ink { get; } = new();
 	public static SolidColorBrush Dim { get; } = new();
 	public static SolidColorBrush Faint { get; } = new();
@@ -89,6 +100,7 @@ internal static class Theme
 
 	private static readonly SolidColorBrush[] TrackHues = Brushes(TrackHueCount);
 	private static readonly SolidColorBrush[] TrackHuesSoft = Brushes(TrackHueCount);
+	private static readonly SolidColorBrush[] TrackLamps = Brushes(TrackHueCount);
 
 	/// <summary>The theme the brushes show.</summary>
 	public static ThemeDefinition Current { get; private set; } = ThemeDefinition.Slate;
@@ -117,6 +129,13 @@ internal static class Theme
 		Panel.Color = t.Panel;
 		PanelFace.GradientStops[0].Color = t.PanelFace.Top;
 		PanelFace.GradientStops[1].Color = t.PanelFace.Bottom;
+		Key.GradientStops[0].Color = t.KeyFace.Top;
+		Key.GradientStops[1].Color = t.KeyFace.Bottom;
+		KeyOver.GradientStops[0].Color = t.KeyFaceOver.Top;
+		KeyOver.GradientStops[1].Color = t.KeyFaceOver.Bottom;
+		KeyLit.Color = t.KeyLit;
+		Window.Color = t.Window;
+		WindowInk.Color = t.WindowInk;
 		Ink.Color = t.Ink;
 		Dim.Color = t.Dim;
 		Faint.Color = t.Faint;
@@ -161,26 +180,27 @@ internal static class Theme
 		{
 			TrackHues[i].Color = t.TrackHues[i];
 			TrackHuesSoft[i].Color = WithAlpha(t.TrackHues[i], TrackHueSoftAlpha);
+			TrackLamps[i].Color = t.TrackLampLight == 1f ? t.TrackHues[i] : ThemeDefinition.Lit(t.TrackHues[i], t.TrackLampLight);
 		}
 	}
 
 	/// <summary>
 	/// The built-in controls in the workbench's colours, under WinUI's lightweight-styling keys, for a view's resources: a
-	/// button raised off its panel, a toggle that is on filled with the accent and its text dark, a slider's fill and thumb
+	/// button raised off its panel as a key, a toggle that is on lit (the accent) and its text dark, a slider's fill and thumb
 	/// in the accent.
 	/// </summary>
 	public static ResourceDictionary Controls()
 	{
 		var resources = new ResourceDictionary();
-		resources.Add("ButtonBackground", Raised);
-		resources.Add("ButtonBackgroundPointerOver", RaisedOver);
+		resources.Add("ButtonBackground", Key);
+		resources.Add("ButtonBackgroundPointerOver", KeyOver);
 		resources.Add("ButtonBackgroundPressed", Sunk);
 		resources.Add("ButtonForeground", Ink);
-		resources.Add("ToggleButtonBackground", Raised);
-		resources.Add("ToggleButtonBackgroundPointerOver", RaisedOver);
+		resources.Add("ToggleButtonBackground", Key);
+		resources.Add("ToggleButtonBackgroundPointerOver", KeyOver);
 		resources.Add("ToggleButtonBackgroundPressed", Sunk);
 		resources.Add("ToggleButtonForeground", Ink);
-		resources.Add("ToggleButtonBackgroundChecked", Accent);
+		resources.Add("ToggleButtonBackgroundChecked", KeyLit);
 		resources.Add("ToggleButtonForegroundChecked", AccentInk);
 		resources.Add("SliderTrackFill", Rail);
 		resources.Add("SliderTrackValueFill", Accent);
@@ -207,6 +227,9 @@ internal static class Theme
 
 	/// <summary>The same hue, faint: behind the pass of a track's part that is playing.</summary>
 	public static SolidColorBrush TrackHueSoft(int index) => TrackHuesSoft[Wrap(index)];
+
+	/// <summary>The same hue where it marks the track's head: lit past white in a theme that glows.</summary>
+	public static SolidColorBrush TrackLamp(int index) => TrackLamps[Wrap(index)];
 
 	private static int Wrap(int index) => ((index % TrackHueCount) + TrackHueCount) % TrackHueCount;
 

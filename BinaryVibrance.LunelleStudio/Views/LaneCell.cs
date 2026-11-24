@@ -261,7 +261,7 @@ internal sealed class LaneCell : ContentControl
 		return clip;
 	}
 
-	private static BinaryVibrance.Vysara.Media.SolidColorBrush Lamp(bool on) => on ? Theme.Meter : Theme.Off;
+	private static BinaryVibrance.Vysara.Media.SolidColorBrush Lamp(bool on) => on ? Theme.Lamp : Theme.Off;
 
 	private static Border Mark(BinaryVibrance.Vysara.Media.Brush brush, float thickness) => new()
 	{

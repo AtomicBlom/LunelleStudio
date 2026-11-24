@@ -31,6 +31,12 @@ internal static class Theme
 	public static SolidColorBrush Accent { get; } = new();
 	public static SolidColorBrush Off { get; } = new();
 	public static SolidColorBrush Meter { get; } = new();
+
+	/// <summary>A part's lamp while it plays; may be brighter than white, to glow.</summary>
+	public static SolidColorBrush Lamp { get; } = new();
+
+	/// <summary>A level as it moves (a track's meter, the scope); may be brighter than white, to glow.</summary>
+	public static SolidColorBrush Level { get; } = new();
 	public static SolidColorBrush Error { get; } = new();
 	public static SolidColorBrush WhiteKey { get; } = new();
 	public static SolidColorBrush BlackKey { get; } = new();
@@ -106,6 +112,8 @@ internal static class Theme
 		Accent.Color = t.Accent;
 		Off.Color = t.Off;
 		Meter.Color = t.Meter;
+		Lamp.Color = t.Lamp;
+		Level.Color = t.Level;
 		Error.Color = t.Error;
 		WhiteKey.Color = t.WhiteKey;
 		BlackKey.Color = t.BlackKey;

@@ -19,7 +19,7 @@ internal sealed class TrackHeader : ContentControl
 	private readonly BinaryVibrance.Vysara.Media.TranslateTransform _stay = new();
 	private ArrangeScroll? _scroll;
 	private Border? _frame;
-	private readonly Border _meter = new() { HorizontalAlignment = HorizontalAlignment.Left, CornerRadius = new CornerRadius(2f), Background = Theme.Meter, Height = 4f };
+	private readonly Border _meter = new() { HorizontalAlignment = HorizontalAlignment.Left, CornerRadius = new CornerRadius(2f), Background = Theme.Level, Height = 4f };
 
 	public TrackHeader()
 	{

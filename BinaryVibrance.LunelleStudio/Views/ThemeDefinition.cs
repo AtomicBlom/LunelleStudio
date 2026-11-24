@@ -46,6 +46,15 @@ internal sealed record ThemeDefinition
 	public required HdrColor Off { get; init; }
 
 	public required HdrColor Meter { get; init; }
+
+	/// <summary>A part's lamp while it plays: in a theme that glows, brighter than white (<see cref="Lit"/>).</summary>
+	public required HdrColor Lamp { get; init; }
+
+	/// <summary>A level shown as it moves (a track's meter, the scope's traces): in a theme that glows, brighter than white.</summary>
+	public required HdrColor Level { get; init; }
+
+	/// <summary>How much of the glow round what is drawn brighter than white is added to the window: 0 for none.</summary>
+	public float Glow { get; init; }
 	public required HdrColor Error { get; init; }
 	public required HdrColor ErrorSoft { get; init; }
 	public required HdrColor Backdrop { get; init; }
@@ -94,6 +103,8 @@ internal sealed record ThemeDefinition
 		AccentInk = Rgb(11, 22, 38),
 		Off = Rgb(60, 64, 78),
 		Meter = Rgb(96, 214, 128),
+		Lamp = Rgb(96, 214, 128),
+		Level = Rgb(96, 214, 128),
 		Error = Rgb(150, 40, 44),
 		ErrorSoft = Rgb(224, 88, 93, 46),
 		Backdrop = Rgb(0, 0, 0, 120),
@@ -144,12 +155,15 @@ internal sealed record ThemeDefinition
 		AccentWash = 0.5f,
 		Off = Rgb(62, 58, 52),
 		Meter = Rgb(127, 220, 106),
+		Lamp = Lit(Rgb(127, 220, 106), 3f),
+		Level = Lit(Rgb(127, 220, 106), 1.6f),
+		Glow = 0.35f,
 		Error = Rgb(196, 64, 46),
 		ErrorSoft = Rgb(227, 93, 74, 46),
 		Backdrop = Rgb(0, 0, 0, 140),
 		Note = Rgb(255, 176, 112),
 		BarLine = Rgb(74, 70, 64),
-		Playhead = Rgb(255, 138, 61, 235),
+		Playhead = Lit(Rgb(255, 138, 61), 2.5f),
 		WhiteKey = Rgb(233, 227, 214),
 		BlackKey = Rgb(20, 19, 18),
 		Drive = Rgb(63, 201, 182),
@@ -181,4 +195,17 @@ internal sealed record ThemeDefinition
 	}
 
 	private static HdrColor Rgb(byte r, byte g, byte b, byte a = 255) => HdrColor.FromRgb(r, g, b, a);
+
+	/// <summary>
+	/// <paramref name="colour"/> giving <paramref name="times"/> its light: authored colours are sRGB, which Vysara decodes
+	/// to linear light along a curve that runs on past 1, so this scales the linear light and encodes it back. Past white,
+	/// it glows in a theme with <see cref="Glow"/>.
+	/// </summary>
+	public static HdrColor Lit(HdrColor colour, float times) =>
+		colour with { R = Encode(Decode(colour.R) * times), G = Encode(Decode(colour.G) * times), B = Encode(Decode(colour.B) * times) };
+
+	// The sRGB curve each way, as Vysara's HdrColor decodes it, continued past 1
+	private static float Decode(float c) => c <= 0.04045f ? c / 12.92f : MathF.Pow((c + 0.055f) / 1.055f, 2.4f);
+
+	private static float Encode(float l) => l <= 0.0031308f ? l * 12.92f : 1.055f * MathF.Pow(l, 1f / 2.4f) - 0.055f;
 }

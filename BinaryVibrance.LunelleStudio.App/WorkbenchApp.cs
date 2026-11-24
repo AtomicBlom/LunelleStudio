@@ -21,6 +21,7 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 	private UIHost _ui = null!;
 	private UIPainter _painter = null!;
 	private UIView _view = null!;
+	private Glow _glow = null!;
 	private Workbench _workbench = null!;
 	private Task<MusicProject> _opening = null!;
 	private WorkbenchProject? _project;
@@ -48,6 +49,7 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 		Audio = new AudioEngine(AudioOutput.Open(audio), audio);
 
 		Engine.DefineTechnique("background", new TechniqueDescriptor("background"));
+		_glow = new Glow(Engine);
 		_ui = new UIHost();
 		_painter = UIPainter.Create(Engine, _ui);
 		_view = _ui.CreateRoot(UILayer.Default);
@@ -83,13 +85,16 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 
 		SetGraph(RenderGraph.Define(g =>
 		{
+			// The workbench in linear light, then its glow and the display pass onto the screen (Glow)
 			var screen = g.Backbuffer;
+			var workbench = Glow.Target(g);
 			g.Pass("background")
-				.Writes(screen)
+				.Writes(workbench)
 				.Draw(static ctx => ctx.FullScreen("background"));
 			g.Pass("ui")
-				.Blends(screen)
+				.Blends(workbench)
 				.Draw((_painter, _view.Surface), static (ctx, ui) => ui.Item1.Draw(ctx, ui.Item2));
+			_glow.Declare(g, workbench, screen);
 			g.Present(screen);
 		}));
 	}
@@ -140,6 +145,7 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 		WorkbenchFocus.KeepKeys(_ui.Focus);
 		_ui.Render();
 		_painter.Prepare();
+		_glow.Prepare(SurfaceSize, Workbench.ThemeGlow);
 		Audio.Update();
 	}
 

@@ -26,6 +26,30 @@ public class ThemeTests
 	}
 
 	[Test]
+	public void Slate_glows_nowhere_so_it_shows_as_it_always_has()
+	{
+		var slate = ThemeDefinition.Slate;
+		slate.Glow.ShouldBe(0f);
+		slate.Lamp.ShouldBe(slate.Meter);
+		slate.Level.ShouldBe(slate.Meter);
+	}
+
+	[Test]
+	public void A_lit_colour_gives_that_many_times_its_light()
+	{
+		var orange = HdrColor.FromRgb(255, 138, 61);
+		var lit = ThemeDefinition.Lit(orange, 2.5f);
+
+		lit.A.ShouldBe(orange.A);
+		// In linear light, as Vysara draws it: half precision, so to a few parts in a thousand
+		var (before, after) = (orange.ToPremultiplied().ToVector4(), lit.ToPremultiplied().ToVector4());
+		after.X.ShouldBe(before.X * 2.5f, 0.005f);
+		after.Y.ShouldBe(before.Y * 2.5f, 0.005f);
+		after.Z.ShouldBe(before.Z * 2.5f, 0.005f);
+		ThemeDefinition.Lit(orange, 1f).R.ShouldBe(orange.R, 1e-5f);
+	}
+
+	[Test]
 	public void A_theme_recolours_the_brushes_the_views_already_hold()
 	{
 		var accent = Theme.Accent;

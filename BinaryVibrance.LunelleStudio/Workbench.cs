@@ -1060,6 +1060,9 @@ public sealed partial class Workbench : IDisposable
 	/// <summary>The name of the theme the workbench shows.</summary>
 	public static string ThemeName => Theme.Current.Name;
 
+	/// <summary>How much the theme's glow adds round what it draws brighter than white: 0 for none.</summary>
+	public static float ThemeGlow => Theme.Current.Glow;
+
 	/// <summary>Every theme's name, the first the one a workbench starts in.</summary>
 	public static IReadOnlyList<string> ThemeNames { get; } = [.. ThemeDefinition.All.Select(t => t.Name)];
 

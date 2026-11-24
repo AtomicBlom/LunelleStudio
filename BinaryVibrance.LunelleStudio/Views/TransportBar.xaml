@@ -39,6 +39,8 @@
                 <ToggleButton ToolTipService.ToolTip="Loop the current section" IsChecked="{x:Bind ViewModel.LoopSection, Mode=TwoWay}" VerticalAlignment="Center" Margin="0,0,14,0" Padding="8,3,8,4">
                     <TextBlock Text="Loop section" FontSize="12" />
                 </ToggleButton>
+                <!-- The master's level, in a theme with a VU meter (code-behind gives it the view model) -->
+                <views:VuMeter x:Name="Vu" VerticalAlignment="Center" Margin="0,0,14,0" />
             </StackPanel>
             <StackPanel Grid.Row="0" Grid.Column="1" Orientation="Horizontal">
                 <TextBlock Text="{x:Bind ViewModel.Notice, Mode=OneWay}" Visibility="{x:Bind views:Display.Any(ViewModel.Notice), Mode=OneWay}"

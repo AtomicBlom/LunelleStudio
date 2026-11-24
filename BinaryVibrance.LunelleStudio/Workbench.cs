@@ -149,7 +149,7 @@ public sealed partial class Workbench : IDisposable
 		_bus = bus;
 		_catalog = catalog;
 		Player = new MusicPlayer(audio, bus);
-		ViewModel = new WorkbenchViewModel(this);
+		ViewModel = new WorkbenchViewModel(this) { HasVuMeter = Theme.Current.VuMeter };
 		audio.AddEffect(bus, _tap);
 		ViewModel.Designer.Built += OnDesignerBuilt;
 		ViewModel.Designer.CopyRequested += OnCopyRequested;
@@ -678,7 +678,24 @@ public sealed partial class Workbench : IDisposable
 			RefreshSketch();
 			ViewModel.RaiseRefreshed();
 		}
+		ShowMasterLevel(deltaSeconds);
 		ViewModel.RaiseFrame();
+	}
+
+	// The VU meter's needle: 0 VU at a peak of −10 dBFS, the dial −20 to +3 VU. The needle answers as a VU meter's does,
+	// about 300 ms to settle, so it shows the music's loudness rather than every transient.
+	private const float VuZeroDbfs = -10f, VuFloor = -20f, VuCeiling = 3f, VuSettleSeconds = 0.065f;
+	private float _vuLinear;
+
+	private void ShowMasterLevel(double deltaSeconds)
+	{
+		if (!ViewModel.HasVuMeter)
+			return;
+		var peak = _audio.Stats.Peak;
+		var ease = 1f - MathF.Exp(-(float)deltaSeconds / VuSettleSeconds);
+		_vuLinear += (peak - _vuLinear) * ease;
+		var vu = AudioAnalysis.ToDb(MathF.Max(_vuLinear, 1e-6f)) - VuZeroDbfs;
+		ViewModel.MasterLevel = Math.Clamp((vu - VuFloor) / (VuCeiling - VuFloor), 0f, 1f);
 	}
 
 	private void Refresh()
@@ -1087,6 +1104,7 @@ public sealed partial class Workbench : IDisposable
 		if (!ReferenceEquals(theme, Theme.Current))
 		{
 			Theme.Apply(theme);
+			ViewModel.HasVuMeter = theme.VuMeter;
 			ThemeChanged?.Invoke(theme.Name);
 		}
 		return true;

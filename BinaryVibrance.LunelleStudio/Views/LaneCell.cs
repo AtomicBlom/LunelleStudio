@@ -184,12 +184,23 @@ internal sealed class LaneCell : ContentControl
 		var column = new StackPanel { Orientation = Orientation.Vertical };
 		column.Children.Add(row);
 		column.Children.Add(strip);
+		// Its track's hue along its top, in a theme that edges parts, over it rather than above it, so nothing moves
+		var face = new Grid();
+		face.Children.Add(column);
+		face.Children.Add(new Border
+		{
+			Height = 2f,
+			VerticalAlignment = VerticalAlignment.Top,
+			CornerRadius = new CornerRadius(2f, 2f, 0f, 0f),
+			Background = Theme.PartEdge(part.TrackIndex),
+			IsHitTestVisible = false,
+		});
 		var clip = new Border
 		{
 			Height = ArrangeLayout.ClipHeight,
 			CornerRadius = new CornerRadius(5f),
 			Background = part.IsSelected ? Theme.AccentSoft : Theme.Clear,
-			Child = column,
+			Child = face,
 		};
 		var tip = $"{part.Title}: click to edit it, or a bar of it to open the roll there. Right-click for more.";
 		ToolTipService.SetToolTip(clip, tip);

@@ -25,8 +25,12 @@
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
                                     <TextBlock Grid.Column="0" Text="{x:Bind Name}" FontSize="14" Foreground="{x:Static views:Theme.Ink}" />
-                                    <TextBlock Grid.Column="1" Visibility="{x:Bind IsLevel}" Text="{x:Bind views:Display.Fixed(Value), Mode=OneWay}"
-                                               FontSize="13" Foreground="{x:Static views:Theme.Dim}" />
+                                    <!-- In the theme's readout window, its text where it would be with none -->
+                                    <Border Grid.Column="1" Visibility="{x:Bind IsLevel}" Background="{x:Static views:Theme.Window}" CornerRadius="3"
+                                            Padding="6,1,6,1" Margin="0,-1,-6,-1">
+                                        <TextBlock Text="{x:Bind views:Display.Fixed(Value), Mode=OneWay}" FontSize="13" Foreground="{x:Static views:Theme.WindowDim}"
+                                                   Typography.NumeralAlignment="Tabular" />
+                                    </Border>
                                 </Grid>
                                 <StackPanel Visibility="{x:Bind IsLevel}">
                                     <views:CueTicks Cue="{x:Bind Self}" HorizontalAlignment="Left" Margin="0,4,0,0" />

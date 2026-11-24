@@ -20,6 +20,7 @@ internal sealed partial class TransportBar : ContentControl, INotifyPropertyChan
 		set
 		{
 			field = value;
+			Vu.ViewModel = value;
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ViewModel)));
 		}
 	}

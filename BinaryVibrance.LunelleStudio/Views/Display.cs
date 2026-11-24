@@ -94,6 +94,9 @@ internal static class Display
 	// A rail icon, in the accent while its mode is the one showing
 	public static SolidColorBrush RailInk(bool on) => on ? Theme.Accent : Theme.Dim;
 
+	// The lamp beside a rail mode: the theme's while it is the one showing
+	public static SolidColorBrush RailLamp(bool on) => on ? Theme.RailLamp : Theme.Clear;
+
 	// Where the playhead crosses a column, as a left margin
 	public static BinaryVibrance.Vysara.Thickness Playhead(float x) => new(x, 0f, 0f, 0f);
 

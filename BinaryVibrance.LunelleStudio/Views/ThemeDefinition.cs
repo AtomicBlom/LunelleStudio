@@ -38,8 +38,15 @@ internal sealed record ThemeDefinition
 	/// <summary>Behind a readout (the transport's position): a display's dark glass, or clear.</summary>
 	public required HdrColor Window { get; init; }
 
-	/// <summary>A readout's figures in their <see cref="Window"/>.</summary>
+	/// <summary>A readout's figures in their <see cref="Window"/>, and a quieter readout's (a cue's value).</summary>
 	public required HdrColor WindowInk { get; init; }
+	public required HdrColor WindowDim { get; init; }
+
+	/// <summary>Beside the rail's mode that is showing: a lamp, or clear.</summary>
+	public required HdrColor RailLamp { get; init; }
+
+	/// <summary>How much of its track's hue edges the top of each part: 0 for none.</summary>
+	public float PartEdge { get; init; }
 
 	/// <summary>How many times its light a track's hue has where it marks the track's head: past white, a lamp that
 	/// glows in the track's colour; 1 for the hue as it is.</summary>
@@ -73,6 +80,15 @@ internal sealed record ThemeDefinition
 
 	/// <summary>How much of the glow round what is drawn brighter than white is added to the window: 0 for none.</summary>
 	public float Glow { get; init; }
+
+	/// <summary>Whether the master's level shows on a VU meter by the transport, with its face, scale and needle in
+	/// <see cref="VuFace"/>, <see cref="VuInk"/>, <see cref="VuHot"/> and <see cref="VuNeedle"/>.</summary>
+	public bool VuMeter { get; init; }
+
+	public HdrColor VuFace { get; init; }
+	public HdrColor VuInk { get; init; }
+	public HdrColor VuHot { get; init; }
+	public HdrColor VuNeedle { get; init; }
 
 	/// <summary>The font of the workbench's words (<see cref="Theme.Label"/>), by the name the app bakes it under, or
 	/// null for Vysara's own.</summary>
@@ -122,6 +138,8 @@ internal sealed record ThemeDefinition
 		KeyLit = Rgb(92, 170, 255),
 		Window = Rgb(0, 0, 0, 0),
 		WindowInk = Rgb(226, 230, 238),
+		WindowDim = Rgb(140, 148, 164),
+		RailLamp = Rgb(0, 0, 0, 0),
 		Ink = Rgb(226, 230, 238),
 		Dim = Rgb(140, 148, 164),
 		Faint = Rgb(93, 100, 118),
@@ -178,7 +196,10 @@ internal sealed record ThemeDefinition
 		KeyLit = Lit(Rgb(255, 138, 61), 1.25f),
 		Window = Rgb(16, 20, 14),
 		WindowInk = Lit(Rgb(201, 240, 178), 1.2f),
+		WindowDim = Rgb(150, 196, 128),
 		TrackLampLight = 2.2f,
+		RailLamp = Lit(Rgb(255, 138, 61), 2f),
+		PartEdge = 0.9f,
 		Ink = Rgb(236, 230, 216),
 		Dim = Rgb(163, 155, 138),
 		Faint = Rgb(112, 105, 92),
@@ -194,6 +215,11 @@ internal sealed record ThemeDefinition
 		Lamp = Lit(Rgb(127, 220, 106), 3f),
 		Level = Lit(Rgb(127, 220, 106), 1.6f),
 		Glow = 0.35f,
+		VuMeter = true,
+		VuFace = Lit(Rgb(239, 226, 196), 1.1f),
+		VuInk = Rgb(42, 38, 32),
+		VuHot = Rgb(200, 58, 44),
+		VuNeedle = Rgb(29, 26, 22),
 		LabelFont = "archivo-narrow",
 		ReadoutFont = "b612-mono",
 		Error = Rgb(196, 64, 46),

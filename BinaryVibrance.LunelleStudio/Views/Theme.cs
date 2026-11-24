@@ -35,6 +35,16 @@ internal static class Theme
 	/// <summary>Behind a readout, and its figures.</summary>
 	public static SolidColorBrush Window { get; } = new();
 	public static SolidColorBrush WindowInk { get; } = new();
+	public static SolidColorBrush WindowDim { get; } = new();
+
+	/// <summary>Beside the rail's mode that is showing.</summary>
+	public static SolidColorBrush RailLamp { get; } = new();
+
+	/// <summary>The VU meter's face (lit from behind), its scale, its red zone past 0 VU and its needle.</summary>
+	public static SolidColorBrush VuFace { get; } = new();
+	public static SolidColorBrush VuInk { get; } = new();
+	public static SolidColorBrush VuHot { get; } = new();
+	public static SolidColorBrush VuNeedle { get; } = new();
 
 	public static SolidColorBrush Ink { get; } = new();
 	public static SolidColorBrush Dim { get; } = new();
@@ -101,6 +111,7 @@ internal static class Theme
 	private static readonly SolidColorBrush[] TrackHues = Brushes(TrackHueCount);
 	private static readonly SolidColorBrush[] TrackHuesSoft = Brushes(TrackHueCount);
 	private static readonly SolidColorBrush[] TrackLamps = Brushes(TrackHueCount);
+	private static readonly SolidColorBrush[] PartEdges = Brushes(TrackHueCount);
 
 	/// <summary>The theme the brushes show.</summary>
 	public static ThemeDefinition Current { get; private set; } = ThemeDefinition.Slate;
@@ -136,6 +147,12 @@ internal static class Theme
 		KeyLit.Color = t.KeyLit;
 		Window.Color = t.Window;
 		WindowInk.Color = t.WindowInk;
+		WindowDim.Color = t.WindowDim;
+		RailLamp.Color = t.RailLamp;
+		VuFace.Color = t.VuFace;
+		VuInk.Color = t.VuInk;
+		VuHot.Color = t.VuHot;
+		VuNeedle.Color = t.VuNeedle;
 		Ink.Color = t.Ink;
 		Dim.Color = t.Dim;
 		Faint.Color = t.Faint;
@@ -180,6 +197,7 @@ internal static class Theme
 		{
 			TrackHues[i].Color = t.TrackHues[i];
 			TrackHuesSoft[i].Color = WithAlpha(t.TrackHues[i], TrackHueSoftAlpha);
+			PartEdges[i].Color = WithAlpha(t.TrackHues[i], t.TrackHues[i].A * 255f * t.PartEdge);
 			TrackLamps[i].Color = t.TrackLampLight == 1f ? t.TrackHues[i] : ThemeDefinition.Lit(t.TrackHues[i], t.TrackLampLight);
 		}
 	}
@@ -227,6 +245,9 @@ internal static class Theme
 
 	/// <summary>The same hue, faint: behind the pass of a track's part that is playing.</summary>
 	public static SolidColorBrush TrackHueSoft(int index) => TrackHuesSoft[Wrap(index)];
+
+	/// <summary>The same hue along the top of each of the track's parts: clear in a theme with no edge.</summary>
+	public static SolidColorBrush PartEdge(int index) => PartEdges[Wrap(index)];
 
 	/// <summary>The same hue where it marks the track's head: lit past white in a theme that glows.</summary>
 	public static SolidColorBrush TrackLamp(int index) => TrackLamps[Wrap(index)];

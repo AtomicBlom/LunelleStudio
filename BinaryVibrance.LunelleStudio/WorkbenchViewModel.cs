@@ -11,6 +11,8 @@ public sealed class WorkbenchViewModel : ViewModel
 	private bool _isPlaying;
 	private bool _loopSection;
 	private string _positionText = "stopped";
+	private float _masterLevel;
+	private bool _hasVuMeter;
 	private string _tempoText = "";
 	private string _scaleText = "";
 	private string _error = "";
@@ -86,6 +88,20 @@ public sealed class WorkbenchViewModel : ViewModel
 	{
 		get => _positionText;
 		internal set => Set(ref _positionText, value);
+	}
+
+	/// <summary>Where the VU meter's needle is, 0 (−20 VU) to 1 (+3 VU): the master's level, eased as a VU meter's needle is.</summary>
+	public float MasterLevel
+	{
+		get => _masterLevel;
+		internal set => Set(ref _masterLevel, value);
+	}
+
+	/// <summary>Whether the theme shows the master's level on a VU meter by the transport.</summary>
+	public bool HasVuMeter
+	{
+		get => _hasVuMeter;
+		internal set => Set(ref _hasVuMeter, value);
 	}
 
 	/// <summary>Its tempo: "138 bpm".</summary>

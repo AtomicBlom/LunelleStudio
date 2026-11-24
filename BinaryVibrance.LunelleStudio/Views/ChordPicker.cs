@@ -13,11 +13,17 @@ namespace BinaryVibrance.LunelleStudio.Views;
 internal sealed class ChordPicker : ContentControl
 {
 	private static readonly string[] Numerals = ["I", "II", "III", "IV", "V", "VI", "VII"];
-	private static readonly (ChordKind Kind, string Suffix, string Name)[] Kinds =
+	private static readonly (ChordKind Kind, string Name)[] Kinds =
 	[
-		(ChordKind.Triad, "", "diatonic"), (ChordKind.Major, "M", "major"), (ChordKind.Minor, "m", "minor"),
-		(ChordKind.Power, "5", "power"), (ChordKind.Sus2, "sus2", "sus2"), (ChordKind.Sus4, "sus4", "sus4"),
-		(ChordKind.Seventh, "7", "seventh"), (ChordKind.Diminished, "dim", "diminished"),
+		(ChordKind.Triad, "diatonic"), (ChordKind.Major, "major"), (ChordKind.Minor, "minor"), (ChordKind.Power, "power"),
+		(ChordKind.Sus2, "sus2"), (ChordKind.Sus4, "sus4"), (ChordKind.Diminished, "diminished"),
+	];
+	private static readonly (ChordExtension Extension, bool MajorSeventh, string Name)[] Extensions =
+	[
+		(ChordExtension.None, false, "triad"), (ChordExtension.Sixth, false, "6"), (ChordExtension.SixNine, false, "6/9"),
+		(ChordExtension.Add9, false, "add9"), (ChordExtension.Seventh, false, "7"), (ChordExtension.Seventh, true, "maj7"),
+		(ChordExtension.Ninth, false, "9"), (ChordExtension.Ninth, true, "maj9"), (ChordExtension.Eleventh, false, "11"),
+		(ChordExtension.Thirteenth, false, "13"), (ChordExtension.Thirteenth, true, "maj13"),
 	];
 
 	private readonly List<List<string>> _bars;
@@ -77,7 +83,7 @@ internal sealed class ChordPicker : ContentControl
 		for (var d = 1; d <= 7; d++)
 		{
 			var degree = d;
-			var button = Toggle(Spell(new Chord(d, chord.Kind, chord.Accidental)), chord.Degree == d, $"Chord on scale degree {Numerals[d - 1]}");
+			var button = Toggle(Spell(chord with { Degree = d }), chord.Degree == d, $"Chord on scale degree {Numerals[d - 1]}");
 			button.Click += (_, _) => Set(chord with { Degree = degree });
 			degrees.Children.Add(button);
 		}
@@ -92,15 +98,31 @@ internal sealed class ChordPicker : ContentControl
 		}
 		_column.Children.Add(accidentals);
 
-		_column.Children.Add(Label("Kind"));
+		_column.Children.Add(Label("Quality"));
 		var kinds = Row();
-		foreach (var (kind, _, name) in Kinds)
+		foreach (var (kind, name) in Kinds)
 		{
-			var button = Toggle(name, chord.Kind == kind, kind == ChordKind.Triad ? "Diatonic: major, minor or diminished, as the scale gives on this degree" : $"{char.ToUpperInvariant(name[0])}{name[1..]} chord, regardless of the scale");
-			button.Click += (_, _) => Set(chord with { Kind = kind });
+			var button = Toggle(name, chord.Kind == kind, kind == ChordKind.Triad ? "Diatonic: major, minor or diminished, as the scale gives on this degree, and the scale's seventh" : $"{char.ToUpperInvariant(name[0])}{name[1..]} chord, regardless of the scale");
+			button.Click += (_, _) => Set(kind == ChordKind.Power ? new Chord(chord.Degree, kind, chord.Accidental) : chord with { Kind = kind });
 			kinds.Children.Add(button);
 		}
 		_column.Children.Add(kinds);
+
+		// Alterations (b9, #11 and the rest) are kept through a pick here, and written in the chords text
+		_column.Children.Add(Label("Extension"));
+		for (var row = 0; row < 2; row++)
+		{
+			var extensions = Row();
+			foreach (var (extension, majorSeventh, name) in Extensions)
+			{
+				if (extension >= ChordExtension.Seventh != (row == 1))
+					continue;
+				var button = Toggle(name, chord.Extension == extension && chord.MajorSeventh == majorSeventh, extension == ChordExtension.None ? "The triad alone" : $"Add {name} to the triad");
+				button.Click += (_, _) => Set(chord with { Kind = chord.Kind == ChordKind.Power ? ChordKind.Triad : chord.Kind, Extension = extension, MajorSeventh = majorSeventh });
+				extensions.Children.Add(button);
+			}
+			_column.Children.Add(extensions);
+		}
 
 		var progression = Row();
 		var add = new Button { Content = Text("+ Add bar"), Padding = new Thickness(8f, 2f, 8f, 3f), Margin = new Thickness(0f, 0f, 4f, 0f) };
@@ -163,8 +185,7 @@ internal sealed class ChordPicker : ContentControl
 			_ => new Chord(chord.Degree, ChordKind.Triad, chord.Accidental).Intervals(_scale) is [_, 3, ..],
 		};
 		var accidentals = chord.Accidental < 0 ? new string('b', -chord.Accidental) : new string('#', chord.Accidental);
-		var suffix = Kinds.First(k => k.Kind == chord.Kind).Suffix;
-		return accidentals + (minor ? numeral.ToLowerInvariant() : numeral) + suffix;
+		return accidentals + (minor ? numeral.ToLowerInvariant() : numeral) + chord.Suffix;
 	}
 
 	// A bar's token as a chord: the tokens came from a section that read them, so one that doesn't read throws rather than

@@ -61,6 +61,12 @@ public sealed partial class Workbench : IDisposable
 	/// </summary>
 	public Func<string, bool>? CopyText { get; set; }
 
+	/// <summary>
+	/// Where the project's songs and patches are read and written: the disk unless the host keeps them elsewhere (a
+	/// browser's storage). Set before the first song is opened.
+	/// </summary>
+	public IMusicFiles Files { get; init; } = DiskFiles.Instance;
+
 	internal int ReadScope(Span<float> into) => _tap.Read(into);
 
 	internal int SampleRate => _audio.SampleRate;
@@ -1406,7 +1412,7 @@ public sealed partial class Workbench : IDisposable
 		try
 		{
 			_editor?.Save();
-			_editor = SongEditor.Open(_source.Path);
+			_editor = SongEditor.Open(_source.Path, Files);
 		}
 		catch (Exception ex) when (ex is IOException or FormatException or UnauthorizedAccessException)
 		{
@@ -1601,7 +1607,7 @@ public sealed partial class Workbench : IDisposable
 		{
 			try
 			{
-				var text = File.ReadAllText(_patchFile);
+				var text = Files.ReadText(_patchFile);
 				_patchCode = System.Text.Json.Nodes.JsonNode.Parse(text)?["code"]?.GetValue<string>();
 				if (_patchCode is null)
 				{
@@ -1632,9 +1638,9 @@ public sealed partial class Workbench : IDisposable
 		var text = PatchFile.Write(spec, ViewModel.Designer.Names);
 		try
 		{
-			if (!File.Exists(_patchFile) || File.ReadAllText(_patchFile) != text)
+			if (!Files.Exists(_patchFile) || Files.ReadText(_patchFile) != text)
 			{
-				File.WriteAllText(_patchFile, text);
+				Files.WriteText(_patchFile, text);
 				ViewModel.BuildText = $"saved {Path.GetFileName(_patchFile)} {DateTime.Now:HH:mm:ss}";
 			}
 		}
@@ -1773,7 +1779,7 @@ public sealed partial class Workbench : IDisposable
 			+ PatchCode.Write(designer.Spec, property, designer.Names, _catalog.MacroName)
 				.Replace($"public static Patch {property} =>", $"public static partial Patch {property} =>", StringComparison.Ordinal);
 		var (file, line) = Code.AddMember(type, Path.GetDirectoryName(_patchFile)!, code);
-		File.WriteAllText(_patchFile, $"{{\n  \"format\": \"{PatchFile.Format}\",\n  \"name\": \"{designer.Spec.Name}\",\n  \"code\": \"{property}\"\n}}\n");
+		Files.WriteText(_patchFile, $"{{\n  \"format\": \"{PatchFile.Format}\",\n  \"name\": \"{designer.Spec.Name}\",\n  \"code\": \"{property}\"\n}}\n");
 		_patchCode = property;
 		designer.ShowCode(true, false);
 		ViewModel.BuildText = $"Converted to C# in {Path.GetFileName(file)}:{line} · building";
@@ -1789,7 +1795,7 @@ public sealed partial class Workbench : IDisposable
 		var removed = _catalog.PatchesType is { } type ? Code?.RemoveMember(type, property) : null;
 		var spec = PatchSpec.From(patch);
 		var names = removed is null ? null : VariableNames(removed, spec.Operators.Count);
-		File.WriteAllText(_patchFile, PatchFile.Write(spec, names));
+		Files.WriteText(_patchFile, PatchFile.Write(spec, names));
 		_patchCode = null;
 		ViewModel.Designer.Load(patch, _catalog.MacroName, names: names);
 		ViewModel.Designer.ShowCode(false, Code is not null && _catalog.PatchesType is not null);
@@ -1837,7 +1843,7 @@ public sealed partial class Workbench : IDisposable
 		string text;
 		try
 		{
-			text = File.ReadAllText(entry.Path);
+			text = Files.ReadText(entry.Path);
 		}
 		catch (IOException ex)
 		{

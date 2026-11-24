@@ -20,7 +20,8 @@ dotnet run --project BinaryVibrance.LunelleStudio.App -- <folder> --data
 ```
 
 A folder with no `.csproj`, or any folder with `--data`, is music files alone: its songs, patches, kits and a
-`lunelle-project.json` (its cues and macros) read with no C#, nothing compiled and no extension (Lunelle's `MusicFolder`); `new --data` starts one.
+`lunelle-project.json` (its cues and macros) read with no C#, nothing compiled and no extension (Lunelle's `MusicFolder`); `new --data` starts one. Whatever the project, the workbench reads and writes its
+songs, patches and state through `Workbench.Files` (`IMusicFiles`): the disk, unless a host keeps them elsewhere.
 
 Lunelle's [`docs/synth.md`](https://github.com/AtomicBlom/Lunelle/blob/master/docs/synth.md), sections 5 and 6, is the guide.
 

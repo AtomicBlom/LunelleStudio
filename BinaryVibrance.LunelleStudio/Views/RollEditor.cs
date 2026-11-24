@@ -42,6 +42,8 @@ internal sealed class RollEditor : ContentControl
 	// The part last drawn, and the offset to scroll to once its rows are laid out: a part newly opened shows its notes
 	private string? _shownTitle;
 	private float _centreOn = -1f;
+	// The step to scroll the roll's left edge to once it is laid out (the bar a click on a lane chose), or -1
+	private int _scrollToStep = -1;
 
 	public RollEditor()
 	{
@@ -80,6 +82,13 @@ internal sealed class RollEditor : ContentControl
 
 	private void OnRollChanged(object? sender, PropertyChangedEventArgs e)
 	{
+		if (e.PropertyName == nameof(RollViewModel.Focused) && Roll is { } roll)
+		{
+			// Scrolled to once its steps are laid out, as a part newly opened centres on its notes
+			_scrollToStep = roll.FocusStep;
+			InvalidateArrange();
+			return;
+		}
 		if (e.PropertyName != nameof(RollViewModel.Version))
 			return;
 		Fit(_fittedTo);
@@ -107,6 +116,11 @@ internal sealed class RollEditor : ContentControl
 		{
 			_scroll.ScrollToVerticalOffset(_centreOn - _scroll.ViewportHeight / 2f);
 			_centreOn = -1f;
+		}
+		if (_scrollToStep >= 0)
+		{
+			_scroll.ScrollToHorizontalOffset(_scrollToStep * _stepWidth);
+			_scrollToStep = -1;
 		}
 		return arranged;
 	}

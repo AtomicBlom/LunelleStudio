@@ -92,7 +92,7 @@ internal sealed partial class ArrangeView : ContentControl, INotifyPropertyChang
 		column.Children.Add(list);
 		column.Children.Add(add);
 		column.Children.Add(problem);
-		var flyout = new Flyout { Content = column, Placement = FlyoutPlacementMode.BottomEdgeAlignedRight };
+		var flyout = new Flyout { Content = column, Placement = FlyoutPlacementMode.BottomEdgeAlignedLeft };
 		void Add()
 		{
 			if (list.SelectedIndex < 0)

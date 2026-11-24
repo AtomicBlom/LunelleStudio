@@ -6,7 +6,7 @@ namespace BinaryVibrance.LunelleStudio.Views;
 
 /// <summary>
 /// The workbench's icons, stroked with round ends in a 20 square as the rail's are, made at any size: what a library row,
-/// a lane's header, a file and the inspector's title are, and the small marks on buttons (play, add, up and down, close, delete) and a handle to drag by.
+/// a lane's header, a file and the inspector's title are, and the small marks on buttons (play, add, up and down, close, delete), a handle to drag by and the dots of a ⋯ menu.
 /// The patch, kit and files icons are the rail's own.
 /// </summary>
 internal static class Glyphs
@@ -26,6 +26,7 @@ internal static class Glyphs
 	private const string CloseData = "M4,4 L16,16 M16,4 L4,16";
 	private const string TrashData = "M3.5,5.5 L16.5,5.5 M8,5.5 L8,3 L12,3 L12,5.5 M5.5,5.5 L6.5,17 L13.5,17 L14.5,5.5 M8.5,8.5 L8.8,14 M11.5,8.5 L11.2,14";
 	private const string GripData = "M6,5 L14,5 M6,10 L14,10 M6,15 L14,15";
+	private const string MoreData = "M5.5,10 A1.5,1.5 0 1 1 2.5,10 A1.5,1.5 0 1 1 5.5,10 Z M11.5,10 A1.5,1.5 0 1 1 8.5,10 A1.5,1.5 0 1 1 11.5,10 Z M17.5,10 A1.5,1.5 0 1 1 14.5,10 A1.5,1.5 0 1 1 17.5,10 Z";
 
 	public static Path Song(float size, Brush? stroke = null) => Make(SongData, size, stroke);
 	public static Path Patch(float size, Brush? stroke = null) => Make(PatchData, size, stroke);
@@ -42,6 +43,7 @@ internal static class Glyphs
 	public static Path Close(float size, Brush? stroke = null) => Make(CloseData, size, stroke);
 	public static Path Trash(float size, Brush? stroke = null) => Make(TrashData, size, stroke);
 	public static Path Grip(float size, Brush? stroke = null) => Make(GripData, size, stroke);
+	public static Path More(float size, Brush? stroke = null) => Make(MoreData, size, stroke, fill: true);
 
 	private static Path Make(string data, float size, Brush? stroke, bool fill = false) => new()
 	{

@@ -9,9 +9,8 @@ namespace BinaryVibrance.LunelleStudio.Views;
 
 /// <summary>
 /// A track at the head of its lane: a stripe in its hue, its name, what it plays, mute and solo, its gain and its meter.
-/// A click shows it in the inspector, edged in the accent while it does; right-click (or Shift+F10) for its menu: rename
-/// it, give it another instrument, open that instrument, take it out. Near its top or bottom edge a line with a + shows,
-/// which adds a track just above or below it.
+/// A click shows it in the inspector, edged in the accent while it does; ⋯ or right-click (or Shift+F10) for its menu:
+/// add a track just above or below it, rename it, give it another instrument, open that instrument, take it out.
 /// </summary>
 internal sealed class TrackHeader : ContentControl
 {
@@ -89,6 +88,7 @@ internal sealed class TrackHeader : ContentControl
 		top.ColumnDefinitions.Add(GridLength.Star);
 		top.ColumnDefinitions.Add(GridLength.Auto);
 		top.ColumnDefinitions.Add(GridLength.Auto);
+		top.ColumnDefinitions.Add(GridLength.Auto);
 		top.Children.Add(new TextBlock { Text = track.Name, FontSize = 13f, Foreground = Theme.Ink, VerticalAlignment = VerticalAlignment.Center, TextTrimming = TextTrimming.CharacterEllipsis });
 		var mute = new ToggleButton { Content = Letter("M"), IsChecked = track.Muted, Width = 26f, Margin = new Thickness(0f, 0f, 3f, 0f), Padding = new Thickness(0f, 1f, 0f, 2f) };
 		mute.Click += (_, _) => track.Muted = mute.IsChecked == true;
@@ -100,6 +100,10 @@ internal sealed class TrackHeader : ContentControl
 		Grid.SetColumn(solo, 2);
 		top.Children.Add(mute);
 		top.Children.Add(solo);
+		var more = new Button { Content = Glyphs.More(14f, Theme.Dim), Padding = new Thickness(5f, 4f, 5f, 4f), Margin = new Thickness(2f, 0f, 0f, 0f), Background = Theme.Clear, VerticalAlignment = VerticalAlignment.Center };
+		ToolTipService.SetToolTip(more, "More: add a track, rename, change the instrument, delete");
+		Grid.SetColumn(more, 3);
+		top.Children.Add(more);
 		column.Children.Add(top);
 
 		var plays = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0f, 2f, 0f, 2f) };
@@ -124,13 +128,11 @@ internal sealed class TrackHeader : ContentControl
 			Height = track.Height,
 			Child = grid,
 		};
-		var stack = new Grid();
-		stack.Children.Add(_frame);
-		if (track.CanEdit)
-			stack.Children.Add(Between(track));
-		Content = stack;
+		Content = _frame;
 		Light();
-		ContextFlyout = Menu(track);
+		var menu = Menu(track);
+		ContextFlyout = menu;
+		more.Click += (_, _) => menu.ShowAt(more);
 		ToolTipService.SetToolTip(this, $"{track.Name}. Click to edit; right-click for more options.");
 	}
 
@@ -141,53 +143,40 @@ internal sealed class TrackHeader : ContentControl
 			_stay.X = _scroll.X;
 	}
 
-	// How near the pointer must come to the header's top or bottom edge for the line to show there
-	private const float Reach = 8f;
-
-	// Along its top or bottom edge, while the pointer is near it: a line with a + adding a track just above or below it,
-	// playing the instrument chosen from a list
-	private InsertLine Between(TrackViewModel track)
+	// A track added just above it or just below it, playing the instrument chosen from a list
+	private void AddBeside(TrackViewModel track, bool below)
 	{
-		var line = new InsertLine("Add a track here, playing a patch or kit");
-		var below = false;
-		line.Follow(this, at =>
+		var instruments = track.Instruments;
+		var list = new ListView
 		{
-			var height = track.Height;
-			if (at.Y <= Reach)
-				below = false;
-			else if (at.Y >= height - Reach)
-				below = true;
-			else
-				return null;
-			return (below ? height : 0f, 0f, HeaderWidth);
-		});
-		line.Chosen += anchor =>
-		{
-			line.IsHeld = true;
-			var instruments = track.Instruments;
-			var list = new ListView
-			{
-				ItemsSource = instruments.Select(i => (object?)$"{(i.IsKit ? "kit" : "patch")} · {i.Name}").ToList(),
-				IsItemClickEnabled = true,
-			};
-			var flyout = new Flyout { Content = list, Placement = FlyoutPlacementMode.RightEdgeAlignedTop };
-			var under = below;
-			list.ItemClick += (_, e) =>
-			{
-				var at = list.ItemsSource is List<object?> items ? items.IndexOf(e.ClickedItem) : -1;
-				flyout.Hide();
-				if (at >= 0 && track.AddTrackBeside(instruments[at].Name, instruments[at].IsKit, under) is { } why)
-					Console.WriteLine($"[workbench] {why}");
-			};
-			flyout.Closed += (_, _) => line.Release();
-			flyout.ShowAt(anchor);
+			ItemsSource = instruments.Select(i => (object?)$"{(i.IsKit ? "kit" : "patch")} · {i.Name}").ToList(),
+			IsItemClickEnabled = true,
+			MaxHeight = 320f,
 		};
-		return line;
+		var flyout = new Flyout { Content = list, Placement = FlyoutPlacementMode.RightEdgeAlignedTop };
+		list.ItemClick += (_, e) =>
+		{
+			var at = list.ItemsSource is List<object?> items ? items.IndexOf(e.ClickedItem) : -1;
+			flyout.Hide();
+			if (at >= 0 && track.AddTrackBeside(instruments[at].Name, instruments[at].IsKit, below) is { } why)
+				Console.WriteLine($"[workbench] {why}");
+		};
+		flyout.ShowAt(this);
 	}
 
+	// Its menu, from ⋯ or a right-click: tracks beside it, its name, its instrument, deleting it
 	private MenuFlyout Menu(TrackViewModel track)
 	{
 		var menu = new MenuFlyout();
+		if (track.CanEdit)
+		{
+			var above = new MenuFlyoutItem { Text = "Add track above…" };
+			above.Click += (_, _) => AddBeside(track, below: false);
+			var under = new MenuFlyoutItem { Text = "Add track below…" };
+			under.Click += (_, _) => AddBeside(track, below: true);
+			menu.Items.Add(above);
+			menu.Items.Add(under);
+		}
 		var rename = new MenuFlyoutItem { Text = "Rename…" };
 		rename.Click += (_, _) => Ask(track);
 		var instrument = new MenuFlyoutItem { Text = "Change instrument…" };

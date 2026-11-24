@@ -2,9 +2,10 @@
 <!--
     Arrange: the song as a board. Across the top each section's head (its name, a ruler of its bars and chords, its exits),
     down the left each track's head (its hue, mute, solo, gain and meter); both stay put as the lanes under them scroll.
-    Where a lane crosses a section, the parts the track plays there, every pass drawn across the section. A track or part
-    is added where the pointer shows a line with a + between them; + Add track shows only while the song has no tracks. Beside the board
-    the inspector, for the section or part chosen; under it, past a splitter, the part chosen in the roll.
+    Where a lane crosses a section, the parts the track plays there, every pass drawn across the section. A part is added
+    from its cell's slot while the cell is empty, else from a part's or a track's menu; a track from the row under the last
+    lane, a track's menu, or a patch or kit dropped from the library. Beside the board the inspector, for the section or
+    part chosen; under it, past a splitter, the part chosen in the roll.
 -->
 <ContentControl xmlns="https://github.com/AtomicBlom/Vysara/ui"
                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -45,12 +46,11 @@
             <views:Inspector ViewModel="{x:Bind ViewModel, Mode=OneWay}" />
         </Border>
 
-        <!-- The song, what plays next, and a track added -->
+        <!-- The song and what plays next -->
         <Grid Grid.Row="0" Margin="12,8,12,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <Button Command="{x:Bind ViewModel.InspectSongCommand, Mode=OneWay}" Padding="8,2,10,3" VerticalAlignment="Center"
                     ToolTipService.ToolTip="Song settings: tempo, key and scale">
@@ -58,10 +58,6 @@
             </Button>
             <TextBlock Grid.Column="1" Text="{x:Bind ViewModel.NextText, Mode=OneWay}" FontSize="13" Foreground="{x:Static views:Theme.Dim}"
                        Margin="16,0,0,0" VerticalAlignment="Center" />
-            <Button x:Name="AddTrack" Grid.Column="2" Padding="10,3,10,4" Visibility="{x:Bind views:Display.Not(ViewModel.HasTracks), Mode=OneWay}"
-                    ToolTipService.ToolTip="Add the first track. You can also drag a patch or kit from the library onto the board.">
-                <TextBlock Text="+ Add track" FontSize="12" />
-            </Button>
         </Grid>
 
         <Grid Grid.Row="1">
@@ -72,7 +68,14 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
+                    <!-- Under the last lane: a track added, playing a patch or kit chosen from a list -->
+                    <Button x:Name="AddTrack" Grid.Row="2" Width="164" Margin="6,6,0,12" Padding="10,4,12,5" HorizontalAlignment="Left"
+                            Background="{x:Static views:Theme.Clear}" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1"
+                            ToolTipService.ToolTip="Add a track. You can also drag a patch or kit from the library onto the board.">
+                        <TextBlock Text="+ Add track" FontSize="11.5" Foreground="{x:Static views:Theme.Faint}" />
+                    </Button>
                     <ItemsControl Grid.Row="1" ItemsSource="{x:Bind ViewModel.Tracks, Mode=OneWay}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate x:DataType="wb:TrackViewModel">

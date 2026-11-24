@@ -545,6 +545,8 @@ public sealed partial class Workbench : IDisposable
 			When = placement.Condition is { } condition ? ConditionText.Write(condition) : null,
 			Rows = rows.Count,
 			IsSelected = _selected == key,
+			TicksPerBar = placement.Section.Song.Meter.TicksPerBar,
+			Shape = ConditionShape.Read(placement.Condition, _catalog.Cues),
 		};
 	}
 
@@ -574,7 +576,11 @@ public sealed partial class Workbench : IDisposable
 	{
 		foreach (var row in ViewModel.Tracks)
 			foreach (var clip in row.Placements)
-				clip.ConditionMet = clip.Placement.Condition?.IsMet(Player.Get) ?? true;
+			{
+				clip.ConditionMet = clip.Placement.Condition?.IsMet(Player.Get, PassOf(clip.Placement)) ?? true;
+				if (clip.Shape?.Levels.FirstOrDefault(l => l.Rule != LevelRule.Any) is { } level)
+					clip.LevelNow = Player.Get(level.Cue);
+			}
 		foreach (var cue in ViewModel.Cues)
 		{
 			var value = Player.Get(cue.Cue);
@@ -769,9 +775,19 @@ public sealed partial class Workbench : IDisposable
 	internal void Force(PlacementViewModel row, PlacementState state)
 	{
 		var placement = row.Placement;
-		_forced[(placement.Section.Name, placement.Name)] = state;
-		if (Player.IsPlaying && placement.Section.Song == Player.Song)
-			Player.Force(placement, state);
+		var key = (placement.Section.Name, placement.Name);
+		_forced[key] = state;
+		if (Player.IsPlaying && Player.Song is { } song && song.Sections.Count > placement.Section.Index)
+		{
+			// The part as the song playing has it: a rebuild since the row was made makes another
+			var playing = song.Sections[placement.Section.Index].Placements.FirstOrDefault(p => p.Name == placement.Name) ?? placement;
+			Player.Force(playing, state);
+		}
+		// Every clip of the part shows it, the one the board has now among them
+		foreach (var track in ViewModel.Tracks)
+			foreach (var clip in track.Placements)
+				if (clip != row && (clip.Placement.Section.Name, clip.Placement.Name) == key)
+					clip.State = state;
 	}
 
 	internal void SetCue(CueBase cue, float value) => Player.Set(cue, value);
@@ -792,16 +808,27 @@ public sealed partial class Workbench : IDisposable
 		}
 	}
 
-	internal void SelectPlacement(PlacementViewModel row)
+	/// <summary>
+	/// Chooses a part: the inspector and the roll show it. With <paramref name="bar"/> (a bar of its section, from 0) the
+	/// roll opens at that bar of the part, or on its fill where the bar is the fill's.
+	/// </summary>
+	internal void SelectPlacement(PlacementViewModel row, int bar = -1)
 	{
 		_selected = (row.Placement.Section.Name, row.Placement.Name);
 		_selectedIndex = IndexIn(row.Placement);
 		_inspected = _selected;
+		var ticksPerBar = row.Placement.Section.Song.Meter.TicksPerBar;
+		_rollFill = bar >= 0 && row.FillTick >= 0 && bar * ticksPerBar >= row.FillTick;
+		_rollBar = bar;
+		_rollRefocus = true;
 		Unmark();
 		ViewModel.Inspected = row;
 		foreach (var track in ViewModel.Tracks)
 			foreach (var clip in track.Placements)
+			{
 				clip.IsSelected = clip == row;
+				clip.ChosenBar = clip == row ? bar : -1;
+			}
 		ShowPattern(row.Placement);
 		ShowRoll(row.Placement);
 		if (ViewModel.Mode == WorkbenchMode.Arrange)
@@ -1321,7 +1348,8 @@ public sealed partial class Workbench : IDisposable
 		return -1;
 	}
 
-	// The part chosen in the roll, when its song has a file and the part is data there; what it can do between data and code
+	// The part chosen in the roll, when its song has a file and the part is data there; what it can do between data and code.
+	// While its fill is what was chosen (_rollFill), the roll edits the fill; it opens at the bar a click chose (_rollBar)
 	private void ShowRoll(Placement placement)
 	{
 		var roll = ViewModel.Roll;
@@ -1335,7 +1363,7 @@ public sealed partial class Workbench : IDisposable
 		}
 		var section = placement.Section.Index;
 		var index = IndexIn(placement);
-		if (_editor.Part(section, index) is not { } part)
+		if (_editor.Part(section, index) is not { } whole)
 		{
 			var raw = _editor.RawPart(section, index);
 			var member = raw?["code"]?.GetValue<string>() ?? raw?["part"]?["code"]?.GetValue<string>();
@@ -1349,6 +1377,9 @@ public sealed partial class Workbench : IDisposable
 			roll.ShowCode(false, member is not null, where);
 			return;
 		}
+		if (_rollFill && whole["endWith"] is not JsonObject)
+			_rollFill = false;
+		var part = _rollFill ? (JsonObject)whole["endWith"]! : whole;
 		var step = (part["line"] ?? part["beat"] ?? part["strum"])?.GetValue<string>() switch
 		{
 			"quarters" => Ticks.Quarter,
@@ -1356,30 +1387,66 @@ public sealed partial class Workbench : IDisposable
 			"sixteenths" => Ticks.Sixteenth,
 			_ => Ticks.Triplet,
 		};
+		var ticksPerBar = placement.Section.Song.Meter.TicksPerBar;
+		var sectionTicks = placement.Section.Bars * ticksPerBar;
+		// A fill takes its section's last bar; the part's own steps start over each pass
+		var offset = _rollFill ? Math.Max(0, sectionTicks - ticksPerBar) : 0;
+		var loopTicks = LoopTicksOf(placement);
+		var focus = _rollBar < 0 || _rollFill ? 0 : _rollBar * ticksPerBar % Math.Max(1, loopTicks);
 		var editor = _editor;
+		var fill = _rollFill;
 		roll.KitPieces = placement.Track.Kit is { } kit ? [.. kit.Pieces.Select(p => p.Piece.Id)] : [];
-		roll.Chords = ChordTones(placement, step, part["overChords"]?.GetValue<bool>() == true);
-		roll.Show($"{placement.Name} · {placement.Section.Name}", (JsonObject)part.DeepClone(),
-			placement.Section.Song.Meter.TicksPerBar / step, editor.IsEdited(section, index), editor.CanUndo, editor.CanRedo,
-			change => EditPart(section, index, change),
+		roll.Chords = ChordTones(placement, step, part["overChords"]?.GetValue<bool>() == true, offset);
+		roll.Show($"{placement.Name}{(fill ? " · fill" : "")} · {placement.Section.Name}", (JsonObject)part.DeepClone(),
+			ticksPerBar / step, editor.IsEdited(section, index), editor.CanUndo, editor.CanRedo,
+			change => EditPart(section, index, p =>
+			{
+				if (!fill)
+					change(p);
+				else if (p["endWith"] is JsonObject inFill)
+					change(inFill);
+			}),
 			gesture =>
 			{
 				if (gesture == 1)
 					editor.BeginGesture();
 				else
 					editor.EndGesture();
-			});
-		roll.ShowCode(Code is not null && _source?.Type is not null, false, "");
+			},
+			_rollRefocus ? focus / step : null);
+		_rollRefocus = false;
+		roll.ShowCode(Code is not null && _source?.Type is not null && !fill, false, "");
 	}
 
-	// For the roll: the chord over a step of a part (its first pass through the section), and whether the note a row plays
-	// there is that chord's root (2), another of its notes (1) or neither, as the player plays it, following the chords or not
-	private (Func<int, object> ChordAt, Func<int, int, int> Tone) ChordTones(Placement placement, int stepTicks, bool overChords)
+	// How long one pass of a part is, in ticks; a section's length for a part that can't be laid out
+	private int LoopTicksOf(Placement placement)
+	{
+		try
+		{
+			return Player.SectionPatternOf(placement, _scale).LoopTicks;
+		}
+		catch (ArgumentException)
+		{
+			return placement.Section.Bars * placement.Section.Song.Meter.TicksPerBar;
+		}
+	}
+
+	// Whether the roll edits the chosen part's fill rather than the part, and the bar of its section a click on its lane
+	// chose (-1 for its start)
+	private bool _rollFill;
+	private int _rollBar = -1;
+	// Whether the next showing of the roll is of a part newly chosen, which it scrolls to
+	private bool _rollRefocus;
+
+	// For the roll: the chord over a step of a part (its first pass through the section, or its fill from `offset` ticks in),
+	// and whether the note a row plays there is that chord's root (2), another of its notes (1) or neither, as the player
+	// plays it, following the chords or not
+	private (Func<int, object> ChordAt, Func<int, int, int> Tone) ChordTones(Placement placement, int stepTicks, bool overChords, int offset = 0)
 	{
 		var section = placement.Section;
 		var scale = _scale ?? section.Song.Scale;
 		var sectionTicks = Math.Max(1, section.Bars * section.Song.Meter.TicksPerBar);
-		Chord At(int step) => section.ChordAt(step * stepTicks % sectionTicks);
+		Chord At(int step) => section.ChordAt((offset + step * stepTicks) % sectionTicks);
 		static int Class(Pitch pitch) => (((int)MathF.Round(pitch.Midi) % 12) + 12) % 12;
 		int Tone(int step, int row)
 		{

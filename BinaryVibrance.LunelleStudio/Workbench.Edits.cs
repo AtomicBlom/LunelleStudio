@@ -308,6 +308,145 @@ public sealed partial class Workbench
 	internal void RemoveFill(Placement placement) =>
 		EditPart(placement.Section.Index, IndexIn(placement), part => part.Remove("endWith"));
 
+	/// <summary>Whether a part is data in its song's file (not code, nor added by a hook), so the workbench can change its notes.</summary>
+	internal bool IsDataPart(Placement placement) => _editor?.Part(placement.Section.Index, IndexIn(placement)) is not null;
+
+	/// <summary>Whether the chosen part can be converted to C#: its song has a file and a type of code to write it to.</summary>
+	internal bool CanEject => Code is not null && _editor is not null && _source?.Type is not null;
+
+	/// <summary>
+	/// Gives a part a fill: its last bar, copied, to change in the roll, which opens on it. Why it can't, or null: a part
+	/// in code, or one with a fill already.
+	/// </summary>
+	internal string? AddFill(Placement placement)
+	{
+		var (section, index) = (placement.Section.Index, IndexIn(placement));
+		if (_editor?.Part(section, index) is not { } part)
+			return "This part is defined in code, so its fill is written there.";
+		if (part["endWith"] is not null)
+			return "This part has a fill already.";
+		var ticksPerBar = placement.Section.Song.Meter.TicksPerBar;
+		var kind = part["line"] is not null ? "line" : part["beat"] is not null ? "beat" : part["strum"] is not null ? "strum" : null;
+		if (kind is null || GridOf(placement) is not { } grid)
+			return "This kind of part can't be given a fill here.";
+		var step = GridTicks(grid.Grid);
+		var (perBar, perBeat) = (ticksPerBar / step, Ticks.PerBeat / step);
+		// The steps of the part's last bar; a note held into it from the bar before starts there instead
+		List<string> LastBar(string text, bool characters)
+		{
+			var steps = (characters ? NotationText.Characters(text) : NotationText.Line(text)).Steps.ToList();
+			var start = steps.Count == 0 ? 0 : (steps.Count - 1) / perBar * perBar;
+			var bar = steps.Skip(start).ToList();
+			while (bar.Count < perBar)
+				bar.Add(".");
+			if (!characters && bar[0] == "-")
+				bar[0] = ".";
+			return bar;
+		}
+		var fill = new JsonObject { [kind] = grid.Grid };
+		if (kind == "beat")
+		{
+			var rows = new JsonObject();
+			foreach (var (piece, hits) in part["rows"] as JsonObject ?? [])
+				rows[piece] = RollEdits.Write(LastBar(hits?.GetValue<string>() ?? "", characters: true), perBar, perBeat, characters: true);
+			fill["rows"] = rows;
+		}
+		else
+		{
+			fill["notes"] = RollEdits.Write(LastBar(part["notes"]?.GetValue<string>() ?? "", characters: kind == "strum"), perBar, perBeat, characters: kind == "strum");
+			foreach (var key in new[] { "overChords", "octave", "voicing", "spread" })
+				if (part[key] is { } value)
+					fill[key] = value.DeepClone();
+		}
+		EditPart(section, index, p => p["endWith"] = fill);
+		if (FindRow(section, index) is { } row)
+			SelectPlacement(row, placement.Section.Bars - 1);
+		return null;
+	}
+
+	/// <summary>Puts a copy of a part just below it in its section, and chooses the copy.</summary>
+	internal void DuplicatePart(Placement placement)
+	{
+		var (section, index) = (placement.Section.Index, IndexIn(placement));
+		if (_editor?.RawPart(section, index) is not { } raw)
+			return;
+		var copy = (JsonObject)raw.DeepClone();
+		if (copy["name"]?.GetValue<string>() is { } name)
+			copy["name"] = name + " copy";
+		_editor.Edit(root =>
+		{
+			if (root["sections"]?[section]?["parts"] is JsonArray parts && index < parts.Count)
+				parts.Insert(index + 1, copy);
+		});
+		Rebuild(swap: true);
+		if (FindRow(section, index + 1) is { } row)
+			SelectPlacement(row);
+	}
+
+	/// <summary>Renames a part; empty gives it its track's name again. Why it can't be, or null.</summary>
+	internal string? RenamePart(Placement placement, string name)
+	{
+		name = name.Trim();
+		var (section, index) = (placement.Section.Index, IndexIn(placement));
+		if (_editor?.RawPart(section, index) is null)
+			return "This part is added by a hook, so it is named in C#.";
+		var keep = name.Length == 0 || name == placement.Track.Name;
+		EditPart(section, index, part =>
+		{
+			if (keep)
+				part.Remove("name");
+			else
+				part["name"] = name;
+		});
+		if (FindRow(section, index) is { } row)
+			SelectPlacement(row);
+		return null;
+	}
+
+	/// <summary>Adds a part for a part's track just above it or just below it in its section, chosen at once.</summary>
+	internal void AddPartBeside(Placement placement, NewPartKind kind, bool below)
+	{
+		var own = placement.Section.Placements.Where(p => p.Track == placement.Track).ToList();
+		var at = own.IndexOf(placement);
+		AddPart(placement.Section.Index, placement.Track.Name, kind, below ? at + 1 : at);
+	}
+
+	// The clip of the part at `index` in section `section` of the song as built now
+	private PlacementViewModel? FindRow(int section, int index)
+	{
+		if (_song is not { } song || (uint)section >= (uint)song.Sections.Count || (uint)index >= (uint)song.Sections[section].Placements.Count)
+			return null;
+		var placement = song.Sections[section].Placements[index];
+		foreach (var track in ViewModel.Tracks)
+			foreach (var clip in track.Placements)
+				if (clip.Placement == placement)
+					return clip;
+		return null;
+	}
+
+	/// <summary>Where a cue is now, as the song hears it.</summary>
+	internal float CueNow(CueBase cue) => Player.Get(cue);
+
+	/// <summary>Which pass of a part's section in a row is playing: the player's while the section plays, else 1.</summary>
+	internal int PassOf(Placement placement) =>
+		Player.IsPlaying && Player.Song is { } song && placement.Section.Song == song && Player.Position.SectionIndex == placement.Section.Index
+			? Math.Max(1, Player.Pass)
+			: 1;
+
+	/// <summary>The other parts in a part's section that wait for a level cue: each one's name and the level it waits at.</summary>
+	internal IReadOnlyList<(string Name, float Level)> LevelsInSection(Placement placement, Cue cue)
+	{
+		var found = new List<(string, float)>();
+		foreach (var other in placement.Section.Placements)
+		{
+			if (other == placement || other.Condition is not { } condition)
+				continue;
+			foreach (var (level, _) in Levels(condition, cue))
+				found.Add((other.Name, level));
+		}
+		return found;
+	}
+
 	/// <summary>
 	/// Adds a track playing an instrument of the catalog's, at <paramref name="at"/> among the tracks (the end without);
 	/// the reason it can't be, or null.

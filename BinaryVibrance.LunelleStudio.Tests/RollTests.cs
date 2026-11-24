@@ -681,4 +681,107 @@ public class RollTests
 		var song = SongFile.Load(File.ReadAllText(rig.Path), new SongBindings { Patch = n => n == MusicRig.Click.Name ? MusicRig.Click : null });
 		song.Sections[0].Sweeps.Single().Track.Name.ShouldBe("bass");
 	}
+
+	// A song of one track over a section of four bars: a two-bar part that repeats, and a beat of one bar
+	private static Song FourBars()
+	{
+		var song = new Song("first");
+		var lead = song.Track("lead", MusicRig.Click);
+		var verse = song.Section("verse", 4);
+		verse.Play(lead, Line.Quarters("1 3 5 3 | 5 4 3 2")).Named("melody");
+		verse.Play(lead, Line.Quarters("1 . . .")).When(Energy.Above(0.5f));
+		return song;
+	}
+
+	private static JsonArray PartsInFile(Rig rig)
+	{
+		rig.Step(SongEditor.SaveAfterSeconds + 0.1);
+		return JsonNode.Parse(File.ReadAllText(rig.Path))!["sections"]![0]!["parts"]!.AsArray();
+	}
+
+	[Test]
+	public void A_fill_is_the_parts_last_bar_copied_and_a_click_on_its_bar_opens_it_in_the_roll()
+	{
+		using var rig = new Rig(FourBars);
+		var model = rig.Workbench.ViewModel;
+		var melody = model.Tracks[0].Placements[0];
+		melody.HasFill.ShouldBeFalse();
+		melody.Bars.ShouldBe(4);
+
+		melody.AddFill().ShouldBeNull();
+		PartsInFile(rig)[0]!["endWith"]!["notes"]!.GetValue<string>().ShouldBe("5 4 3 2");
+		var roll = model.Roll;
+		roll.Title.ShouldBe("melody · fill · verse");
+		roll.Notes.Select(n => n.Token).ShouldBe(["5", "4", "3", "2"]);
+		model.Tracks[0].Placements[0].AddFill().ShouldNotBeNull();
+
+		// The roll edits the fill: its notes change, the part's stay as they were
+		var first = roll.Notes[0];
+		roll.Press(first.Step, first.Row, secondary: true, twice: false);
+		var parts = PartsInFile(rig);
+		parts[0]!["endWith"]!["notes"]!.GetValue<string>().ShouldBe(". 4 3 2");
+		parts[0]!["notes"]!.GetValue<string>().ShouldBe("1 3 5 3 | 5 4 3 2");
+
+		// A click on another bar opens the part there: bar 3 of the section is the part's first bar again, on its second pass
+		model.Tracks[0].Placements[0].SelectBar(2);
+		roll.Title.ShouldBe("melody · verse");
+		roll.FocusStep.ShouldBe(0);
+		model.Tracks[0].Placements[0].SelectBar(1);
+		roll.FocusStep.ShouldBe(4);
+		model.Tracks[0].Placements[0].ChosenBar.ShouldBe(1);
+		model.Tracks[0].Placements[0].SelectBar(3);
+		roll.Title.ShouldBe("melody · fill · verse");
+
+		model.Tracks[0].Placements[0].RemoveFill();
+		PartsInFile(rig)[0]!["endWith"].ShouldBeNull();
+	}
+
+	[Test]
+	public void A_part_is_duplicated_renamed_and_added_beside_another_from_its_menu()
+	{
+		using var rig = new Rig(FourBars);
+		var model = rig.Workbench.ViewModel;
+
+		model.Tracks[0].Placements[0].Duplicate();
+		var parts = PartsInFile(rig);
+		parts.Count.ShouldBe(3);
+		parts[1]!["name"]!.GetValue<string>().ShouldBe("melody copy");
+		model.Roll.Title.ShouldBe("melody copy · verse");
+
+		model.Tracks[0].Placements[1].Rename("counter").ShouldBeNull();
+		PartsInFile(rig)[1]!["name"]!.GetValue<string>().ShouldBe("counter");
+		model.Tracks[0].Placements[1].Rename("").ShouldBeNull();
+		PartsInFile(rig)[1]!["name"].ShouldBeNull();
+
+		// Above the first part, then below the last
+		model.Tracks[0].Placements[0].AddBeside(NewPartKind.Bass, below: false);
+		model.Tracks[0].Placements[^1].AddBeside(NewPartKind.Strum, below: true);
+		parts = PartsInFile(rig);
+		parts.Count.ShouldBe(5);
+		parts[0]!["overChords"]!.GetValue<bool>().ShouldBeTrue();
+		parts[1]!["name"]!.GetValue<string>().ShouldBe("melody");
+		parts[4]!["strum"].ShouldNotBeNull();
+	}
+
+	[Test]
+	public void A_parts_condition_is_taken_apart_for_its_chip_and_a_part_held_on_shows_it_after_a_rebuild()
+	{
+		using var rig = new Rig(FourBars);
+		var model = rig.Workbench.ViewModel;
+		rig.Workbench.Play();
+		var waits = model.Tracks[0].Placements[1];
+		waits.Shape.ShouldNotBeNull().Level(Energy).ShouldNotBeNull().Rule.ShouldBe(LevelRule.Above);
+		model.Tracks[0].Placements[0].Shape.ShouldNotBeNull().IsAlways.ShouldBeTrue();
+
+		waits.State = PlacementState.On;
+		waits.SetWhen("energy > 0.7").ShouldBeNull();
+		var rebuilt = model.Tracks[0].Placements[1];
+		rebuilt.ShouldNotBeSameAs(waits);
+		rebuilt.State.ShouldBe(PlacementState.On);
+		rebuilt.Shape!.Level(Energy)!.From.ShouldBe(0.7f);
+
+		// Held off from the clip the board showed before the rebuild: the one it shows now follows
+		waits.State = PlacementState.Off;
+		rebuilt.State.ShouldBe(PlacementState.Off);
+	}
 }

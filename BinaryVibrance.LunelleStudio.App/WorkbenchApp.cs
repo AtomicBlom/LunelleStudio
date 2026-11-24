@@ -14,16 +14,24 @@ namespace BinaryVibrance.LunelleStudio.App;
 /// of the music) while the project is opened and compiled beside it, then plays what it built and takes up each save.
 /// A project's extension, loaded before the window opens, gives the bus the music plays into and controls of its own,
 /// and is kept across every save. What it was doing is kept beside the project.
+/// <para>
+/// Given a folder of music files alone (<paramref name="filesAlone"/>), nothing is compiled: the folder is read as
+/// <see cref="Lunelle.Music.MusicFolder"/> and read again on each save (<see cref="WorkbenchFolder"/>), and it has no
+/// extension.
+/// </para>
 /// </summary>
-public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extension = null, IReadOnlyList<string>? arguments = null, string? extensionProject = null) : KaldraApplication
+public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extension = null, IReadOnlyList<string>? arguments = null, string? extensionProject = null, bool filesAlone = false) : KaldraApplication
 {
-	private readonly WorkbenchStateFile _state = WorkbenchStateFile.Beside(projectPath);
+	private readonly WorkbenchStateFile _state = filesAlone
+		? new WorkbenchStateFile(Path.Combine(projectPath, ".lunelle-studio", "workbench.json"))
+		: WorkbenchStateFile.Beside(projectPath);
+	private WorkbenchFolder? _folder;
 	private UIHost _ui = null!;
 	private UIPainter _painter = null!;
 	private UIView _view = null!;
 	private Glow _glow = null!;
 	private Workbench _workbench = null!;
-	private Task<MusicProject> _opening = null!;
+	private Task<MusicProject>? _opening;
 	private WorkbenchProject? _project;
 	private bool _opened;
 	private WorkbenchState? _restore;
@@ -34,7 +42,7 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 	// window, the editor, has the focus
 	private AudioEngine Audio { get; set; } = null!;
 
-	private string Name => Path.GetFileNameWithoutExtension(projectPath);
+	private string Name => filesAlone ? Path.GetFileName(Path.TrimEndingDirectorySeparator(Path.GetFullPath(projectPath))) : Path.GetFileNameWithoutExtension(projectPath);
 
 	protected override void Configure(AppOptions options)
 	{
@@ -81,7 +89,10 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 			_workbench.RestoreState(_restore);
 			_restore = null;
 		}
-		_opening = MusicProject.OpenAsync(projectPath, new Dictionary<string, string> { ["Configuration"] = Configuration });
+		if (filesAlone)
+			_folder = WorkbenchFolder.Open(projectPath, _workbench);
+		else
+			_opening = MusicProject.OpenAsync(projectPath, new Dictionary<string, string> { ["Configuration"] = Configuration });
 		var view = new WorkbenchView(_workbench.ViewModel);
 		extension?.Attach(new WorkbenchExtensionContext(_workbench, Audio, view.TransportExtras, arguments ?? []));
 		_view.Root.Content = view;
@@ -108,8 +119,9 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 	{
 		TakeProject();
 		_project?.Update();
+		_folder?.Update();
 		// What it was doing comes back once there is music to come back to
-		if (_restore is not null && _project?.Current is not null)
+		if (_restore is not null && (_project?.Current is not null || _folder?.Current is not null))
 		{
 			_workbench.RestoreState(_restore);
 			_restore = null;
@@ -130,7 +142,7 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 	// The project, once it has opened: or why it didn't, on the build pill
 	private void TakeProject()
 	{
-		if (_opened || !_opening.IsCompleted)
+		if (_opened || _opening is null || !_opening.IsCompleted)
 			return;
 		_opened = true;
 		if (_opening.IsCompletedSuccessfully)
@@ -168,6 +180,7 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 				_state.Save(_workbench.CaptureState());
 			_extensionWatcher?.Dispose();
 			_project?.Dispose();
+			_folder?.Dispose();
 			_workbench.Dispose();
 			extension?.Dispose();
 		}

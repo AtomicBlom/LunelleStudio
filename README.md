@@ -16,7 +16,11 @@ split out of the [Kaldra engine](https://github.com/AtomicBlom/Kaldra), once cal
 ```
 dotnet run --project BinaryVibrance.LunelleStudio.App -- <music project.csproj | folder>
 dotnet run --project BinaryVibrance.LunelleStudio.App -- new <folder>
+dotnet run --project BinaryVibrance.LunelleStudio.App -- <folder> --data
 ```
+
+A folder with no `.csproj`, or any folder with `--data`, is music files alone: its songs, patches, kits and a
+`lunelle-project.json` (its cues and macros) read with no C#, nothing compiled and no extension (Lunelle's `MusicFolder`).
 
 Lunelle's [`docs/synth.md`](https://github.com/AtomicBlom/Lunelle/blob/master/docs/synth.md), sections 5 and 6, is the guide.
 

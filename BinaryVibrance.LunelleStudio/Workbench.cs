@@ -257,6 +257,17 @@ public sealed partial class Workbench : IDisposable
 		ViewModel.BuildText = "Build failed · last build still playing";
 	}
 
+	/// <summary>
+	/// Shows a project of files alone read again in the build pill (<see cref="FolderCatalog"/>): how long it took, and what
+	/// it said of files left out or code that plays nothing, everything else playing as read.
+	/// </summary>
+	public void ReportRead(IReadOnlyList<string> problems, TimeSpan took)
+	{
+		ArgumentNullException.ThrowIfNull(problems);
+		ViewModel.Error = problems.Count == 0 ? "" : string.Join("\n", problems.Take(8)) + (problems.Count > 8 ? $"\n… and {problems.Count - 8} more" : "");
+		ViewModel.BuildText = $"read {DateTime.Now:HH:mm:ss} in {took.TotalMilliseconds:0} ms" + (problems.Count == 0 ? "" : $" · {problems.Count} to look at");
+	}
+
 	/// <summary>Chooses a song and builds it; if one was playing, it plays.</summary>
 	public void SelectSong(int index)
 	{

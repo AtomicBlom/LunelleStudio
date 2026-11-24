@@ -178,4 +178,79 @@ public sealed class PlacementViewModel : ViewModel
 
 	/// <summary>Shows it in the pattern view.</summary>
 	public void Select() => _workbench.SelectPlacement(this);
+
+	/// <summary>Chooses it with the roll at <paramref name="bar"/> of its section (from 0): that bar of the part, or its fill where the bar is the fill's.</summary>
+	public void SelectBar(int bar) => _workbench.SelectPlacement(this, bar);
+
+	/// <summary>The bar of its section a click on its lane chose while it is the part chosen, or -1.</summary>
+	public int ChosenBar
+	{
+		get;
+		internal set => Set(ref field, value);
+	} = -1;
+
+	/// <summary>How long a bar of its section is, in ticks.</summary>
+	public int TicksPerBar { get; internal init; } = Ticks.PerBeat * 4;
+
+	/// <summary>How many bars its section is.</summary>
+	public int Bars => TicksPerBar > 0 ? LengthTicks / TicksPerBar : 0;
+
+	/// <summary>Its condition taken apart by cue, as its lane's chip and the plays-when editor show it; null where it can't be.</summary>
+	internal ConditionShape? Shape { get; init; }
+
+	/// <summary>
+	/// Where the cue its chip draws a gauge for is now (its condition's first level cue), refreshed as cues move; 0 when it
+	/// has none.
+	/// </summary>
+	public float LevelNow
+	{
+		get;
+		internal set => Set(ref field, value);
+	}
+
+	/// <summary>Whether its song is a file the workbench edits, so it can be changed from its lane.</summary>
+	public bool CanEdit => _workbench.CanEditSong;
+
+	/// <summary>Whether it is data in its song's file, so its notes, fill and copies are the workbench's to make.</summary>
+	public bool IsData => _workbench.IsDataPart(Placement);
+
+	/// <summary>Whether it ends its section's every pass with a fill.</summary>
+	public bool HasFill => FillTick >= 0;
+
+	/// <summary>Adds a part for its track just above it or just below it, chosen at once.</summary>
+	public void AddBeside(NewPartKind kind, bool below) => _workbench.AddPartBeside(Placement, kind, below);
+
+	/// <summary>Gives it a fill in its last bar: a copy of that bar, to change in the roll, which opens on it; why it can't, or null.</summary>
+	public string? AddFill() => _workbench.AddFill(Placement);
+
+	/// <summary>Takes its fill out of its last bar.</summary>
+	public void RemoveFill() => _workbench.RemoveFill(Placement);
+
+	/// <summary>Puts a copy of it just below it, chosen.</summary>
+	public void Duplicate() => _workbench.DuplicatePart(Placement);
+
+	/// <summary>Renames it (empty: its track's name again); why it can't be, or null.</summary>
+	public string? Rename(string name) => _workbench.RenamePart(Placement, name);
+
+	/// <summary>Converts the whole of it to C#, as the roll's button does.</summary>
+	public void ConvertToCode()
+	{
+		Select();
+		_workbench.EjectSelected(placement: true);
+	}
+
+	/// <summary>Whether it can be converted to C#: its song has a file and code to write it to.</summary>
+	public bool CanConvert => _workbench.CanEject;
+
+	/// <summary>The project's cues, which its condition can name.</summary>
+	public IReadOnlyList<CueBase> Cues => _workbench.ConditionCues;
+
+	/// <summary>Where a cue is now.</summary>
+	public float CueNow(CueBase cue) => _workbench.CueNow(cue);
+
+	/// <summary>Which pass of its section in a row is playing: 1 while its section isn't.</summary>
+	public int SectionPass => _workbench.PassOf(Placement);
+
+	/// <summary>The other parts in its section that wait for <paramref name="cue"/>: each one's name and the level it waits at.</summary>
+	public IReadOnlyList<(string Name, float Level)> OthersOn(Cue cue) => _workbench.LevelsInSection(Placement, cue);
 }

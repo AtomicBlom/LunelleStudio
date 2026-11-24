@@ -41,10 +41,16 @@ internal sealed class Inspector : ContentControl
 		set
 		{
 			if (field is not null)
+			{
 				field.PropertyChanged -= OnChanged;
+				field.Frame -= OnFrame;
+			}
 			field = value;
 			if (value is not null)
+			{
 				value.PropertyChanged += OnChanged;
+				value.Frame += OnFrame;
+			}
 			Show();
 		}
 	}
@@ -82,6 +88,7 @@ internal sealed class Inspector : ContentControl
 		_shownKey = key;
 		_current = inspected;
 		_column.Children.Clear();
+		_playsWhen = null;
 		switch (inspected)
 		{
 			case SongViewModel song:
@@ -104,6 +111,11 @@ internal sealed class Inspector : ContentControl
 
 	// The view model shown now, which a rebuild replaces
 	private object? _current;
+
+	// The part's plays-when editor while it shows a part, kept up to date each frame
+	private PlaysWhenEditor? _playsWhen;
+
+	private void OnFrame() => _playsWhen?.Refresh();
 
 	private SongViewModel? Song => _current as SongViewModel;
 
@@ -434,9 +446,10 @@ internal sealed class Inspector : ContentControl
 			return;
 		}
 
+		_playsWhen = new PlaysWhenEditor(part, when => Edit(() => Part?.SetWhen(when)));
 		_column.Children.Add(Group("Plays when", true,
 			Note("Checked at every bar line, or only where the part's phrase begins."),
-			new ConditionEditor(Workbench.ConditionCues, part.When, when => Edit(() => Part?.SetWhen(when)))));
+			_playsWhen));
 
 		var levels = new List<object?> { "Full" };
 		levels.AddRange(Workbench.ConditionCues.Where(c => c.OptionNames.Count == 0).Select(c => (object?)c.Name));
@@ -504,14 +517,32 @@ internal sealed class Inspector : ContentControl
 
 		if (placement.FillPart is not null)
 		{
-			var remove = new Button { Content = Small("Remove fill", Theme.Ink), Padding = new Thickness(8f, 2f, 8f, 3f), HorizontalAlignment = HorizontalAlignment.Left };
+			var edit = new Button { Content = Small("Edit fill", Theme.Ink), Padding = new Thickness(8f, 2f, 8f, 3f), Margin = new Thickness(0f, 0f, 6f, 0f) };
+			ToolTipService.SetToolTip(edit, "Open the fill in the roll, as a click on its bar in the lane does");
+			edit.Click += (_, _) => Part?.SelectBar(Part.Bars - 1);
+			var remove = new Button { Content = Small("Remove fill", Theme.Ink), Padding = new Thickness(8f, 2f, 8f, 3f) };
 			ToolTipService.SetToolTip(remove, "Play the part itself in its last bar instead of the fill");
-			remove.Click += (_, _) =>
+			remove.Click += (_, _) => Part?.RemoveFill();
+			var buttons = new StackPanel { Orientation = Orientation.Horizontal };
+			buttons.Children.Add(edit);
+			buttons.Children.Add(remove);
+			_column.Children.Add(Group("Fill", false, Note("The part's last bar plays a fill."), buttons));
+		}
+		else if (part.IsData)
+		{
+			var add = new Button { Content = Small("Add fill", Theme.Ink), Padding = new Thickness(8f, 2f, 8f, 3f), HorizontalAlignment = HorizontalAlignment.Left };
+			ToolTipService.SetToolTip(add, "End each pass of the section with a bar of its own: its last bar, copied, to change in the roll");
+			var problem = Note("");
+			problem.Visibility = Visibility.Collapsed;
+			add.Click += (_, _) =>
 			{
-				if (Part is { } p)
-					Workbench?.RemoveFill(p.Placement);
+				if (Part?.AddFill() is { } why)
+				{
+					problem.Text = why;
+					problem.Visibility = Visibility.Visible;
+				}
 			};
-			_column.Children.Add(Group("Fill", false, Note("The part's last bar plays a fill."), remove));
+			_column.Children.Add(Group("Fill", false, Note("A fill takes the part's place in the section's last bar."), add, problem));
 		}
 
 		_column.Children.Add(DeleteButton("Delete part", "Delete this part from the section", () => Part?.Delete()));

@@ -143,6 +143,12 @@ public sealed class RollViewModel : ViewModel
 		Bump();
 	}
 
+	/// <summary>The step the roll was last asked to show, which the view scrolls to: the bar a click on a lane chose, or 0.</summary>
+	public int FocusStep { get; private set; }
+
+	/// <summary>How many times the roll has been asked to show a step; the view scrolls to <see cref="FocusStep"/> as it changes.</summary>
+	public int Focused { get; private set => Set(ref field, value); }
+
 	/// <summary>The pieces of the kit a beat's track plays, each a row though the part doesn't play it yet.</summary>
 	internal IReadOnlyList<string> KitPieces { get; set; } = [];
 
@@ -180,9 +186,14 @@ public sealed class RollViewModel : ViewModel
 	/// <paramref name="gesture"/> grouping a drag's edits into one to undo (1 to start, 0 to end).
 	/// </summary>
 	internal void Show(string title, JsonObject part, int stepsPerBar, bool edited, bool canUndo, bool canRedo,
-		Action<Action<JsonObject>> edit, Action<int> gesture)
+		Action<Action<JsonObject>> edit, Action<int> gesture, int? focusStep = null)
 	{
 		var same = _part is not null && Title == title;
+		if (focusStep is { } focus)
+		{
+			FocusStep = focus;
+			Focused++;
+		}
 		_part = part;
 		_edit = edit;
 		_gesture = gesture;

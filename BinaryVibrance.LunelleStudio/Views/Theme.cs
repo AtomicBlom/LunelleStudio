@@ -1,4 +1,5 @@
 using BinaryVibrance.Vysara;
+using BinaryVibrance.Vysara.Controls;
 using BinaryVibrance.Vysara.Media;
 
 namespace BinaryVibrance.LunelleStudio.Views;
@@ -205,11 +206,14 @@ internal static class Theme
 	/// <summary>
 	/// The built-in controls in the workbench's colours, under WinUI's lightweight-styling keys, for a view's resources: a
 	/// button raised off its panel as a key, a toggle that is on lit (the accent) and its text dark, a slider's fill and thumb
-	/// in the accent.
+	/// in the accent. And buttons' and toggles' words bold, by implicit styles: the theme's bold where it has one
+	/// (<see cref="ThemeDefinition.LabelBoldFont"/>), its words' nearest weight where it hasn't.
 	/// </summary>
 	public static ResourceDictionary Controls()
 	{
 		var resources = new ResourceDictionary();
+		resources.Add(Bold(typeof(Button)));
+		resources.Add(Bold(typeof(ToggleButton)));
 		resources.Add("ButtonBackground", Key);
 		resources.Add("ButtonBackgroundPointerOver", KeyOver);
 		resources.Add("ButtonBackgroundPressed", Sunk);
@@ -239,6 +243,13 @@ internal static class Theme
 		resources.Add("ToggleButtonForegroundChecked", Accent);
 		return resources;
 	}
+
+	// An implicit style making a control's words bold
+	private static Style Bold(Type control) => new()
+	{
+		TargetType = control,
+		Setters = { new Setter { Property = Control.FontWeightProperty, Value = FontWeights.Bold } },
+	};
 
 	/// <summary>The hue of the track at <paramref name="index"/> in its song: its lane's stripe, its notes, its lit keys.</summary>
 	public static SolidColorBrush TrackHue(int index) => TrackHues[Wrap(index)];

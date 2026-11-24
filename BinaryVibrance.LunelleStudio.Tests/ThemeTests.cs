@@ -52,7 +52,7 @@ public class ThemeTests
 		// The app bakes each Assets/Fonts/<name>.fontset.json into the atlas a theme names
 		var assets = Path.Combine(RepositoryRoot(), "BinaryVibrance.LunelleStudio.App", "Assets", "Fonts");
 		foreach (var theme in ThemeDefinition.All)
-			foreach (var font in new[] { theme.LabelFont, theme.ReadoutFont })
+			foreach (var font in new[] { theme.LabelFont, theme.LabelBoldFont, theme.ReadoutFont })
 				if (font is not null)
 					File.Exists(Path.Combine(assets, $"{font}.fontset.json")).ShouldBeTrue($"{theme.Name} names '{font}'");
 	}

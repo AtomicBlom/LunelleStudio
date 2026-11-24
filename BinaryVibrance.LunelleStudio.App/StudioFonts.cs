@@ -14,15 +14,16 @@ internal sealed class StudioFonts(FontCollection fonts)
 
 	private readonly Dictionary<string, FontAtlas?> _loaded = new(StringComparer.OrdinalIgnoreCase);
 
-	/// <summary>Give each family the theme's font for it (<see cref="Workbench.ThemeFonts"/>).</summary>
+	/// <summary>Give each family the theme's fonts for its weights (<see cref="Workbench.ThemeFonts"/>), and nothing else.</summary>
 	public void Apply()
 	{
-		foreach (var (family, font) in Workbench.ThemeFonts)
+		var themes = Workbench.ThemeFonts;
+		foreach (var (family, _, _) in themes)
+			fonts.Remove(family);
+		foreach (var (family, weight, font) in themes)
 		{
 			if (font is not null && Load(font) is { } atlas)
-				fonts.Set(family, atlas);
-			else
-				fonts.Remove(family);
+				fonts.Set(family, weight, atlas);
 		}
 	}
 

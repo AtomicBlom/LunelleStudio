@@ -32,8 +32,8 @@ internal sealed record ThemeDefinition
 	public required (HdrColor Top, HdrColor Bottom) KeyFace { get; init; }
 	public required (HdrColor Top, HdrColor Bottom) KeyFaceOver { get; init; }
 
-	/// <summary>A toggle that is on: a push-button lit from inside. No brighter than white, since a glow round a lit area
-	/// as big as a button drowns its text.</summary>
+	/// <summary>A toggle that is on: a push-button lit from inside. Only a little past white, if at all, since a glow round
+	/// a lit area as big as a button washes over its words, which are bold for it.</summary>
 	public required HdrColor KeyLit { get; init; }
 
 	/// <summary>Behind a readout (the transport's position): a display's dark glass, or clear.</summary>
@@ -94,6 +94,10 @@ internal sealed record ThemeDefinition
 	/// <summary>The font of the workbench's words (<see cref="Theme.Label"/>), by the name the app bakes it under, or
 	/// null for Vysara's own.</summary>
 	public string? LabelFont { get; init; }
+
+	/// <summary>The bold of <see cref="LabelFont"/>: the words on buttons and toggles (Theme.Controls' implicit styles), or
+	/// null, when they take the nearest weight the family has.</summary>
+	public string? LabelBoldFont { get; init; }
 
 	/// <summary>The font of its changing numbers (<see cref="Theme.Readout"/>), or null for Vysara's own.</summary>
 	public string? ReadoutFont { get; init; }
@@ -196,7 +200,7 @@ internal sealed record ThemeDefinition
 		Rail = Rgb(22, 21, 18),
 		KeyFace = (Rgb(66, 62, 57), Rgb(46, 43, 40)),
 		KeyFaceOver = (Rgb(78, 74, 68), Rgb(56, 53, 49)),
-		KeyLit = Rgb(255, 138, 61),
+		KeyLit = Lit(Rgb(255, 138, 61), 1.06f),
 		Window = Rgb(16, 20, 14),
 		WindowInk = Lit(Rgb(201, 240, 178), 1.2f),
 		WindowDim = Rgb(150, 196, 128),
@@ -224,6 +228,7 @@ internal sealed record ThemeDefinition
 		VuHot = Rgb(200, 58, 44),
 		VuNeedle = Rgb(29, 26, 22),
 		LabelFont = "archivo-narrow",
+		LabelBoldFont = "archivo-narrow-bold",
 		ReadoutFont = "b612-mono",
 		Error = Rgb(196, 64, 46),
 		ErrorSoft = Rgb(227, 93, 74, 46),

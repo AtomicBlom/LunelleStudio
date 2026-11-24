@@ -19,7 +19,7 @@ namespace BinaryVibrance.LunelleStudio.Views;
 internal sealed class LaneCell : ContentControl
 {
 	// The parts' clips sit this far in from the cell's edges
-	private const float Inset = 6f;
+	internal const float Inset = 6f;
 	private const float RowHeight = 22f;
 
 	private static BinaryVibrance.Vysara.Media.SolidColorBrush Hover => Theme.Hover;
@@ -169,14 +169,16 @@ internal sealed class LaneCell : ContentControl
 		var strip = new Grid { Width = width, Height = LanePasses.DrawnHeight };
 		strip.Children.Add(passes);
 		strip.Children.Add(marks);
-		var barWidth = part.Bars > 0 ? width / part.Bars : width;
+		// A bar's span on the passes, where the ruler has it (LanePasses.Across)
+		var bars = Math.Max(1, part.Bars);
 		void Place(Border mark, int bar)
 		{
 			mark.Visibility = bar < 0 ? Visibility.Collapsed : Visibility.Visible;
 			if (bar < 0)
 				return;
-			mark.Width = MathF.Max(2f, barWidth - 1f);
-			Canvas.SetLeft(mark, bar * barWidth);
+			var left = LanePasses.Across((float)bar / bars, width);
+			mark.Width = MathF.Max(2f, LanePasses.Across((float)(bar + 1) / bars, width) - left);
+			Canvas.SetLeft(mark, left);
 		}
 		Place(hover, -1);
 		Place(chosen, part.IsSelected ? part.ChosenBar : -1);
@@ -214,7 +216,7 @@ internal sealed class LaneCell : ContentControl
 			if (e is not PointerRoutedEventArgs p || part.Bars <= 0)
 				return -1;
 			var at = p.GetCurrentPoint(strip).Position;
-			return at.Y < 0f || at.Y > LanePasses.DrawnHeight || at.X < 0f || at.X >= width ? -1 : Math.Clamp((int)(at.X / barWidth), 0, part.Bars - 1);
+			return at.Y < 0f || at.Y > LanePasses.DrawnHeight || at.X < 0f || at.X >= width ? -1 : Math.Clamp((int)(LanePasses.ShareAt(at.X, width) * part.Bars), 0, part.Bars - 1);
 		}
 		var hovering = false;
 		long lastPress = 0;

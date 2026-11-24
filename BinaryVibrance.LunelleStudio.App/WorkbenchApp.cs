@@ -58,6 +58,15 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 		{
 			CopyText = SetClipboardText,
 		};
+		// The theme chosen last, in whatever project, before the first view is made; and each new choice kept
+		var settings = StudioSettings.Load();
+		if (settings.Theme is { } theme && !_workbench.SetTheme(theme))
+			Console.Error.WriteLine($"[studio] no theme is called '{theme}': showing {Workbench.ThemeName}");
+		_workbench.ThemeChanged += name =>
+		{
+			settings.Theme = name;
+			settings.Save();
+		};
 		_workbench.ReportStatus($"opening {Name}…");
 		_restore = _state.Load();
 		if (catalog is not null && _restore is not null)

@@ -3,6 +3,7 @@ using BinaryVibrance.Sirrow;
 using BinaryVibrance.Lunelle.Chip;
 using BinaryVibrance.Lunelle.Music;
 using BinaryVibrance.Kaldra.Input;
+using BinaryVibrance.LunelleStudio.Views;
 
 namespace BinaryVibrance.LunelleStudio;
 
@@ -1048,6 +1049,37 @@ public sealed partial class Workbench : IDisposable
 		yield return new PaletteItemViewModel("Mode", "Arrange", () => SetMode(WorkbenchMode.Arrange));
 		yield return new PaletteItemViewModel("Mode", "Patch", () => SetMode(WorkbenchMode.Patch));
 		yield return new PaletteItemViewModel("Mode", "Kit", () => SetMode(WorkbenchMode.Kit));
+		foreach (var theme in ThemeDefinition.All)
+			if (!ReferenceEquals(theme, Theme.Current))
+			{
+				var name = theme.Name;
+				yield return new PaletteItemViewModel("Theme", $"Use the {name} theme", () => SetTheme(name));
+			}
+	}
+
+	/// <summary>The name of the theme the workbench shows.</summary>
+	public static string ThemeName => Theme.Current.Name;
+
+	/// <summary>Every theme's name, the first the one a workbench starts in.</summary>
+	public static IReadOnlyList<string> ThemeNames { get; } = [.. ThemeDefinition.All.Select(t => t.Name)];
+
+	/// <summary>Raised when the theme changes, with its name: for an app to keep the choice.</summary>
+	public event Action<string>? ThemeChanged;
+
+	/// <summary>
+	/// Shows the theme named <paramref name="name"/> (any case), recolouring every view in place; returns false, changing
+	/// nothing, when there is no such theme. The theme is the whole app's, as the views' brushes are shared.
+	/// </summary>
+	public bool SetTheme(string name)
+	{
+		if (ThemeDefinition.Find(name) is not { } theme)
+			return false;
+		if (!ReferenceEquals(theme, Theme.Current))
+		{
+			Theme.Apply(theme);
+			ThemeChanged?.Invoke(theme.Name);
+		}
+		return true;
 	}
 
 	/// <summary>Starts a note on the bench's patch (or hits the kit's piece the note falls on); returns it, to let go.</summary>

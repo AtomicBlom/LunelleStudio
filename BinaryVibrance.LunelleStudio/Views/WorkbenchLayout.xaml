@@ -41,7 +41,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- The rail -->
-            <Border Grid.Column="0" Width="78" Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}"
+            <Border Grid.Column="0" Width="78" Background="{x:Static views:Theme.PanelFace}" BorderBrush="{x:Static views:Theme.Line}"
                     BorderThickness="1" CornerRadius="8">
                 <!-- Each an icon over its name, lit in the accent while it is the one showing -->
                 <StackPanel x:Name="RailModes" Margin="5,6,5,6">
@@ -111,13 +111,13 @@
             </Grid>
 
             <!-- The cues beside Arrange -->
-            <Border Grid.Column="3" Width="300" Margin="8,0,0,0" Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}"
+            <Border Grid.Column="3" Width="300" Margin="8,0,0,0" Background="{x:Static views:Theme.PanelFace}" BorderBrush="{x:Static views:Theme.Line}"
                     BorderThickness="1" CornerRadius="8" Visibility="{x:Bind ViewModel.IsArrange, Mode=OneWay}">
                 <views:CuePanel ViewModel="{x:Bind ViewModel}" />
             </Border>
 
             <!-- The patch designer's inspector beside Patch -->
-            <Border Grid.Column="3" Width="360" Margin="8,0,0,0" Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}"
+            <Border Grid.Column="3" Width="360" Margin="8,0,0,0" Background="{x:Static views:Theme.PanelFace}" BorderBrush="{x:Static views:Theme.Line}"
                     BorderThickness="1" CornerRadius="8" Visibility="{x:Bind ViewModel.IsPatch, Mode=OneWay}">
                 <views:DesignerInspector ViewModel="{x:Bind ViewModel}" />
             </Border>

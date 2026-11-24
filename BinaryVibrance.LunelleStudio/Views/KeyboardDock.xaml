@@ -8,7 +8,7 @@
                 xmlns:views="using:BinaryVibrance.LunelleStudio.Views"
                 x:Class="BinaryVibrance.LunelleStudio.Views.KeyboardDock"
                 IsTabStop="False">
-    <Border Background="{x:Static views:Theme.Panel}" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1" CornerRadius="8">
+    <Border Background="{x:Static views:Theme.PanelFace}" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1" CornerRadius="8">
         <Grid Margin="12,8,12,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="230" />

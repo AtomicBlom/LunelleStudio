@@ -22,7 +22,7 @@ internal sealed class LaneCell : ContentControl
 	private const float Inset = 6f;
 	private const float RowHeight = 22f;
 
-	private static readonly BinaryVibrance.Vysara.Media.SolidColorBrush Hover = Theme.Brush(226, 230, 238, 9);
+	private static BinaryVibrance.Vysara.Media.SolidColorBrush Hover => Theme.Hover;
 
 	private readonly Border _ground = new();
 

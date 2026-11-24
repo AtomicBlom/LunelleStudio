@@ -29,8 +29,20 @@ internal sealed partial class WorkbenchLayout : BinaryVibrance.Vysara.Controls.C
 
 	partial void OnComponentRebuilt() => WireDrops();
 
+	// The rail's Settings: a flyout of the workbench's settings beside it, made afresh each time, so it shows them as they are
+	private void ShowSettings()
+	{
+		var flyout = new Flyout
+		{
+			Placement = BinaryVibrance.Vysara.Controls.Primitives.FlyoutPlacementMode.RightEdgeAlignedBottom,
+			Content = new SettingsPanel(ViewModel.Workbench),
+		};
+		flyout.ShowAt(SettingsButton);
+	}
+
 	private void WireDrops()
 	{
+		SettingsButton.Click += (_, _) => ShowSettings();
 		PinnedLibrary.InstrumentDragged += (name, isKit, at, dropped) => OnInstrumentDragged(PinnedLibrary, name, isKit, at, dropped);
 		FlyoutLibrary.InstrumentDragged += (name, isKit, at, dropped) => OnInstrumentDragged(FlyoutLibrary, name, isKit, at, dropped);
 	}

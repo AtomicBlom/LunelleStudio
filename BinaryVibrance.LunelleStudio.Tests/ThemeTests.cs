@@ -1,6 +1,11 @@
+using System.Numerics;
 using BinaryVibrance.Sirrow;
+using BinaryVibrance.Kaldra.Input;
+using BinaryVibrance.Kaldra.UI.Vysara;
 using BinaryVibrance.LunelleStudio.Views;
 using BinaryVibrance.Vysara;
+using BinaryVibrance.Vysara.Controls;
+using BinaryVibrance.Vysara.Media;
 using Shouldly;
 
 namespace BinaryVibrance.LunelleStudio.Tests;
@@ -134,5 +139,62 @@ public class ThemeTests
 			workbench.SetTheme("Slate");
 		}
 		reported.ShouldBe(["Console", "Slate"]);
+	}
+
+	[Test]
+	public void The_settings_light_the_theme_showing_and_a_click_on_another_shows_it()
+	{
+		using var session = new OfflineSession();
+		using var workbench = new Workbench(session.Engine, session.Engine.Master, new WorkbenchCatalog());
+		var surface = new Vector2(400f, 400f);
+		var host = new UIHost();
+		var panel = new SettingsPanel(workbench) { HorizontalAlignment = HorizontalAlignment.Left, VerticalAlignment = VerticalAlignment.Top };
+		host.CreateRoot(UILayer.Default).Root.Content = panel;
+		host.Tick(0.016, 0f, surface);
+		var stack = new InputLayerStack();
+		stack.Push(new VysaraInputLayer(host));
+		void Frame(params InputEvent[] events)
+		{
+			stack.Resolve(events);
+			host.Tick(0.016, 0f, surface);
+		}
+		ToggleButton[] keys = [.. Keys(panel)];
+		keys.Length.ShouldBe(ThemeDefinition.All.Count);
+		try
+		{
+			keys.Select(k => k.IsChecked == true).ShouldBe([true, false, false, false]);
+
+			var at = Centre(keys[1]);
+			Frame(InputEvent.PointerMove(at.X, at.Y), InputEvent.MouseButtonDown(MouseButton.Left));
+			Frame(InputEvent.MouseButtonUp(MouseButton.Left));
+
+			Workbench.ThemeName.ShouldBe("Console");
+			keys.Select(k => k.IsChecked == true).ShouldBe([false, true, false, false]);
+		}
+		finally
+		{
+			workbench.SetTheme("Slate");
+		}
+	}
+
+	private static IEnumerable<ToggleButton> Keys(UIElement element)
+	{
+		if (element is ToggleButton key)
+		{
+			yield return key;
+			yield break;
+		}
+		for (var i = 0; i < VisualTreeHelper.GetChildrenCount(element); i++)
+			foreach (var found in Keys(VisualTreeHelper.GetChild(element, i)))
+				yield return found;
+	}
+
+	// Where an element's middle is on the surface
+	private static Vector2 Centre(UIElement element)
+	{
+		var (x, y) = (0f, 0f);
+		for (UIElement? e = element; e is not null; e = VisualTreeHelper.GetParent(e))
+			(x, y) = (x + e.LayoutRect.X, y + e.LayoutRect.Y);
+		return new Vector2(x + element.LayoutRect.Width / 2f, y + element.LayoutRect.Height / 2f);
 	}
 }

@@ -13,6 +13,9 @@ internal sealed record ThemeDefinition
 	/// <summary>The name the command palette and the settings know it by.</summary>
 	public required string Name { get; init; }
 
+	/// <summary>What it looks like, in a line, for the settings.</summary>
+	public string About { get; init; } = "";
+
 	/// <summary>Behind everything.</summary>
 	public required HdrColor Page { get; init; }
 
@@ -139,6 +142,7 @@ internal sealed record ThemeDefinition
 	public static ThemeDefinition Slate { get; } = new()
 	{
 		Name = "Slate",
+		About = "Dark slate and a cool blue, as the workbench was made",
 		Page = Rgb(18, 20, 26),
 		Panel = Rgb(28, 31, 40),
 		PanelFace = (Rgb(28, 31, 40), Rgb(28, 31, 40)),
@@ -197,6 +201,7 @@ internal sealed record ThemeDefinition
 	public static ThemeDefinition Console { get; } = new()
 	{
 		Name = "Console",
+		About = "A mixing desk late at night: charcoal, lit keys, a VU meter",
 		Page = Rgb(25, 24, 22),
 		Panel = Rgb(39, 37, 34),
 		PanelFace = (Rgb(45, 43, 40), Rgb(35, 33, 31)),
@@ -267,6 +272,7 @@ internal sealed record ThemeDefinition
 	public static ThemeDefinition Faceplate { get; } = new()
 	{
 		Name = "Faceplate",
+		About = "Brushed graphite and amber, as a rack of hardware",
 		Page = Rgb(16, 17, 18),
 		Panel = Rgb(38, 40, 44),
 		PanelFace = (Rgb(43, 45, 50), Rgb(32, 34, 38)),
@@ -332,6 +338,7 @@ internal sealed record ThemeDefinition
 	public static ThemeDefinition Bench { get; } = new()
 	{
 		Name = "Bench",
+		About = "Test equipment: a grey case round dark screens",
 		Page = Rgb(26, 25, 24),
 		Panel = Rgb(18, 19, 21),
 		PanelFace = (Rgb(21, 22, 24), Rgb(16, 17, 19)),

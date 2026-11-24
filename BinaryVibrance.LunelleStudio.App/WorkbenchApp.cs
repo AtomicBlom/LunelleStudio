@@ -53,6 +53,8 @@ public sealed class WorkbenchApp(string projectPath, IWorkbenchExtension? extens
 		_ui = new UIHost();
 		_painter = UIPainter.Create(Engine, _ui);
 		_view = _ui.CreateRoot(UILayer.Default);
+		// On whole pixels, so a moving playhead always covers whole pixels and the glow round a lit one holds steady (Glow)
+		_view.Root.UseLayoutRounding = true;
 
 		// The extension's bus (a game's mix) and its own build of the music, to play until the project has compiled
 		var catalog = extension?.Catalog;

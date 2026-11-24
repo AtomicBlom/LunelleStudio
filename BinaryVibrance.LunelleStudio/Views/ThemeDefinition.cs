@@ -32,7 +32,8 @@ internal sealed record ThemeDefinition
 	public required (HdrColor Top, HdrColor Bottom) KeyFace { get; init; }
 	public required (HdrColor Top, HdrColor Bottom) KeyFaceOver { get; init; }
 
-	/// <summary>A toggle that is on: in a theme that glows, a push-button lit from inside, brighter than white.</summary>
+	/// <summary>A toggle that is on: a push-button lit from inside. No brighter than white, since a glow round a lit area
+	/// as big as a button drowns its text.</summary>
 	public required HdrColor KeyLit { get; init; }
 
 	/// <summary>Behind a readout (the transport's position): a display's dark glass, or clear.</summary>
@@ -102,6 +103,8 @@ internal sealed record ThemeDefinition
 
 	public required HdrColor Note { get; init; }
 	public required HdrColor BarLine { get; init; }
+	/// <summary>The playhead's line: in a theme that glows, brighter than white. It moves, so it glows evenly only because
+	/// the workbench is laid out on whole pixels (Vysara's UseLayoutRounding), where it always covers whole pixels.</summary>
 	public required HdrColor Playhead { get; init; }
 	public required HdrColor WhiteKey { get; init; }
 	public required HdrColor BlackKey { get; init; }
@@ -193,7 +196,7 @@ internal sealed record ThemeDefinition
 		Rail = Rgb(22, 21, 18),
 		KeyFace = (Rgb(66, 62, 57), Rgb(46, 43, 40)),
 		KeyFaceOver = (Rgb(78, 74, 68), Rgb(56, 53, 49)),
-		KeyLit = Lit(Rgb(255, 138, 61), 1.25f),
+		KeyLit = Rgb(255, 138, 61),
 		Window = Rgb(16, 20, 14),
 		WindowInk = Lit(Rgb(201, 240, 178), 1.2f),
 		WindowDim = Rgb(150, 196, 128),
@@ -216,7 +219,7 @@ internal sealed record ThemeDefinition
 		Level = Lit(Rgb(127, 220, 106), 1.6f),
 		Glow = 0.35f,
 		VuMeter = true,
-		VuFace = Lit(Rgb(239, 226, 196), 1.1f),
+		VuFace = Rgb(239, 226, 196),
 		VuInk = Rgb(42, 38, 32),
 		VuHot = Rgb(200, 58, 44),
 		VuNeedle = Rgb(29, 26, 22),

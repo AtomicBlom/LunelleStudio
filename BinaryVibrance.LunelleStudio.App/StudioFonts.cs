@@ -4,7 +4,8 @@ namespace BinaryVibrance.LunelleStudio.App;
 
 /// <summary>
 /// The themes' typefaces, baked at build time into atlases under <c>fonts\</c> beside the app (the project's
-/// <c>Assets/Fonts</c>), each loaded the first time a theme names it. <see cref="Apply"/> gives each family the views
+/// <c>Assets/Fonts</c>), or into the app itself in the browser, which has no folder beside it; each loaded the first time
+/// a theme names it. <see cref="Apply"/> gives each family the views
 /// name the font the theme gives it, in the UI host's fonts, which lays the text in it out again; a family whose font the
 /// theme leaves out, or that wasn't baked, draws in Vysara's own.
 /// </summary>
@@ -34,8 +35,8 @@ internal sealed class StudioFonts(FontCollection fonts)
 			return atlas;
 		try
 		{
-			using var json = File.OpenRead(Path.Combine(Folder, $"{name}.font.json"));
-			using var png = File.OpenRead(Path.Combine(Folder, $"{name}.0.png"));
+			using var json = Open($"{name}.font.json");
+			using var png = Open($"{name}.0.png");
 			atlas = FontAtlas.Load(json, png);
 		}
 		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException)
@@ -46,4 +47,8 @@ internal sealed class StudioFonts(FontCollection fonts)
 		_loaded[name] = atlas;
 		return atlas;
 	}
+
+	private static Stream Open(string file) => OperatingSystem.IsBrowser()
+		? typeof(StudioFonts).Assembly.GetManifestResourceStream(file) ?? throw new FileNotFoundException($"{file} isn't embedded.")
+		: File.OpenRead(Path.Combine(Folder, file));
 }

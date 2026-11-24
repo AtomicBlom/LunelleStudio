@@ -135,19 +135,6 @@ public class WorkbenchFolderTests
 		session.Left().Max(MathF.Abs).ShouldBeGreaterThan(0.01f);
 	}
 
-	// Files kept in memory, as a browser host keeps them in its storage
-	private sealed class MemoryFiles : IMusicFiles
-	{
-		private readonly Dictionary<string, string> _files = new(StringComparer.OrdinalIgnoreCase);
-
-		public bool Exists(string path) => _files.ContainsKey(Path.GetFullPath(path));
-
-		public string ReadText(string path) =>
-			_files.TryGetValue(Path.GetFullPath(path), out var text) ? text : throw new FileNotFoundException(path);
-
-		public void WriteText(string path, string text) => _files[Path.GetFullPath(path)] = text;
-	}
-
 	[Test]
 	public void A_workbench_over_files_kept_elsewhere_reads_and_writes_them_there()
 	{
@@ -157,17 +144,28 @@ public class WorkbenchFolderTests
 		files.WriteText(Path.Combine(root, "Patches", "tone.patch.json"),
 			PatchFile.Write(PatchSpec.From(Patch.Build("tone", p => p.Out(p.Sine(1f, Env.Adsr(0.005f, 0.1f, 0.6f, 0.1f)))))));
 		files.WriteText(Path.Combine(root, "Songs", "tune.song.json"), Song(120));
-		var music = MusicFolder.Load([MusicFolder.ProjectFileName, "Patches/tone.patch.json", "Songs/tune.song.json"],
-			path => System.Text.Encoding.UTF8.GetBytes(files.ReadText(Path.Combine(root, path))));
 
 		using var session = new OfflineSession();
 		using var workbench = new Workbench(session.Engine, session.Engine.Master, new WorkbenchCatalog()) { Files = files };
-		workbench.UseCatalog(FolderCatalog.From(music, root));
+		using var host = WorkbenchFolder.Open(root, workbench);
+		host.Update();
+		var first = host.Current.ShouldNotBeNull();
 		workbench.ViewModel.SongName.ShouldBe("tune");
 		workbench.NewSong("fresh").ShouldBeNull();
 		files.ReadText(Path.Combine(root, "Songs", "fresh.song.json")).ShouldContain("\"name\": \"fresh\"");
 		workbench.NewPatch("bell", copyOf: "tone").ShouldBeNull();
 		files.Exists(Path.Combine(root, "Patches", "bell.patch.json")).ShouldBeTrue();
+
+		// The new song and patch heard, and the folder read again with them
+		var deadline = Stopwatch.StartNew();
+		while (ReferenceEquals(host.Current, first) && deadline.Elapsed < TimeSpan.FromSeconds(10))
+		{
+			host.Update();
+			Thread.Sleep(20);
+		}
+		host.Current.ShouldNotBeSameAs(first);
+		host.Current!.Songs.Select(s => s.Name).ShouldBe(["fresh", "tune"], ignoreOrder: true);
+		host.Current.Patches.Select(p => p.Name).ShouldBe(["bell", "tone"], ignoreOrder: true);
 
 		var editor = SongEditor.Open(Path.Combine(root, "Songs", "tune.song.json"), files);
 		editor.Edit(song => song["tempo"] = 96);

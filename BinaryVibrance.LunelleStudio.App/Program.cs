@@ -1,3 +1,18 @@
+#if LUNELLESTUDIO_WEB
+using BinaryVibrance.Kaldra.Core.Hosting;
+using BinaryVibrance.LunelleStudio.App;
+using BinaryVibrance.LunelleStudio.App.Web;
+
+// The browser's studio: music files alone, kept in the browser's storage (BrowserFiles), the sample's music the first
+// time; a project comes and goes as a .lunelle file, exported and imported from the transport. Kaldra's web host drives
+// it from the page once the runtime is up.
+await System.Runtime.InteropServices.JavaScript.JSHost.ImportAsync(StudioPage.Module, "../lunelle-studio.js");
+// The music's output, an AudioWorklet, which the app opens as it loads (AudioOutput.Open)
+await BinaryVibrance.Sirrow.Web.WebAudio.RegisterAsync();
+var files = await BrowserFiles.OpenAsync();
+BrowserProject.StartIfEmpty(files);
+KaldraApplication.Run(new WorkbenchApp(BrowserProject.Folder, filesAlone: true, files: files), args);
+#else
 using BinaryVibrance.Sirrow.Sdl;
 using BinaryVibrance.LunelleStudio;
 using BinaryVibrance.LunelleStudio.App;
@@ -107,3 +122,4 @@ static string FindProject(string path)
 		_ => throw new ArgumentException($"{path} has more than one .csproj: name the one to open."),
 	};
 }
+#endif

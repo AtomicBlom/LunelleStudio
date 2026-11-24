@@ -466,7 +466,7 @@ public sealed partial class Workbench
 			if (at is { } place && place >= 0 && place < tracks.Count)
 				tracks.Insert(place, track);
 			else
-				tracks.Add(track);
+				tracks.Add((JsonNode)track);
 		});
 		return null;
 	}
@@ -592,7 +592,7 @@ public sealed partial class Workbench
 			}
 			else
 			{
-				parts.Add(part);
+				parts.Add((JsonNode)part);
 				index = parts.Count - 1;
 			}
 		});

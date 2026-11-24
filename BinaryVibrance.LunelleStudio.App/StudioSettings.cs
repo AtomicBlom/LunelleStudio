@@ -5,8 +5,8 @@ namespace BinaryVibrance.LunelleStudio.App;
 
 /// <summary>
 /// What the player of the studio chose for every project alike: the theme. Kept in
-/// <c>%LOCALAPPDATA%\BinaryVibrance\LunelleStudio\settings.json</c>, apart from what each project's workbench was doing
-/// (<see cref="WorkbenchStateFile"/>, beside the project).
+/// <c>%LOCALAPPDATA%\BinaryVibrance\LunelleStudio\settings.json</c> (in the browser, its storage under that path), apart
+/// from what each project's workbench was doing (<see cref="WorkbenchStateFile"/>, beside the project).
 /// </summary>
 internal sealed class StudioSettings
 {
@@ -17,11 +17,11 @@ internal sealed class StudioSettings
 	public string? Theme { get; set; }
 
 	/// <summary>What was saved, or nothing chosen when nothing was or it can't be read.</summary>
-	public static StudioSettings Load()
+	public static StudioSettings Load(IMusicFiles files)
 	{
 		try
 		{
-			if (File.Exists(FilePath) && JsonNode.Parse(File.ReadAllText(FilePath)) is JsonObject json)
+			if (files.Exists(FilePath) && JsonNode.Parse(files.ReadText(FilePath)) is JsonObject json)
 				return new StudioSettings { Theme = json["theme"]?.GetValue<string>() };
 		}
 		catch (Exception ex) when (ex is JsonException or IOException or UnauthorizedAccessException or InvalidOperationException)
@@ -32,13 +32,12 @@ internal sealed class StudioSettings
 	}
 
 	/// <summary>Writes the settings; a failure is reported and otherwise ignored, as the choice still holds until the app closes.</summary>
-	public void Save()
+	public void Save(IMusicFiles files)
 	{
 		try
 		{
-			Directory.CreateDirectory(Path.GetDirectoryName(FilePath)!);
 			var json = new JsonObject { ["theme"] = Theme };
-			File.WriteAllText(FilePath, json.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+			files.WriteText(FilePath, json.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
 		}
 		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
 		{

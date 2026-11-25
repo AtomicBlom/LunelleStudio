@@ -50,7 +50,26 @@ internal sealed partial class ArrangeView : ContentControl, INotifyPropertyChang
 		}
 	}
 
-	private void OnFrame() => Follow();
+	private void OnFrame()
+	{
+		Follow();
+		Fit();
+	}
+
+	// The part panel no taller than leaves the board its least, so a height kept from a larger window still fits this one
+	// rather than pushing the view past its foot and over the keyboard under it
+	private void Fit()
+	{
+		var height = Layout.LayoutRect.Height;
+		if (height <= 0f)
+			return;
+		var most = Math.Max(Splitter.MinimumTrackSize, height - (Head.LayoutRect.Height + 16f) - 6f - Splitter.MinimumTrackSize);
+		if (Layout.RowDefinitions[3].Value > most)
+		{
+			Layout.RowDefinitions[3] = GridLength.Pixels(most);
+			Layout.InvalidateMeasure();
+		}
+	}
 
 	// The heads moved back by as much as the lanes are scrolled, so they stay put
 	private void Follow()

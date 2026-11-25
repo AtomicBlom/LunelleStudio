@@ -47,7 +47,7 @@
         </Border>
 
         <!-- The song and what plays next -->
-        <Grid Grid.Row="0" Margin="12,8,12,8">
+        <Grid x:Name="Head" Grid.Row="0" Margin="12,8,12,8">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />

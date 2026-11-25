@@ -119,10 +119,12 @@
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
                     </Grid>
-                    <!-- The corner over both heads -->
-                    <Border x:Name="Corner" Grid.Row="0" Width="176" HorizontalAlignment="Left" Background="{x:Static views:Theme.Panel}"
+                    <!-- The corner over both heads, as tall as a section's head (SectionHeader.Tall): taller, it made the row taller
+                         and the heads, centred in it, left a strip at the top where the lanes showed as they scrolled -->
+                    <Border x:Name="Corner" Grid.Row="0" Width="176" Height="{x:Static views:SectionHeader.Tall}" HorizontalAlignment="Left"
+                            VerticalAlignment="Top" Background="{x:Static views:Theme.Panel}"
                             BorderBrush="{x:Static views:Theme.LineStrong}" BorderThickness="0,0,1,1">
-                        <StackPanel Margin="12,10,8,8">
+                        <StackPanel Margin="12,10,8,5">
                             <TextBlock Text="SECTIONS" FontSize="10" Foreground="{x:Static views:Theme.Faint}" />
                             <TextBlock Text="Bars and chords" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Margin="0,22,0,0" />
                             <TextBlock Text="Exits" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Margin="0,8,0,0" />

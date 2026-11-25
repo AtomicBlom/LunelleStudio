@@ -34,6 +34,8 @@ internal sealed class SectionHeader : ContentControl
 	{
 		IsTabStop = false;
 		Height = Tall;
+		// At the top of its row however tall the row is: centred in a taller one, the lanes would show over it as they scroll
+		VerticalAlignment = VerticalAlignment.Top;
 	}
 
 	/// <summary>The section it heads.</summary>

@@ -617,4 +617,7 @@ public sealed class WorkbenchViewModel : ViewModel
 
 	/// <summary>Something the host needs seen, beside the build pill until it goes: "StudioExtras changed: restart to take it up".</summary>
 	public string Notice { get; set => Set(ref field, value); } = "";
+
+	/// <summary>Whether the project has edits not yet saved (the document's, docs/spec/transactions.md).</summary>
+	public bool IsDirty { get; set => Set(ref field, value); }
 }

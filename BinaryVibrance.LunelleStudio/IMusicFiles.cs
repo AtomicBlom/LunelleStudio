@@ -32,6 +32,9 @@ public interface IMusicFiles
 	/// </summary>
 	IEnumerable<string> List(string folder);
 
+	/// <summary>Removes the file at <paramref name="path"/>, if it is there.</summary>
+	void Delete(string path);
+
 	/// <summary>
 	/// Calls <paramref name="changed"/> with a file's full path whenever a file under <paramref name="folder"/> is written,
 	/// made, removed or renamed, by the workbench or anything else, until the result is disposed. It may be called on
@@ -73,6 +76,13 @@ public sealed class DiskFiles : IMusicFiles
 		if (Path.GetDirectoryName(Path.GetFullPath(path)) is { Length: > 0 } folder)
 			Directory.CreateDirectory(folder);
 		File.WriteAllBytes(path, bytes);
+	}
+
+	/// <inheritdoc/>
+	public void Delete(string path)
+	{
+		if (File.Exists(path))
+			File.Delete(path);
 	}
 
 	/// <inheritdoc/>

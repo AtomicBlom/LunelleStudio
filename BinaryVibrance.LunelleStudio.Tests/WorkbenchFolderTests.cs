@@ -184,4 +184,43 @@ public class WorkbenchFolderTests
 		state.Load().ShouldNotBeNull().Song.ShouldBe("tune");
 		Directory.Exists(root).ShouldBeFalse();
 	}
+
+	[Test]
+	public void A_workbench_over_a_document_undoes_and_saves_its_edits_and_the_music_follows()
+	{
+		var root = Path.Combine(Path.GetTempPath(), "lunelle-studio-document-" + Guid.NewGuid().ToString("N")[..8]);
+		var disk = new MemoryFiles();
+		disk.WriteText(Path.Combine(root, MusicFolder.ProjectFileName), Project);
+		disk.WriteText(Path.Combine(root, "Cues", "tunes.cues.json"), Cues);
+		disk.WriteText(Path.Combine(root, "Patches", "tone.patch.json"),
+			PatchFile.Write(PatchSpec.From(Patch.Build("tone", p => p.Out(p.Sine(1f, Env.Adsr(0.005f, 0.1f, 0.6f, 0.1f)))))));
+		var song = Path.Combine(root, "Songs", "tune.song.json");
+		disk.WriteText(song, Song(120));
+		var document = ProjectDocument.Open(disk, root);
+
+		using var session = new OfflineSession();
+		using var workbench = new Workbench(session.Engine, session.Engine.Master, new WorkbenchCatalog()) { Files = document };
+		using var host = WorkbenchFolder.Open(root, workbench);
+		host.Update();
+		workbench.ViewModel.SongName.ShouldBe("tune");
+		workbench.ViewModel.IsDirty.ShouldBeFalse();
+
+		workbench.Editor!.Edit(root => root["tempo"] = 96);
+		workbench.Editor.Save();
+		workbench.ViewModel.IsDirty.ShouldBeTrue();
+		document.ReadText(song).ShouldContain("\"tempo\": 96");
+		disk.ReadText(song).ShouldContain("\"tempo\": 120");
+
+		workbench.UndoEdit();
+		document.ReadText(song).ShouldContain("\"tempo\": 120");
+		workbench.ViewModel.IsDirty.ShouldBeFalse();
+		workbench.RedoEdit();
+		document.ReadText(song).ShouldContain("\"tempo\": 96");
+		workbench.Editor.Text.ShouldContain("\"tempo\": 96");
+
+		workbench.Save();
+		disk.ReadText(song).ShouldContain("\"tempo\": 96");
+		workbench.ViewModel.IsDirty.ShouldBeFalse();
+		document.CanUndo.ShouldBeFalse();
+	}
 }

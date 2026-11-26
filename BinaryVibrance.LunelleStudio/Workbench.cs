@@ -65,7 +65,15 @@ public sealed partial class Workbench : IDisposable
 	/// Where the project's songs and patches are read and written: the disk unless the host keeps them elsewhere (a
 	/// browser's storage). Set before the first song is opened.
 	/// </summary>
-	public IMusicFiles Files { get; init; } = DiskFiles.Instance;
+	public IMusicFiles Files
+	{
+		get;
+		init
+		{
+			field = value;
+			WatchDocument();
+		}
+	} = DiskFiles.Instance;
 
 	internal int ReadScope(Span<float> into) => _tap.Read(into);
 
@@ -278,6 +286,7 @@ public sealed partial class Workbench : IDisposable
 	/// <summary>Chooses a song and builds it; if one was playing, it plays.</summary>
 	public void SelectSong(int index)
 	{
+		Seal();
 		if ((uint)index >= (uint)_catalog.Songs.Count)
 			throw new ArgumentOutOfRangeException(nameof(index), index, "No such song in the catalog.");
 		var playing = Player.IsPlaying;
@@ -897,6 +906,7 @@ public sealed partial class Workbench : IDisposable
 	/// <summary>Chooses a patch for the bench, which the keyboard plays.</summary>
 	public void SelectPatch(int index)
 	{
+		Seal();
 		if ((uint)index >= (uint)_catalog.Patches.Count)
 			throw new ArgumentOutOfRangeException(nameof(index), index, "No such patch in the catalog.");
 		var (name, build) = _catalog.Patches[index];
@@ -932,6 +942,7 @@ public sealed partial class Workbench : IDisposable
 	/// <summary>Chooses a kit for the bench, whose pads (and keys) play its pieces.</summary>
 	public void SelectKit(int index)
 	{
+		Seal();
 		if ((uint)index >= (uint)_catalog.Kits.Count)
 			throw new ArgumentOutOfRangeException(nameof(index), index, "No such kit in the catalog.");
 		var (name, build) = _catalog.Kits[index];
@@ -1204,6 +1215,8 @@ public sealed partial class Workbench : IDisposable
 		}
 		if (control && !ViewModel.IsTyping && input.Pressed(Key.Y))
 			RedoEdit();
+		if (control && input.Pressed(Key.S))
+			Save();
 		if (!control && !ViewModel.IsTyping && input.Pressed(Key.Delete))
 			ViewModel.Roll.DeleteCommand.Execute(null);
 		if (ViewModel.IsTyping || ViewModel.PaletteOpen || control)
@@ -1496,6 +1509,8 @@ public sealed partial class Workbench : IDisposable
 	/// <summary>Undoes the last edit of the song's file.</summary>
 	internal void UndoEdit()
 	{
+		if (DocumentStep(d => d.Undo()))
+			return;
 		if (_editor?.Undo() == true)
 			Rebuild(swap: true);
 	}
@@ -1503,6 +1518,8 @@ public sealed partial class Workbench : IDisposable
 	/// <summary>Does again the last edit undone.</summary>
 	internal void RedoEdit()
 	{
+		if (DocumentStep(d => d.Redo()))
+			return;
 		if (_editor?.Redo() == true)
 			Rebuild(swap: true);
 	}

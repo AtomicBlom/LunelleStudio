@@ -24,6 +24,11 @@ namespace BinaryVibrance.LunelleStudio.App;
 public sealed partial class WorkbenchApp(string projectPath, IWorkbenchExtension? extension = null, IReadOnlyList<string>? arguments = null, string? extensionProject = null, bool filesAlone = false, IMusicFiles? files = null) : KaldraApplication
 {
 	private readonly IMusicFiles _files = files ?? DiskFiles.Instance;
+	private ProjectDocument? _document;
+
+	// The project's files as the studio edits them (docs/spec/transactions.md), its journal recovered
+	private ProjectDocument Document => _document ??= ProjectDocument.Open(_files,
+		filesAlone ? projectPath : Path.GetDirectoryName(Path.GetFullPath(projectPath))!);
 	private readonly string? _extensionProject = extensionProject;   // the extension's project, which the desktop watches
 	private readonly WorkbenchStateFile _state = filesAlone
 		? new WorkbenchStateFile(Path.Combine(projectPath, ".lunelle-studio", "workbench.json"), files)
@@ -88,7 +93,8 @@ public sealed partial class WorkbenchApp(string projectPath, IWorkbenchExtension
 		_workbench = new Workbench(Audio, extension?.Output(Audio) ?? Audio.CreateBus("music"), catalog ?? new WorkbenchCatalog())
 		{
 			CopyText = SetClipboardText,
-			Files = _files,
+			// The project's files as a document: edits undo, Ctrl+S saves them, and a crash loses nothing
+			Files = Document,
 			// Offered to a project of files alone (the browser's always is)
 			Presets = StudioPresets.Load(),
 		};
@@ -121,6 +127,7 @@ public sealed partial class WorkbenchApp(string projectPath, IWorkbenchExtension
 			OpenProject();
 		var view = new WorkbenchView(_workbench.ViewModel);
 		extension?.Attach(new WorkbenchExtensionContext(_workbench, Audio, view.TransportExtras, arguments ?? []));
+		AddSave(view);
 		AddControls(view);
 		_view.Root.Content = view;
 		WatchExtension();
@@ -162,6 +169,23 @@ public sealed partial class WorkbenchApp(string projectPath, IWorkbenchExtension
 			_state.Save(_workbench.CaptureState());
 			SaveSettings();
 		}
+	}
+
+	// Save, first at the transport's end in every host: "save •" while there is something to save (Ctrl+S saves too)
+	private void AddSave(WorkbenchView view)
+	{
+		var label = new TextBlock { Text = "save", FontSize = 13f, Margin = new Thickness(8, 3, 8, 4) };
+		var button = new Button { Content = label, Margin = new Thickness(0, 0, 4, 4) };
+		ToolTipService.SetToolTip(button, "Write the edits to the project's files (Ctrl+S); until then they undo, and a crash keeps them");
+		button.Click += (_, _) => _workbench.Save();
+		void Show() => label.Text = _workbench.ViewModel.IsDirty ? "save •" : "save";
+		_workbench.ViewModel.PropertyChanged += (_, e) =>
+		{
+			if (e.PropertyName == nameof(WorkbenchViewModel.IsDirty))
+				Show();
+		};
+		Show();
+		view.TransportExtras.Children.Add(button);
 	}
 
 	// A button for the transport's end, where each host puts its own controls (AddControls)

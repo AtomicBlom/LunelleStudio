@@ -15,6 +15,7 @@ public sealed partial class Workbench
 		var based = file?["base"]?.Str;
 		designer.BasedOn = based ?? "";
 		designer.IsDerived = based is not null && _patchBelow is not null;
+		designer.OverriddenPaths = [];
 		if (!designer.IsDerived)
 			return;
 		foreach (var path in file!["remove"]?.Items ?? [])
@@ -27,6 +28,23 @@ public sealed partial class Workbench
 		if (file["set"] is JObject sets)
 			foreach (var member in sets.Members)
 				designer.Overrides.Add(new OverrideEntryViewModel(this, "set", member.Key, JWriter.Write(member.Value)));
+		designer.OverriddenPaths = [.. designer.Overrides.Select(o => o.Path)];
+	}
+
+	/// <summary>
+	/// Takes out every change the open derived patch's file makes that reaches the setting at <paramref name="path"/> (a
+	/// line of the designer's, marked): one undoable step. Why it can't be, or null.
+	/// </summary>
+	public string? RevertSetting(string path)
+	{
+		var reaching = ViewModel.Designer.Overrides.Where(o => PatchDesigner.Reaches(o.Path, path)).Select(o => (o.Kind, o.Path)).ToList();
+		if (reaching.Count == 0)
+			return $"The patch's file doesn't change {path}.";
+		using (Document?.Transaction($"revert {path}"))
+			foreach (var (kind, at) in reaching)
+				if (RevertOverride(kind, at) is { } why)
+					return why;
+		return null;
 	}
 
 	/// <summary>
@@ -62,7 +80,12 @@ public sealed partial class Workbench
 		var spec = PatchFile.Read(whole.ToString(), out var names);
 		var name = (uint)_benchPatch < (uint)_catalog.Patches.Count ? _catalog.Patches[_benchPatch].Name : spec.Name;
 		spec.Name = name;
-		ViewModel.Designer.Load(spec.ToPatch(), _catalog.MacroName, keepEdits: false, names: names);
+		// Where the designer was stays: the line reverted shows the base's value there
+		var designer = ViewModel.Designer;
+		var (tab, chosen) = (designer.Tab, designer.Selected);
+		designer.Load(spec.ToPatch(), _catalog.MacroName, keepEdits: false, names: names);
+		designer.Select(chosen);
+		designer.Tab = tab;
 		ShowOverrides(file);
 		return null;
 	}

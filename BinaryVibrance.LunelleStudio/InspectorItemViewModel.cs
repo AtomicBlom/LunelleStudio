@@ -91,6 +91,22 @@ public sealed class InspectorItemViewModel : ViewModel
 
 	private string Unit { get; init; } = "";
 
+	/// <summary>
+	/// The path in a patch file it stands for (overrides.md): <c>filter.cutoff</c>, <c>operators[tine].ratio</c>; null for
+	/// a line that is no setting of the file's (a heading, Solo).
+	/// </summary>
+	public string? Path { get; internal set; }
+
+	/// <summary>Whether the open derived patch's file changes what it shows: marked, with its revert.</summary>
+	public bool IsOverridden
+	{
+		get;
+		internal set => Set(ref field, value);
+	}
+
+	/// <summary>Takes the file's changes to it out, so the base shows through there.</summary>
+	public ICommand? RevertCommand { get; internal set; }
+
 	/// <summary>Tells its view that what it shows changed underneath it (an undo, a revert).</summary>
 	internal void Refresh()
 	{

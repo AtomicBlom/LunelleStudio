@@ -183,6 +183,36 @@ public sealed class PatchDesigner : ViewModel
 	/// <summary>What a derived patch's file changes over its base, each with its revert.</summary>
 	public System.Collections.ObjectModel.ObservableCollection<OverrideEntryViewModel> Overrides { get; } = [];
 
+	/// <summary>
+	/// The paths the open derived patch's file changes (<see cref="Overrides"/>'s), for the inspector to mark each line
+	/// they reach; none for a whole patch.
+	/// </summary>
+	internal IReadOnlyList<string> OverriddenPaths
+	{
+		get;
+		set
+		{
+			field = value;
+			foreach (var item in Inspector)
+				item.IsOverridden = Overridden(item.Path);
+		}
+	} = [];
+
+	/// <summary>A line's revert asked for, by its path: the file's changes reaching it are to be taken out.</summary>
+	internal event Action<string>? RevertRequested;
+
+	/// <summary>
+	/// Whether a change at path <paramref name="change"/> reaches the setting at <paramref name="setting"/>: the same
+	/// path, one holding it (an operator removed or added), or one inside it (a modulator's index of its list).
+	/// </summary>
+	internal static bool Reaches(string change, string setting) =>
+		change == setting || Under(setting, change) || Under(change, setting);
+
+	private static bool Under(string path, string parent) =>
+		path.Length > parent.Length && path.StartsWith(parent, StringComparison.Ordinal) && path[parent.Length] is '.' or '[';
+
+	private bool Overridden(string? path) => path is not null && OverriddenPaths.Any(o => Reaches(o, path));
+
 	/// <summary>Which songs the patch is used in, said so an edit's reach is clear: "Used in open-road and understory".</summary>
 	public string UsedBy
 	{
@@ -543,6 +573,7 @@ public sealed class PatchDesigner : ViewModel
 	private void ShowInspector()
 	{
 		Inspector.Clear();
+		_paths = [];
 		if (!IsLoaded)
 			return;
 		switch (Tab)
@@ -560,7 +591,23 @@ public sealed class PatchDesigner : ViewModel
 		}
 	}
 
-	private void Show(InspectorItemViewModel item) => Inspector.Add(item);
+	// What the lines shown next stand for in the file, by their labels (Paths), for marking those a derived patch changes
+	private Dictionary<string, string> _paths = [];
+
+	// The lines shown next stand for these keys under a prefix: ("ratio", "ratio") under "operators[tine]."
+	private void Paths(string prefix, params (string Label, string Key)[] keys) =>
+		_paths = keys.ToDictionary(k => k.Label, k => k.Key.Length == 0 ? prefix.TrimEnd('.') : prefix + k.Key);
+
+	private void Show(InspectorItemViewModel item)
+	{
+		if (!item.IsHeading && _paths.TryGetValue(item.Label, out var path))
+		{
+			item.Path = path;
+			item.IsOverridden = Overridden(path);
+			item.RevertCommand = new ActionCommand(() => RevertRequested?.Invoke(path));
+		}
+		Inspector.Add(item);
+	}
 
 	private void OperatorItems()
 	{
@@ -572,6 +619,8 @@ public sealed class PatchDesigner : ViewModel
 		Show(InspectorItemViewModel.Button("Delete", () => Delete(i)));
 
 		var tap = _spec.Outputs.FindIndex(t => t.Operator == i);
+		var op = $"operators[{NameOf(i)}].";
+		Paths($"out[{NameOf(i)}].", ("in Out", ""), ("level", "level"), ("pan", "pan"));
 		Show(InspectorItemViewModel.Heading("Heard"));
 		Show(InspectorItemViewModel.Toggle("in Out", () => _spec.Outputs.Any(t => t.Operator == i), on =>
 		{
@@ -590,6 +639,7 @@ public sealed class PatchDesigner : ViewModel
 
 		if (o.Kind is not (OperatorKind.Noise or OperatorKind.Level or OperatorKind.Modes or OperatorKind.Sample))
 		{
+			Paths(op, ("follows", "fixed"), ("frequency", "fixed"), ("ratio", "ratio"), ("detune", "detune"), ("phase", "phase"));
 			Show(InspectorItemViewModel.Heading("Pitch"));
 			Show(InspectorItemViewModel.Choice("follows", ["the note", "a fixed Hz"], () => Op.FixedHz > 0f ? 1 : 0,
 				c => SetOp(x => x with { FixedHz = c == 1 ? 440f * x.Ratio : 0f }, structure: true)));
@@ -602,6 +652,8 @@ public sealed class PatchDesigner : ViewModel
 				Show(InspectorItemViewModel.Number("phase", () => Op.StartPhase, v => SetOp(x => x with { StartPhase = v }), 0f, 0.999f, 0.001f, "cycles"));
 		}
 
+		Paths(op, ("feedback", "feedback"), ("shape", "kind"), ("pulse width", "pulseWidth"), ("pink", "pink"),
+			("rings", "decaySeconds"), ("damping", "damping"), ("pick", "pick"));
 		switch (o.Kind)
 		{
 			case OperatorKind.Sine:
@@ -629,6 +681,7 @@ public sealed class PatchDesigner : ViewModel
 				break;
 		}
 
+		Paths(op, ("level", "level"), ("velocity", "velocity"), ("key level", "keyLevel"), ("key decay", "keyDecay"));
 		if (o.Kind is not (OperatorKind.String or OperatorKind.Tube or OperatorKind.Modes))
 		{
 			Show(InspectorItemViewModel.Heading("Level"));
@@ -639,6 +692,7 @@ public sealed class PatchDesigner : ViewModel
 		Show(InspectorItemViewModel.Number("key level", () => Op.KeyLevelDb, v => SetOp(x => x with { KeyLevelDb = v }), -12f, 6f, 0.5f, "dB/oct"));
 		Show(InspectorItemViewModel.Number("key decay", () => Op.KeyDecay, v => SetOp(x => x with { KeyDecay = v }), 0f, 0.95f));
 
+		Paths(op, ("from", "modulatedBy"), ("index", "modulatedBy"));
 		if (o.Kind == OperatorKind.Sine)
 		{
 			Show(InspectorItemViewModel.Heading("Modulated by"));
@@ -656,17 +710,19 @@ public sealed class PatchDesigner : ViewModel
 		}
 		if (o.Kind is OperatorKind.String or OperatorKind.Tube or OperatorKind.Modes)
 		{
+			Paths(op, [.. earlier.Select(e => (NameOf(e), "drivenBy"))]);
 			Show(InspectorItemViewModel.Heading("Driven by"));
 			foreach (var e in earlier)
 				Show(InspectorItemViewModel.Toggle(NameOf(e), () => Op.Drivers.Contains(e),
 					on => SetOp(x => x with { Drivers = on ? [.. x.Drivers.Append(e).Order()] : [.. x.Drivers.Where(d => d != e)] })));
 		}
 		if (o.Kind is not (OperatorKind.String or OperatorKind.Tube or OperatorKind.Modes))
-			EnvelopeItems("Envelope", () => Op.Envelope, e => SetOp(x => x with { Envelope = e }));
+			EnvelopeItems("Envelope", op + "envelope", () => Op.Envelope, e => SetOp(x => x with { Envelope = e }));
 	}
 
 	private void ModeItems(OperatorSpec o)
 	{
+		Paths($"operators[{NameOf(Selected)}].", ("follows", "modes"), ("frequency", "modes"), ("ratio", "modes"), ("rings", "modes"), ("level", "modes"));
 		for (var m = 0; m < o.Modes.Length; m++)
 		{
 			var at = m;
@@ -686,8 +742,10 @@ public sealed class PatchDesigner : ViewModel
 			Show(InspectorItemViewModel.Button("+ Mode", () => SetOp(x => x with { Modes = [.. x.Modes, Mode.At(x.Modes.Length + 2, 0.5f, 0.5f)] }, structure: true)));
 	}
 
-	private void EnvelopeItems(string title, Func<EnvelopeShape> get, Action<EnvelopeShape> set)
+	private void EnvelopeItems(string title, string path, Func<EnvelopeShape> get, Action<EnvelopeShape> set)
 	{
+		// An envelope is one value in the file ("adsr 0.01 0.3 0.7 0.2"): each of its lines stands for it whole
+		Paths(path, ("shape", ""), ("attack", ""), ("decay", ""), ("sustain", ""), ("release", ""), ("rings", ""));
 		Show(InspectorItemViewModel.Heading(title));
 		Show(InspectorItemViewModel.Choice("shape", EnvelopeKinds, () => EnvelopeKind(get()), kind =>
 		{
@@ -719,6 +777,7 @@ public sealed class PatchDesigner : ViewModel
 
 	private void VoiceItems()
 	{
+		Paths("filter.", ("kind", "kind"), ("cutoff", "cutoff"), ("q", "q"), ("key track", "keyTrack"), ("velocity", "velocity"), ("envelope octaves", "envelopeOctaves"));
 		Show(InspectorItemViewModel.Heading("Filter"));
 		Show(InspectorItemViewModel.Choice("kind", FilterKinds, () => _spec.Filter is { } f ? (int)f.Kind + 1 : 0, c => SetVoice(s =>
 			s.Filter = c == 0 ? null : (s.Filter ?? new FilterSpec(FilterKind.LowPass, 2000f)) with { Kind = (FilterKind)(c - 1) }, structure: true)));
@@ -735,8 +794,12 @@ public sealed class PatchDesigner : ViewModel
 					Envelope = s.Filter.Envelope == default ? EnvelopeShape.Struck(0.2f) : s.Filter.Envelope,
 				}, structure: (_spec.Filter!.EnvelopeOctaves == 0f) != (v == 0f)), -4f, 6f, 0.1f));
 			if (_spec.Filter.EnvelopeOctaves != 0f)
-				EnvelopeItems("Filter envelope", () => _spec.Filter!.Envelope, e => SetVoice(s => s.Filter = s.Filter! with { Envelope = e }));
+				EnvelopeItems("Filter envelope", "filter.envelope", () => _spec.Filter!.Envelope, e => SetVoice(s => s.Filter = s.Filter! with { Envelope = e }));
 		}
+		Paths("", ("drive", "drive"), ("gain", "gain"), ("pan", "pan"), ("space", "sends.space"), ("echo", "sends.echo"), ("key", "sends.key"),
+			("vibrato rate", "vibrato.rate"), ("vibrato depth", "vibrato.depth"), ("vibrato delay", "vibrato.delay"),
+			("tremolo rate", "tremolo.rate"), ("tremolo depth", "tremolo.depth"), ("pitch drop", "pitchDrop.semitones"),
+			("drop time", "pitchDrop.seconds"), ("one voice", "mono"), ("glide", "mono.glide"));
 		Show(InspectorItemViewModel.Heading("Voice"));
 		Show(InspectorItemViewModel.Number("drive", () => _spec.Drive, v => SetVoice(s => s.Drive = v), 0f, 1f));
 		Show(InspectorItemViewModel.Number("gain", () => _spec.GainDb, v => SetVoice(s => s.GainDb = v), -24f, 12f, 0.5f, "dB"));
@@ -766,6 +829,7 @@ public sealed class PatchDesigner : ViewModel
 
 	private void MacroItems()
 	{
+		_paths = [];
 		string[] slots = [.. Enumerable.Range(0, Macro.Count).Select(id => _macroName?.Invoke(id) ?? $"macro {id}")];
 		for (var k = 0; k < _spec.Macros.Count; k++)
 		{

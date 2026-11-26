@@ -169,6 +169,7 @@ public sealed partial class Workbench : IDisposable
 		ViewModel.Designer.Built += OnDesignerBuilt;
 		ViewModel.Designer.CopyRequested += OnCopyRequested;
 		ViewModel.Designer.EjectRequested += EjectPatch;
+		ViewModel.Designer.RevertRequested += path => ViewModel.Notice = RevertSetting(path) ?? "";
 		ViewModel.Files.CopyRequested += OnCopyRequested;
 		ViewModel.Designer.BringBackRequested += BringBackPatch;
 		ViewModel.Sketch.Edited += OnSketchEdited;

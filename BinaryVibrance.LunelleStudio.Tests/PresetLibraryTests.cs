@@ -159,6 +159,40 @@ public class PresetLibraryTests
 	}
 
 	[Test]
+	public void A_derived_patch_s_changes_mark_the_designer_s_lines_and_a_line_reverted_is_its_base_s()
+	{
+		using var bench = new Bench();
+		var file = Path.Combine(bench.Root, "Patches", "bright.patch.json");
+		bench.Files.WriteText(Path.Combine(bench.Root, MusicFolder.ProjectFileName),
+			Manifest.Replace("\"macros\"", "\"libraries\": { \"lunelle\": { \"version\": \"1\" } }, \"macros\"", StringComparison.Ordinal));
+		bench.Files.WriteText(file, """{ "format": "lunelle-patch/2", "base": "lunelle:synths/supersaw", "set": { "gain": -3, "sends.space": 0.5 } }""");
+		bench.ReadAgain();
+		bench.Host.Current!.Problems.ShouldBeEmpty();
+		var model = bench.Workbench.ViewModel;
+		bench.Workbench.ChoosePatch(model.Patches.Single(p => p.Name == "bright").Index);
+		var designer = model.Designer;
+		designer.IsDerived.ShouldBeTrue();
+		designer.IsVoiceTab = true;
+		InspectorItemViewModel Line(string path) => designer.Inspector.Single(i => i.Path == path);
+
+		Line("gain").IsOverridden.ShouldBeTrue();
+		Line("sends.space").IsOverridden.ShouldBeTrue();
+		Line("drive").IsOverridden.ShouldBeFalse();
+		Line("sends.echo").IsOverridden.ShouldBeFalse();
+		// A change to a whole reaches its parts, and a part's change its whole
+		PatchDesigner.Reaches("operators[saw]", "operators[saw].ratio").ShouldBeTrue();
+		PatchDesigner.Reaches("operators[saw].modulatedBy[sub].index", "operators[saw].modulatedBy").ShouldBeTrue();
+		PatchDesigner.Reaches("operators[saw]", "operators[saw2].ratio").ShouldBeFalse();
+
+		Line("gain").RevertCommand!.Execute(null);
+		var reverted = JReader.Parse(bench.Files.ReadText(file));
+		reverted["set"]!["gain"].ShouldBeNull();
+		reverted["set"]!["sends.space"]!.Num.ShouldBe("0.5");
+		Line("gain").IsOverridden.ShouldBeFalse();
+		Line("sends.space").IsOverridden.ShouldBeTrue();
+	}
+
+	[Test]
 	public void An_added_patch_is_the_project_s_own_based_on_the_library_s_and_opens_once_the_project_has_it()
 	{
 		using var bench = new Bench();

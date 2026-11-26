@@ -3,7 +3,7 @@ using System.Windows.Input;
 namespace BinaryVibrance.LunelleStudio;
 
 /// <summary>A pattern of the project's in the library (docs/spec/ui-patterns.md): its use puts it into the part chosen.</summary>
-public sealed class PatternEntryViewModel : ViewModel
+public sealed class PatternEntryViewModel : LibraryRowViewModel
 {
 	internal PatternEntryViewModel(Workbench workbench, string id)
 	{
@@ -12,7 +12,7 @@ public sealed class PatternEntryViewModel : ViewModel
 	}
 
 	/// <summary>Its id: <c>drums/groove</c>.</summary>
-	public string Id { get; }
+	public override string Id { get; }
 
 	/// <summary>Has the part chosen play it.</summary>
 	public ICommand UseCommand { get; }

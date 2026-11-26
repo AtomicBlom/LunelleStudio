@@ -168,7 +168,11 @@ public sealed class WorkbenchViewModel : ViewModel
 	public bool HasPresets
 	{
 		get;
-		internal set => Set(ref field, value);
+		internal set
+		{
+			if (Set(ref field, value))
+				Changed(nameof(SoundsShown));
+		}
 	}
 
 	/// <summary>Where in <see cref="Presets"/> the one on the keyboard is, or -1.</summary>
@@ -444,16 +448,93 @@ public sealed class WorkbenchViewModel : ViewModel
 		}
 	} = "";
 
+	/// <summary>
+	/// Shows the library's rows as the filter and the tree have them: a row whose id has every word typed, its folder open
+	/// (or the words finding it inside a folded one), the first of a folder's rows heading it.
+	/// </summary>
 	internal void FilterLibrary()
 	{
 		var words = LibraryQuery.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-		foreach (var list in new[] { Songs, Patches, Kits })
-			foreach (var choice in list)
-				choice.IsVisible = words.All(w => choice.Name.Contains(w, StringComparison.OrdinalIgnoreCase));
+		Group("song", Songs, words);
+		Group("patch", Patches, words);
+		Group("kit", Kits, words);
+		Group("pattern", LibraryPatterns, words);
 		// A preset by its name or its kind: "bass", "sampled"
 		foreach (var preset in Presets)
 			preset.IsVisible = words.All(w => preset.Name.Contains(w, StringComparison.OrdinalIgnoreCase)
 				|| preset.Category.Contains(w, StringComparison.OrdinalIgnoreCase));
+	}
+
+	// The folders folded away, by kind and folder: "patch:bass"
+	private readonly HashSet<string> _folded = [];
+
+	// One kind's rows as a tree: each folder's header on the first of its rows the words keep, its rows hidden while folded
+	private void Group<T>(string kind, IEnumerable<T> rows, string[] words) where T : LibraryRowViewModel
+	{
+		string? heading = null;
+		foreach (var row in rows)
+		{
+			row.FoldsBy(folder => Fold(kind, folder));
+			var found = words.All(w => row.Id.Contains(w, StringComparison.OrdinalIgnoreCase));
+			var folded = words.Length == 0 && _folded.Contains(kind + ":" + row.Folder);
+			row.IsFolded = folded;
+			row.ShowsFolder = found && row.Folder.Length > 0 && row.Folder != heading;
+			row.IsVisible = found && !folded;
+			if (found)
+				heading = row.Folder;
+		}
+	}
+
+	/// <summary>Folds a kind's folder away (<c>"patch"</c>, <c>"bass"</c>), or opens it again.</summary>
+	internal void Fold(string kind, string folder)
+	{
+		if (!_folded.Remove(kind + ":" + folder))
+			_folded.Add(kind + ":" + folder);
+		FilterLibrary();
+	}
+
+	/// <summary>Whether the library shows songs only (with any other kinds ticked); none ticked shows every kind.</summary>
+	public bool FilterSongs { get; set { if (Set(ref field, value)) KindsChanged(); } }
+
+	/// <summary>Whether the library shows patches, among the kinds ticked.</summary>
+	public bool FilterPatches { get; set { if (Set(ref field, value)) KindsChanged(); } }
+
+	/// <summary>Whether the library shows kits, among the kinds ticked.</summary>
+	public bool FilterKits { get; set { if (Set(ref field, value)) KindsChanged(); } }
+
+	/// <summary>Whether the library shows patterns, among the kinds ticked.</summary>
+	public bool FilterPatterns { get; set { if (Set(ref field, value)) KindsChanged(); } }
+
+	/// <summary>Whether the library shows cues, among the kinds ticked.</summary>
+	public bool FilterCues { get; set { if (Set(ref field, value)) KindsChanged(); } }
+
+	/// <summary>Whether the library shows Lunelle's sounds, among the kinds ticked.</summary>
+	public bool FilterSounds { get; set { if (Set(ref field, value)) KindsChanged(); } }
+
+	private bool Shows(bool ticked) => ticked || !(FilterSongs || FilterPatches || FilterKits || FilterPatterns || FilterCues || FilterSounds);
+
+	/// <summary>Whether the library's songs show: no kind ticked, or songs.</summary>
+	public bool SongsShown => Shows(FilterSongs);
+
+	/// <summary>Whether the library's patches show.</summary>
+	public bool PatchesShown => Shows(FilterPatches);
+
+	/// <summary>Whether the library's kits show.</summary>
+	public bool KitsShown => Shows(FilterKits);
+
+	/// <summary>Whether the library's patterns show: the project has some, and the kinds let them.</summary>
+	public bool PatternsShown => HasPatterns && Shows(FilterPatterns);
+
+	/// <summary>Whether the library's cues show: the project has cue files, and the kinds let them.</summary>
+	public bool CuesShown => HasProjectCues && Shows(FilterCues);
+
+	/// <summary>Whether Lunelle's sounds show: there are some to offer, and the kinds let them.</summary>
+	public bool SoundsShown => HasPresets && Shows(FilterSounds);
+
+	private void KindsChanged()
+	{
+		foreach (var name in new[] { nameof(SongsShown), nameof(PatchesShown), nameof(KitsShown), nameof(PatternsShown), nameof(CuesShown), nameof(SoundsShown) })
+			Changed(name);
 	}
 
 	// The library's songs, patches or kits for a new catalog: left as they are when the names haven't changed
@@ -622,7 +703,7 @@ public sealed class WorkbenchViewModel : ViewModel
 	public System.Collections.ObjectModel.ObservableCollection<PatternEntryViewModel> LibraryPatterns { get; } = [];
 
 	/// <summary>Whether the project has patterns to list.</summary>
-	public bool HasPatterns { get; set => Set(ref field, value); }
+	public bool HasPatterns { get; set { if (Set(ref field, value)) Changed(nameof(PatternsShown)); } }
 
 	/// <summary>The project's cues, for the cues panel: each with whether the open song imports it.</summary>
 	public System.Collections.ObjectModel.ObservableCollection<CueEntryViewModel> ProjectCues { get; } = [];
@@ -633,7 +714,7 @@ public sealed class WorkbenchViewModel : ViewModel
 	internal void RequestCueMenu(CueEntryViewModel cue) => CueMenuRequested?.Invoke(cue);
 
 	/// <summary>Whether the project has cue files to list (a project of format 2).</summary>
-	public bool HasProjectCues { get; set => Set(ref field, value); }
+	public bool HasProjectCues { get; set { if (Set(ref field, value)) Changed(nameof(CuesShown)); } }
 
 	/// <summary>Whether an export is being recorded from the cues moved as the song plays.</summary>
 	public bool IsRecording { get; set => Set(ref field, value); }

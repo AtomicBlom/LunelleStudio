@@ -179,6 +179,7 @@ public sealed partial class Workbench : IDisposable
 			ViewModel.AddPatch(name);
 		foreach (var (name, _) in catalog.Kits)
 			ViewModel.AddKit(name);
+		ViewModel.FilterLibrary();
 		foreach (var cue in catalog.Cues)
 			ViewModel.Cues.Add(new CueViewModel(this, cue, Player.Get(cue)));
 		if (catalog.Songs.Count > 0)
@@ -229,7 +230,6 @@ public sealed partial class Workbench : IDisposable
 		WorkbenchViewModel.ReplaceChoices(ViewModel.Patches, [.. catalog.Patches.Select(s => s.Name)], ViewModel.AddPatch);
 		WorkbenchViewModel.ReplaceChoices(ViewModel.Kits, [.. catalog.Kits.Select(s => s.Name)], ViewModel.AddKit);
 		ShowPresets();
-		ViewModel.FilterLibrary();
 		// The cues keep their values; the strip shows the song's (ShowCues), the panel the project's
 		ViewModel.Cues.Clear();
 		foreach (var cue in catalog.Cues)
@@ -242,6 +242,7 @@ public sealed partial class Workbench : IDisposable
 				ViewModel.LibraryPatterns.Add(new PatternEntryViewModel(this, pattern));
 		}
 		ViewModel.HasPatterns = catalog.Patterns.Count > 0;
+		ViewModel.FilterLibrary();
 
 		_songIndex = Index(catalog.Songs, song);
 		_benchPatch = Index(catalog.Patches, patch);

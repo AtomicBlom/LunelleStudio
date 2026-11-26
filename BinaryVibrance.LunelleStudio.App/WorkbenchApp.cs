@@ -12,7 +12,7 @@ namespace BinaryVibrance.LunelleStudio.App;
 /// The workbench over a music project: the window opens at once on an empty workbench (or the extension's own build
 /// of the music) while the project is opened and compiled beside it, then plays what it built and takes up each save.
 /// A project's extension, loaded before the window opens, gives the bus the music plays into and controls of its own,
-/// and is kept across every save. What it was doing is kept beside the project.
+/// and is kept across every save. The song and mode it was at are kept beside the project; it always opens stopped.
 /// <para>
 /// Given a folder of music files alone (<paramref name="filesAlone"/>), nothing is compiled: the folder is read as
 /// <see cref="Lunelle.Music.MusicFolder"/> and read again on each save (<see cref="WorkbenchFolder"/>), and it has no
@@ -34,6 +34,7 @@ public sealed partial class WorkbenchApp(string projectPath, IWorkbenchExtension
 	private Glow _glow = null!;
 	private Workbench _workbench = null!;
 	private WorkbenchState? _restore;
+	private StudioSettings _settings = null!;
 	private double _sinceSave;
 
 	// The music's audio, through the output Program registers (SDL 3, or the browser's AudioWorklet): updated once a
@@ -87,7 +88,8 @@ public sealed partial class WorkbenchApp(string projectPath, IWorkbenchExtension
 			Presets = StudioPresets.Load(),
 		};
 		// The theme chosen last, in whatever project, before the first view is made; and each new choice kept
-		var settings = StudioSettings.Load(_files);
+		var settings = _settings = StudioSettings.Load(_files);
+		_workbench.RestorePreferences(settings.Workbench);
 		if (settings.Theme is { } theme && !_workbench.SetTheme(theme))
 			Console.Error.WriteLine($"[studio] no theme is called '{theme}': showing {Workbench.ThemeName}");
 		var fonts = new StudioFonts(_ui.Fonts);
@@ -136,7 +138,7 @@ public sealed partial class WorkbenchApp(string projectPath, IWorkbenchExtension
 	{
 		UpdateProject();
 		_folder?.Update();
-		// What it was doing comes back once there is music to come back to
+		// The song and mode it was at come back once there is music to come back to
 		if (_restore is not null && (ProjectHasMusic() || _folder?.Current is not null))
 		{
 			_workbench.RestoreState(_restore);
@@ -150,7 +152,15 @@ public sealed partial class WorkbenchApp(string projectPath, IWorkbenchExtension
 		{
 			_sinceSave = 0;
 			_state.Save(_workbench.CaptureState());
+			SaveSettings();
 		}
+	}
+
+	// Keeps the workbench's layout for every project, when it has changed
+	private void SaveSettings()
+	{
+		_settings.Workbench = _workbench.CapturePreferences();
+		_settings.Save(_files);
 	}
 
 	protected override void BeforeRender(FrameTime time)
@@ -176,6 +186,7 @@ public sealed partial class WorkbenchApp(string projectPath, IWorkbenchExtension
 		{
 			if (_restore is null)
 				_state.Save(_workbench.CaptureState());
+			SaveSettings();
 			CloseProject();
 			_folder?.Dispose();
 			_workbench.Dispose();

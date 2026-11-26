@@ -1248,42 +1248,16 @@ public sealed partial class Workbench : IDisposable
 			}
 	}
 
-	/// <summary>What the workbench is doing, to save.</summary>
-	public WorkbenchState CaptureState()
+	/// <summary>What to open at next time: the song, the mode and the bench, never whether or where it played.</summary>
+	public WorkbenchState CaptureState() => new()
 	{
-		var state = new WorkbenchState
-		{
-			Song = _songIndex >= 0 ? _catalog.Songs[_songIndex].Name : null,
-			Playing = Player.IsPlaying,
-			LoopSection = _loop,
-			Section = Player.IsPlaying ? Player.Position.Section : null,
-			ScaleRoot = _scale?.Root.ToString(),
-			ScaleName = _scale?.Name,
-			Patch = _benchPatch >= 0 ? _catalog.Patches[_benchPatch].Name : null,
-			Kit = _benchKitIndex >= 0 ? _catalog.Kits[_benchKitIndex].Name : null,
-			Octave = ViewModel.Octave,
-			PartPanelHeight = ViewModel.PartPanelHeight,
-			Velocity = ViewModel.Velocity,
-			Mode = ViewModel.Mode.ToString(),
-			LibraryPinned = ViewModel.LibraryPinned,
-			SelectedPart = _selected is { } selected ? $"{selected.Section}/{selected.Placement}" : null,
-		};
-		foreach (var cue in ViewModel.Cues)
-			state.Cues[cue.Name] = Player.Get(cue.Cue);
-		foreach (var name in _muted.Keys.Concat(_soloed.Keys).Concat(_gainDb.Keys).Distinct())
-			state.Tracks[name] = new TrackSetting
-			{
-				Muted = _muted.GetValueOrDefault(name),
-				Solo = _soloed.GetValueOrDefault(name),
-				GainDb = _gainDb.GetValueOrDefault(name),
-			};
-		foreach (var ((section, placement), forced) in _forced)
-			if (forced != PlacementState.Auto)
-				state.Forced[$"{section}/{placement}"] = forced.ToString();
-		return state;
-	}
+		Song = _songIndex >= 0 ? _catalog.Songs[_songIndex].Name : null,
+		Patch = _benchPatch >= 0 ? _catalog.Patches[_benchPatch].Name : null,
+		Kit = _benchKitIndex >= 0 ? _catalog.Kits[_benchKitIndex].Name : null,
+		Mode = ViewModel.Mode.ToString(),
+	};
 
-	/// <summary>Takes up a saved state; anything named in it that is gone is ignored.</summary>
+	/// <summary>Takes up a saved state; anything named in it that is gone is ignored. It never starts playing.</summary>
 	public void RestoreState(WorkbenchState state)
 	{
 		ArgumentNullException.ThrowIfNull(state);
@@ -1293,52 +1267,33 @@ public sealed partial class Workbench : IDisposable
 				song = i;
 		if (song >= 0 && song != _songIndex)
 			SelectSong(song);
-		_scale = ScaleFrom(state.ScaleRoot, state.ScaleName);
-		foreach (var cue in ViewModel.Cues)
-			if (state.Cues.TryGetValue(cue.Name, out var value))
-			{
-				Player.Set(cue.Cue, value);
-				if (cue.IsChoice)
-					cue.SelectedOption = CueViewModel.OptionIndex(cue.Cue, value);
-				else
-					cue.Value = value;
-			}
-		foreach (var (name, setting) in state.Tracks)
-		{
-			_muted[name] = setting.Muted;
-			_soloed[name] = setting.Solo;
-			_gainDb[name] = setting.GainDb;
-		}
-		foreach (var (key, value) in state.Forced)
-		{
-			var cut = key.IndexOf('/');
-			if (cut > 0 && Enum.TryParse<PlacementState>(value, out var forced))
-				_forced[(key[..cut], key[(cut + 1)..])] = forced;
-		}
-		_loop = state.LoopSection;
-		ViewModel.ShowLoop(_loop);
-		ViewModel.Octave = state.Octave;
-		ViewModel.PartPanelHeight = state.PartPanelHeight;
-		ViewModel.Velocity = state.Velocity;
-		if (state.SelectedPart is { } part && part.IndexOf('/') is var slash && slash > 0)
-			_selected = (part[..slash], part[(slash + 1)..]);
-		if (_song is { } built)
-			Fill(built);
 		var patch = Index(_catalog.Patches, state.Patch);
 		var kit = Index(_catalog.Kits, state.Kit);
 		if (patch >= 0)
 			SelectPatch(patch);
 		else if (kit >= 0)
 			SelectKit(kit);
-		ViewModel.LibraryPinned = state.LibraryPinned;
 		if (Enum.TryParse<WorkbenchMode>(state.Mode, out var mode))
 			SetMode(mode);
-		if (state.Playing)
-		{
-			Play();
-			if (state.Section is { } section && _song?.Sections.FirstOrDefault(s => s.Name == section) is { } at && at.Index != 0)
-				Player.Jump(at);
-		}
+	}
+
+	/// <summary>How the workbench is laid out, which the app keeps for every project alike.</summary>
+	public WorkbenchPreferences CapturePreferences() => new()
+	{
+		LibraryPinned = ViewModel.LibraryPinned,
+		PartPanelHeight = ViewModel.PartPanelHeight,
+		Octave = ViewModel.Octave,
+		Velocity = ViewModel.Velocity,
+	};
+
+	/// <summary>Lays the workbench out as <paramref name="preferences"/> say.</summary>
+	public void RestorePreferences(WorkbenchPreferences preferences)
+	{
+		ArgumentNullException.ThrowIfNull(preferences);
+		ViewModel.LibraryPinned = preferences.LibraryPinned;
+		ViewModel.PartPanelHeight = preferences.PartPanelHeight;
+		ViewModel.Octave = preferences.Octave;
+		ViewModel.Velocity = preferences.Velocity;
 	}
 
 	private static int Index<T>(IReadOnlyList<(string Name, Func<T> Build)> list, string? name)
@@ -1347,26 +1302,6 @@ public sealed partial class Workbench : IDisposable
 			if (list[i].Name == name)
 				return i;
 		return -1;
-	}
-
-	private static Scale? ScaleFrom(string? root, string? name)
-	{
-		if (root is null || name is null || !Enum.TryParse<Note>(root, out var note))
-			return null;
-		return name switch
-		{
-			"major" => Scale.Major(note),
-			"minor" => Scale.Minor(note),
-			"dorian" => Scale.Dorian(note),
-			"phrygian" => Scale.Phrygian(note),
-			"lydian" => Scale.Lydian(note),
-			"mixolydian" => Scale.Mixolydian(note),
-			"harmonic minor" => Scale.HarmonicMinor(note),
-			"pentatonic major" => Scale.PentatonicMajor(note),
-			"pentatonic minor" => Scale.PentatonicMinor(note),
-			"blues" => Scale.Blues(note),
-			_ => null,
-		};
 	}
 
 	/// <summary>Stops the song and the bench.</summary>

@@ -195,6 +195,18 @@ public class PresetLibraryTests
 		bench.ReadAgain();
 		bench.Host.Current!.Problems.ShouldBeEmpty();
 
+		// The designer says what it is based on and each change, and a change reverted is the base's again
+		bench.Workbench.ChoosePatch(model.Patches.Single(p => p.Name == "synths/supersaw").Index);
+		model.Designer.IsDerived.ShouldBeTrue();
+		model.Designer.BasedOn.ShouldBe("lunelle:synths/supersaw");
+		model.Designer.Overrides.Select(o => o.Kind).ShouldContain("insert");
+		foreach (var change in model.Designer.Overrides.Reverse().ToList())
+			bench.Workbench.RevertOverride(change.Kind, change.Path).ShouldBeNull();
+		model.Designer.Overrides.ShouldBeEmpty();
+		var reverted = JReader.Parse(bench.Files.ReadText(Path.Combine(bench.Root, "Patches", "synths", "supersaw.patch.json")));
+		reverted["insert"].ShouldBeNull();
+		reverted["base"]!.Str.ShouldBe("lunelle:synths/supersaw");
+
 		// Added again, it opens the project's own: nothing is written
 		bench.Workbench.ChoosePatch(model.Patches.Single(p => p.Name == "tone").Index);
 		bench.Workbench.AddPreset(bench.Preset("synths/supersaw").Preset).ShouldBeNull();

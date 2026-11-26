@@ -174,6 +174,15 @@ public sealed class PatchDesigner : ViewModel
 		private set => Set(ref field, value);
 	} = "";
 
+	/// <summary>The patch this one is derived from (its file's <c>"base"</c>), or "" for a whole patch.</summary>
+	public string BasedOn { get; internal set => Set(ref field, value); } = "";
+
+	/// <summary>Whether the patch is derived from another, its file saying only what it changes.</summary>
+	public bool IsDerived { get; internal set => Set(ref field, value); }
+
+	/// <summary>What a derived patch's file changes over its base, each with its revert.</summary>
+	public System.Collections.ObjectModel.ObservableCollection<OverrideEntryViewModel> Overrides { get; } = [];
+
 	/// <summary>Which songs the patch is used in, said so an edit's reach is clear: "Used in open-road and understory".</summary>
 	public string UsedBy
 	{

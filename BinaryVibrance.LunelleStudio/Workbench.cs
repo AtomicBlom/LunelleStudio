@@ -1594,6 +1594,7 @@ public sealed partial class Workbench : IDisposable
 			}
 		}
 		ViewModel.Designer.ShowCode(_patchCode is not null, _patchFile is not null && _patchCode is null && Code is not null && _catalog.PatchesType is not null);
+		ShowOverrides(_patchBelow is not null && _patchFile is not null ? BinaryVibrance.Lunelle.Format.JReader.Parse(Files.ReadText(_patchFile)) as BinaryVibrance.Lunelle.Format.JObject : null);
 		return names;
 	}
 
@@ -1614,8 +1615,11 @@ public sealed partial class Workbench : IDisposable
 		{
 			if (_patchBelow is { } below && BinaryVibrance.Lunelle.Format.JReader.Parse(Files.ReadText(_patchFile)) is BinaryVibrance.Lunelle.Format.JObject layer
 				&& BinaryVibrance.Lunelle.Format.JReader.Parse(text) is BinaryVibrance.Lunelle.Format.JObject wanted)
-				text = BinaryVibrance.Lunelle.Format.JWriter.Write(BinaryVibrance.Lunelle.Format.OverrideDiff.Layer(
-					below, wanted, BinaryVibrance.Lunelle.Format.OverrideSchema.Patch, layer)) + "\n";
+			{
+				var written = BinaryVibrance.Lunelle.Format.OverrideDiff.Layer(below, wanted, BinaryVibrance.Lunelle.Format.OverrideSchema.Patch, layer);
+				text = BinaryVibrance.Lunelle.Format.JWriter.Write(written) + "\n";
+				ShowOverrides(written);
+			}
 			if (!Files.Exists(_patchFile) || Files.ReadText(_patchFile) != text)
 			{
 				Files.WriteText(_patchFile, text);

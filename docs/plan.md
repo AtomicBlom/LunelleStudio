@@ -1,6 +1,6 @@
 # Plan: shipping the studio, format 2, and the editing model
 
-Written 2026-11-26 from a design discussion. Nothing here is built yet. Nobody uses LunelleStudio or Lunelle's
+Written 2026-11-26 from a design discussion; built 2026-11-27 (see "Where it stands", at the end). Nobody uses LunelleStudio or Lunelle's
 formats yet (no web release, no NuGet packages), so **nothing needs migrating**: formats can change freely.
 
 The work spans four repositories: **Lunelle** (format, resolver, generator, player, export runner), **LunelleStudio**
@@ -236,3 +236,23 @@ Phases 0 and 1 need no specs. They are self-contained, and this plan is enough f
 - Workbench state: keep `Mode` per project? Keep the bench's `Patch` and `Kit`?
 - A DX12 fallback on Windows; the backend on macOS.
 - The command line for exports (`lunelle-studio export <song> --name "<export>"`): in the studio, or a Lunelle tool?
+
+---
+
+## Where it stands (2026-11-27)
+
+Built, tested and pushed, on branches that stack (each from the last):
+
+| Phase | Where | State |
+|---|---|---|
+| Specs | Lunelle `format-2` (`docs/spec/`), studio `docs/spec/` | All written; Lunelle's marked implemented, with what was settled as built |
+| 0 | studio `studio-phase-0` | Done: opens stopped at its song and mode, layout in the studio's settings; Kaldra versions named; a missing SDK opens the music alone |
+| 1 | studio `studio-phase-0`, Kaldra `file-dialogs` | Done but 1.6: SDL 3 file dialogs and drops; starts at the last project or the showcase in Documents; open, export, drop; self-contained ReadyToRun publish, icon, DirectX 12 behind Vulkan, an Inno Setup installer opening `.lunelle` files, the `Studio` workflow. 1.6 (packages instead of `$(StudioDirectory)`) waits for packages |
+| 2 | Lunelle `format-2` | Done: the shared resolver (runtime and generator), libraries and Lunelle's own, overrides, cues, patterns, packing, exports with `HoldMacro`, `FromPackage` |
+| — | studio `format-2` | The studio on format 2: presets as Lunelle's library, the Showcase and HelloSynth converted |
+| 3 | studio `editing-model` | Done: the document and journal, undo across files, save, recovery, outside changes; code mode compiles from it |
+| 4 | studio `studio-ui` | Done in part: cues panel, patterns (extract, detach, use), overrides in the designer, exports (render, record), the library by folder. What is still to come is listed in each `docs/spec/ui-*.md`: drag and drop of patterns, the automation lane, a collapsible library tree, per-control override marks |
+
+To merge: Kaldra `file-dialogs`, then Lunelle `format-2`, then the studio's branches in order. The studio's CI checks
+out its siblings' master branches, so it goes green once those are merged.
+

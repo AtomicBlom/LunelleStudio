@@ -12,8 +12,7 @@ split out of the [Kaldra engine](https://github.com/AtomicBlom/Kaldra), once cal
 | `BinaryVibrance.LunelleStudio.App` | `lunelle-studio`, the app: a window on the engine, the music through Sirrow's SDL 3 output; or, with `-r browser-wasm`, the same in the browser ("In the browser"). |
 | `BinaryVibrance.LunelleStudio.Tests` | The tests. |
 | `samples/HelloSynth` | The project `lunelle-studio new` starts from. |
-| `samples/Showcase` | Six songs of music files alone, arranged by their cues as they play: the browser's first project, and a tour of what the files can say (its `README.md`). |
-| `presets/` | The sounds the app ships for a project of files alone to take: 47 patches and six kits, two of them sampled (its `README.md`). |
+| `samples/Showcase` | Six songs of music files alone, arranged by their cues as they play, every sound Lunelle's own library's: the first project the studio opens, and a tour of what the files can say (its `README.md`). |
 
 ```
 dotnet run --project BinaryVibrance.LunelleStudio.App -- <music project.csproj | folder>
@@ -21,15 +20,22 @@ dotnet run --project BinaryVibrance.LunelleStudio.App -- new <folder> [--data]
 dotnet run --project BinaryVibrance.LunelleStudio.App -- <folder> --data
 ```
 
-A folder with no `.csproj`, or any folder with `--data`, is music files alone: its songs, patches, kits and a
-`lunelle-project.json` (its cues and macros) read with no C#, nothing compiled and no extension (Lunelle's `MusicFolder`); `new --data` starts one. Whatever the project, the workbench reads and writes its
-songs, patches and state through `Workbench.Files` (`IMusicFiles`): the disk, unless a host keeps them elsewhere.
+Music is Lunelle's format 2 (its `docs/spec/`): a `lunelle.meta.json` and its songs, patches, kits, patterns and cue
+files, each named by its path. A folder with no `.csproj`, or any folder with `--data`, is music files alone, read with
+no C#, nothing compiled and no extension (Lunelle's `MusicFolder`); `new --data` starts one. A project with code hands
+the same files to Lunelle's generator, and the studio resolves them the same way.
 
-**Presets.** A project of files alone is offered the app's presets (`presets/`, embedded, as `Workbench.Presets`, a
-`PresetLibrary`), listed in the library under its own songs, patches and kits and filtered with them, by name or kind
-("bass", "sampled"). A click plays one on the keys as it is, and **add** copies it into the project with what it needs:
-a kit's samples and licence, or its pieces' patches, and the names of the macros it turns. Then it opens. A project with
-code is offered none.
+**Editing.** Every edit goes to a document over the project's files (`ProjectDocument`, docs/spec/transactions.md):
+Ctrl+Z and Ctrl+Y undo and redo across every file, **save** (Ctrl+S) writes them, and a crash loses nothing, the edits
+recovered from `.lunelle-studio/journal.jsonl` when the project opens again. A project with code compiles from the
+document, unsaved edits and all.
+
+**The library** lists the project's songs, patches and kits by id, with their folders; its patterns, which a part can
+play (extract a part's notes into one, detach one back); its cues, each imported into the open song with a tick, and
+made, renamed and deleted across every song; and **Lunelle's sounds** (`lunelle:…`, `PresetLibrary`). A click plays one
+on the keys, and **add** makes a sound of the project's based on it, which saves only what it changes: the designer says
+what it is based on and each change, with **revert**. **exports** renders a song's exports to WAV, and records new ones
+from the cues moved as it plays. The UI's specs are `docs/spec/ui-*.md`.
 
 ## On the desktop
 

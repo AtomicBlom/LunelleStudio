@@ -235,6 +235,13 @@ public sealed partial class Workbench : IDisposable
 		foreach (var cue in catalog.Cues)
 			Player.Set(cue, cues.TryGetValue(cue.Name, out var was) ? was : Player.Get(cue));
 		ReadProjectCues();
+		if (!ViewModel.LibraryPatterns.Select(p => p.Id).SequenceEqual(catalog.Patterns))
+		{
+			ViewModel.LibraryPatterns.Clear();
+			foreach (var pattern in catalog.Patterns)
+				ViewModel.LibraryPatterns.Add(new PatternEntryViewModel(this, pattern));
+		}
+		ViewModel.HasPatterns = catalog.Patterns.Count > 0;
 
 		_songIndex = Index(catalog.Songs, song);
 		_benchPatch = Index(catalog.Patches, patch);
@@ -1411,6 +1418,8 @@ public sealed partial class Workbench : IDisposable
 			roll.ShowCode(false, member is not null, where);
 			return;
 		}
+		if (!_rollFill && ShowPatternInRoll(whole, $"{placement.Name} · {placement.Section.Name}"))
+			return;
 		if (_rollFill && whole["endWith"] is not JsonObject)
 			_rollFill = false;
 		var part = _rollFill ? (JsonObject)whole["endWith"]! : whole;

@@ -125,6 +125,7 @@ public sealed partial class Workbench
 			return "This song has no file to import a cue into.";
 		if (Imports().Contains(id))
 			return null;
+		Seal();
 		_editor.Edit(root =>
 		{
 			if (root["cues"] is not JsonObject cues)
@@ -132,6 +133,7 @@ public sealed partial class Workbench
 			cues[id] = null;
 		});
 		_editor.Save();
+		Seal();
 		Rebuild(swap: true);
 		return null;
 	}
@@ -145,6 +147,7 @@ public sealed partial class Workbench
 		var missing = ProjectCues.Select(c => c.Id).Where(id => !imports.Contains(id) && Word(id).IsMatch(condition)).ToList();
 		if (missing.Count == 0)
 			return;
+		Seal();
 		_editor.Edit(root =>
 		{
 			if (root["cues"] is not JsonObject cues)
@@ -161,8 +164,10 @@ public sealed partial class Workbench
 			return null;
 		if (Reads(_editor.Text, id))
 			return $"This song reads {id}: take it out of its conditions, levels and macros first.";
+		Seal();
 		_editor.Edit(root => (root["cues"] as JsonObject)?.Remove(id));
 		_editor.Save();
+		Seal();
 		Rebuild(swap: true);
 		return null;
 	}
@@ -212,7 +217,8 @@ public sealed partial class Workbench
 			ReadProjectCues();
 			if (_editor is not null)
 			{
-				_editor.Edit(song =>
+				Seal();
+		_editor.Edit(song =>
 				{
 					if (song["cues"] is not JsonObject imports)
 						song["cues"] = imports = [];

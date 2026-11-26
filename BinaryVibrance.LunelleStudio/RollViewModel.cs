@@ -428,6 +428,28 @@ public sealed class RollViewModel : ViewModel
 
 	private Workbench _workbench = null!;
 
+	/// <summary>The pattern the part chosen plays, or "" for a part of notes of its own.</summary>
+	public string PatternName { get; private set => Set(ref field, value); } = "";
+
+	/// <summary>Whether the part chosen plays a pattern, which detach writes into it.</summary>
+	public bool IsPattern { get; private set => Set(ref field, value); }
+
+	/// <summary>Whether the part chosen's notes can be made a pattern of the project's.</summary>
+	public bool CanExtract { get; private set => Set(ref field, value); }
+
+	/// <summary>Writes the pattern the part plays into it, to edit its notes.</summary>
+	public ICommand DetachCommand => field ??= new ActionCommand(() => _workbench.ViewModel.Notice = _workbench.DetachSelected() ?? "");
+
+	/// <summary>Makes the part's notes a pattern of the project's, which the part then plays.</summary>
+	public ICommand ExtractCommand => field ??= new ActionCommand(() => _workbench.ViewModel.Notice = _workbench.ExtractSelectedNamed() ?? "");
+
+	internal void ShowPattern(string? pattern, bool canExtract)
+	{
+		PatternName = pattern ?? "";
+		IsPattern = pattern is not null;
+		CanExtract = canExtract;
+	}
+
 	/// <summary>Says what the part chosen can do between data and code.</summary>
 	internal void ShowCode(bool canEject, bool canBringBack, string where)
 	{

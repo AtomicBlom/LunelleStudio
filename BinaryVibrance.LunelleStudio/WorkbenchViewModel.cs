@@ -618,6 +618,12 @@ public sealed class WorkbenchViewModel : ViewModel
 	/// <summary>Something the host needs seen, beside the build pill until it goes: "StudioExtras changed: restart to take it up".</summary>
 	public string Notice { get; set => Set(ref field, value); } = "";
 
+	/// <summary>The project's patterns, for the library: each put into the part chosen by its use.</summary>
+	public System.Collections.ObjectModel.ObservableCollection<PatternEntryViewModel> LibraryPatterns { get; } = [];
+
+	/// <summary>Whether the project has patterns to list.</summary>
+	public bool HasPatterns { get; set => Set(ref field, value); }
+
 	/// <summary>The project's cues, for the cues panel: each with whether the open song imports it.</summary>
 	public System.Collections.ObjectModel.ObservableCollection<CueEntryViewModel> ProjectCues { get; } = [];
 

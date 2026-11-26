@@ -58,4 +58,13 @@ public sealed record WorkbenchCatalog
 	/// its songs, for edits across them (renaming a cue). Null for a catalog with no files.
 	/// </summary>
 	public string? Root { get; init; }
+
+	/// <summary>The project's patterns, by id (format 2's Patterns/), for the library to offer a part.</summary>
+	public IReadOnlyList<string> Patterns { get; init; } = [];
+
+	/// <summary>
+	/// A song resolved from its text as edited (Lunelle's MusicFolder.Resolve): its JSON with every pattern a part plays
+	/// written in, and the first error resolving it found; null where the catalog can't resolve.
+	/// </summary>
+	public Func<string, string, (BinaryVibrance.Lunelle.Format.JObject? Json, string? Problem)>? ResolveSong { get; init; }
 }

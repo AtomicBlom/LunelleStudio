@@ -274,4 +274,61 @@ public class WorkbenchFolderTests
 		deleted.ShouldBeNull(deleted);
 		document.ReadText(Path.Combine(root, "Cues", "tunes.cues.json")).ShouldNotContain("intensity");
 	}
+
+	[Test]
+	public void A_part_s_notes_are_extracted_into_a_pattern_detached_again_and_a_pattern_used_in_a_part()
+	{
+		var root = Path.Combine(Path.GetTempPath(), "lunelle-studio-patterns-" + Guid.NewGuid().ToString("N")[..8]);
+		var disk = new MemoryFiles();
+		disk.WriteText(Path.Combine(root, MusicFolder.ProjectFileName), Project);
+		disk.WriteText(Path.Combine(root, "Cues", "tunes.cues.json"), Cues);
+		disk.WriteText(Path.Combine(root, "Patches", "tone.patch.json"),
+			PatchFile.Write(PatchSpec.From(Patch.Build("tone", p => p.Out(p.Sine(1f, Env.Adsr(0.005f, 0.1f, 0.6f, 0.1f)))))));
+		var song = Path.Combine(root, "Songs", "tune.song.json");
+		disk.WriteText(song, Song(120));
+		var document = ProjectDocument.Open(disk, root);
+		using var session = new OfflineSession();
+		using var workbench = new Workbench(session.Engine, session.Engine.Master, new WorkbenchCatalog()) { Files = document };
+		using var host = WorkbenchFolder.Open(root, workbench);
+		host.Update();
+		var model = workbench.ViewModel;
+		void ReadAgain()
+		{
+			var first = host.Current;
+			var deadline = Stopwatch.StartNew();
+			while (ReferenceEquals(host.Current, first) && deadline.Elapsed < TimeSpan.FromSeconds(10))
+			{
+				host.Update();
+				Thread.Sleep(20);
+			}
+		}
+
+		model.Tracks[0].Placements[0].Select();
+		model.Roll.CanExtract.ShouldBeTrue();
+		workbench.ExtractSelected("melody").ShouldBeNull();
+		var pattern = document.ReadText(Path.Combine(root, "Patterns", "melody.pattern.json"));
+		pattern.ShouldContain("\"kind\": \"line\"");
+		pattern.ShouldContain("\"notes\": \"1 3 5 8\"");
+		var extracted = document.ReadText(song);
+		extracted.ShouldContain("\"pattern\": \"melody\"");
+		extracted.ShouldNotContain("\"notes\": \"1 3 5 8\"");
+		ReadAgain();
+		host.Current!.Problems.ShouldBeEmpty();
+		model.LibraryPatterns.Select(p => p.Id).ShouldBe(["melody"]);
+		workbench.PatternUses("melody").ShouldBe(1);
+
+		model.Tracks[0].Placements[0].Select();
+		model.Roll.IsPattern.ShouldBeTrue();
+		model.Roll.PatternName.ShouldBe("melody");
+		workbench.DetachSelected().ShouldBeNull();
+		var detached = document.ReadText(song);
+		detached.ShouldContain("\"notes\": \"1 3 5 8\"");
+		detached.ShouldNotContain("\"pattern\"");
+
+		workbench.UsePattern("melody").ShouldBeNull();
+		document.ReadText(song).ShouldContain("\"pattern\": \"melody\"");
+		// Each was one step
+		document.Undo();
+		document.ReadText(song).ShouldBe(detached);
+	}
 }

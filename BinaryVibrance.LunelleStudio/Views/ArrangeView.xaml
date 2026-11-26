@@ -215,6 +215,10 @@
                                 <Path Data="M2.5,2.5 L2.5,6.5 L6.5,6.5 M3,6.5 C4,4 6,2.5 8.75,2.5 C11.75,2.5 14,5 14,8.25 C14,11.5 11.5,14 8.5,14 C6.5,14 4.75,13 3.75,11.5"
                                       Style="{StaticResource Glyph}" />
                             </Button>
+                            <Button Command="{x:Bind ViewModel.Roll.DetachCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Roll.IsPattern, Mode=OneWay}" Padding="9,4,9,5" Margin="0,0,8,0"
+                                    ToolTipService.ToolTip="Write the pattern's notes into this part, to edit them here for this part alone"><TextBlock Text="Detach pattern" FontSize="12" /></Button>
+                            <Button Command="{x:Bind ViewModel.Roll.ExtractCommand, Mode=OneWay}" Visibility="{x:Bind ViewModel.Roll.CanExtract, Mode=OneWay}" Padding="9,4,9,5" Margin="0,0,8,0"
+                                    ToolTipService.ToolTip="Make these notes a pattern of the project's (Patterns/parts/), which this part then plays and others can"><TextBlock Text="Extract pattern" FontSize="12" /></Button>
                             <StackPanel Orientation="Horizontal" Visibility="{x:Bind ViewModel.Roll.CanEject, Mode=OneWay}">
                                 <Button Command="{x:Bind ViewModel.Roll.EjectNotationCommand, Mode=OneWay}" Padding="9,4,9,5" Margin="0,0,2,0"
                                         ToolTipService.ToolTip="Convert the part's notes to C#, to generate them in code"><TextBlock Text="Convert notes to C#" FontSize="12" /></Button>

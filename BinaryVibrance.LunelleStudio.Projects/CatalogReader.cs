@@ -90,6 +90,8 @@ internal static class CatalogReader
 			MacroName = macroName,
 			SongSource = name => songFiles.GetValueOrDefault(name),
 			Root = root,
+			Patterns = music is null ? [] : [.. music.Project.Root.Entries(EntryKind.Pattern).Keys.Order(StringComparer.Ordinal)],
+			ResolveSong = music is null ? null : (name, text) => music.Resolve(name, text) is var (song, problem) ? (song.Json, problem?.Message) : default,
 			PatchFile = name => music?.PatchPath(name) is { } path ? Path.Combine(root!, path.Replace('/', Path.DirectorySeparatorChar)) : null,
 			// The class the generator writes the patches' properties into
 			PatchesType = assembly.GetTypes().FirstOrDefault(t => t.Name == "Patches" && t.DeclaringType is null

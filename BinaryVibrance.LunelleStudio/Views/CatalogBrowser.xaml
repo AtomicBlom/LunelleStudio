@@ -102,6 +102,36 @@
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
+                    <StackPanel Visibility="{x:Bind ViewModel.HasPatterns, Mode=OneWay}">
+                        <Grid Margin="6,10,4,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Path Data="M2,4 L18,4 M2,10 L18,10 M2,16 L18,16 M5,2 L5,6 M11,8 L11,12 M15,14 L15,18" Width="12" Height="12" Stretch="Uniform" Stroke="{x:Static views:Theme.Faint}" StrokeThickness="1.4"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="PATTERNS" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Margin="6,0,0,0" VerticalAlignment="Center" />
+                        </Grid>
+                        <TextBlock Text="Choose a part in a lane; use plays the pattern there." FontSize="11" Foreground="{x:Static views:Theme.Faint}"
+                                   TextWrapping="Wrap" Margin="8,0,6,4" />
+                        <ListView x:Name="PatternList" ItemsSource="{x:Bind ViewModel.LibraryPatterns, Mode=OneWay}">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="wb:PatternEntryViewModel">
+                                    <Grid Tag="{x:Bind Self}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Text="{x:Bind Id}" FontSize="13" Margin="8,0,6,0" VerticalAlignment="Center" />
+                                        <Button Grid.Column="1" Command="{x:Bind UseCommand}" Padding="7,1,7,2" VerticalAlignment="Center"
+                                                ToolTipService.ToolTip="Play this pattern in the part chosen, in place of its notes">
+                                            <TextBlock Text="use" FontSize="11" />
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
                     <StackPanel Visibility="{x:Bind ViewModel.HasProjectCues, Mode=OneWay}">
                         <Grid Margin="6,10,4,4">
                             <Grid.ColumnDefinitions>

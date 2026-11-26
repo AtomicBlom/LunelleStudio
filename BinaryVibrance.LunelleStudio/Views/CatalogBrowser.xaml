@@ -167,7 +167,7 @@
                                   StrokeStartLineCap="Round" StrokeEndLineCap="Round" VerticalAlignment="Center" />
                             <TextBlock Grid.Column="1" Text="PATTERNS" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Margin="6,0,0,0" VerticalAlignment="Center" />
                         </Grid>
-                        <TextBlock Text="Choose a part in a lane; use plays the pattern there." FontSize="11" Foreground="{x:Static views:Theme.Faint}"
+                        <TextBlock Text="Drag one onto a part in Arrange to play it there, or onto a lane for a new part; Shift drops a copy. Or choose a part, and use." FontSize="11" Foreground="{x:Static views:Theme.Faint}"
                                    TextWrapping="Wrap" Margin="8,0,6,4" />
                         <ListView x:Name="PatternList" ItemsSource="{x:Bind ViewModel.LibraryPatterns, Mode=OneWay}">
                             <ListView.ItemTemplate>
@@ -180,12 +180,12 @@
                                                 <TextBlock Text="{x:Bind Folder}" FontSize="11" Foreground="{x:Static views:Theme.Dim}" Margin="5,0,0,0" VerticalAlignment="Center" />
                                             </StackPanel>
                                         </Button>
-                                        <Grid Visibility="{x:Bind IsVisible, Mode=OneWay}" Margin="{x:Bind views:Display.Indent(Folder)}">
+                                        <Grid Visibility="{x:Bind IsVisible, Mode=OneWay}" Margin="{x:Bind views:Display.Indent(Folder)}" Opacity="{x:Bind Fit, Mode=OneWay}">
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*" />
                                                 <ColumnDefinition Width="Auto" />
                                             </Grid.ColumnDefinitions>
-                                            <TextBlock Text="{x:Bind Leaf}" FontSize="13" Margin="8,0,6,0" VerticalAlignment="Center" ToolTipService.ToolTip="{x:Bind Id}" />
+                                            <TextBlock Text="{x:Bind Leaf}" FontSize="13" Margin="8,0,6,0" VerticalAlignment="Center" ToolTipService.ToolTip="{x:Bind Tip, Mode=OneWay}" />
                                             <Button Grid.Column="1" Command="{x:Bind UseCommand}" Padding="7,1,7,2" VerticalAlignment="Center"
                                                     ToolTipService.ToolTip="Play this pattern in the part chosen, in place of its notes">
                                                 <TextBlock Text="use" FontSize="11" />

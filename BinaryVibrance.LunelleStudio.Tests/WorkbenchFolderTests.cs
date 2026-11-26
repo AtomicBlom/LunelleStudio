@@ -333,6 +333,56 @@ public class WorkbenchFolderTests
 	}
 
 	[Test]
+	public void A_pattern_dropped_on_a_lane_is_a_new_part_on_a_part_its_content_and_a_beat_fits_no_patch()
+	{
+		var root = Path.Combine(Path.GetTempPath(), "lunelle-studio-drops-" + Guid.NewGuid().ToString("N")[..8]);
+		var disk = new MemoryFiles();
+		disk.WriteText(Path.Combine(root, MusicFolder.ProjectFileName), Project);
+		disk.WriteText(Path.Combine(root, "Cues", "tunes.cues.json"), Cues);
+		disk.WriteText(Path.Combine(root, "Patches", "tone.patch.json"),
+			PatchFile.Write(PatchSpec.From(Patch.Build("tone", p => p.Out(p.Sine(1f, Env.Adsr(0.005f, 0.1f, 0.6f, 0.1f)))))));
+		disk.WriteText(Path.Combine(root, "Patterns", "riffs", "climb.pattern.json"),
+			"""{ "format": "lunelle-pattern/1", "kind": "line", "step": "quarters", "notes": "1 2 3 4" }""");
+		disk.WriteText(Path.Combine(root, "Patterns", "groove.pattern.json"),
+			"""{ "format": "lunelle-pattern/1", "kind": "beat", "step": "eighths", "rows": { "kick": "x...x..." } }""");
+		var song = Path.Combine(root, "Songs", "tune.song.json");
+		disk.WriteText(song, Song(120));
+		var document = ProjectDocument.Open(disk, root);
+		using var session = new OfflineSession();
+		using var workbench = new Workbench(session.Engine, session.Engine.Master, new WorkbenchCatalog()) { Files = document };
+		using var host = WorkbenchFolder.Open(root, workbench);
+		host.Update();
+		var model = workbench.ViewModel;
+		model.LibraryPatterns.Select(p => p.Id).ShouldBe(["groove", "riffs/climb"]);
+		var before = document.ReadText(song);
+
+		// A beat fits a kit's track alone: dimmed in the library while a patch's part is chosen
+		model.Tracks[0].Placements[0].Select();
+		model.LibraryPatterns.Select(p => p.Fit).ShouldBe([0.45f, 1f]);
+		workbench.PatternMisfit("groove", "lead").ShouldNotBeNull();
+		workbench.DropPattern("groove", "lead", 0, null, inline: false).ShouldNotBeNull();
+		document.ReadText(song).ShouldBe(before);
+
+		// On the lane's ground: a new part of the track, playing it
+		workbench.DropPattern("riffs/climb", "lead", 0, null, inline: false).ShouldBeNull();
+		var added = document.ReadText(song);
+		added.ShouldContain("\"pattern\": \"riffs/climb\"");
+		model.Tracks[0].Placements.Count.ShouldBe(3);
+
+		// On a part, with Shift: the pattern's content in its place, its own to edit
+		var first = model.Tracks[0].Placements[0];
+		workbench.DropPattern("riffs/climb", "lead", 0, first, inline: true).ShouldBeNull();
+		var copied = document.ReadText(song);
+		copied.ShouldContain("\"notes\": \"1 2 3 4\"");
+		copied.ShouldNotContain("\"notes\": \"1 3 5 8\"");
+		// Each drop was one step
+		document.Undo();
+		document.ReadText(song).ShouldBe(added);
+		document.Undo();
+		document.ReadText(song).ShouldBe(before);
+	}
+
+	[Test]
 	public void A_song_s_exports_are_listed_rendered_and_a_new_one_recorded_from_the_cues_moved()
 	{
 		var root = Path.Combine(Path.GetTempPath(), "lunelle-studio-exports-" + Guid.NewGuid().ToString("N")[..8]);

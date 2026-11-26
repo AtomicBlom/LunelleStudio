@@ -890,6 +890,7 @@ public sealed partial class Workbench : IDisposable
 			}
 		ShowPattern(row.Placement);
 		ShowRoll(row.Placement);
+		ShowPatternFits(row.Placement.Track.Name);
 		if (ViewModel.Mode == WorkbenchMode.Arrange)
 			DockTrack(row.Placement.Track);
 	}

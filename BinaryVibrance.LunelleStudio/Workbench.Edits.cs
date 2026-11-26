@@ -550,16 +550,16 @@ public sealed partial class Workbench
 	/// Adds an empty part for <paramref name="track"/> in <paramref name="section"/>, a bar long: a line for a patch, a beat
 	/// for a kit, on its first piece. With <paramref name="slot"/> it goes there among the parts the track already plays in
 	/// the section (0 before the first, their count after the last); without, after every part. It is chosen, so the roll
-	/// opens on it.
+	/// opens on it. With <paramref name="content"/>, that is the part instead (a pattern dropped on the lane).
 	/// </summary>
-	internal void AddPart(int section, string track, NewPartKind kind = NewPartKind.Melody, int? slot = null)
+	internal void AddPart(int section, string track, NewPartKind kind = NewPartKind.Melody, int? slot = null, JsonObject? content = null)
 	{
 		if (_editor is null || _song?.Tracks.FirstOrDefault(t => t.Name == track) is not { } playing
 			|| (uint)section >= (uint)_song.Sections.Count)
 			return;
 		var beats = _song.Meter.Beats;
 		string Steps(string each) => string.Join(" ", Enumerable.Repeat(each, beats));
-		JsonObject part = playing.Kit is { } kit && kit.Pieces.Count > 0
+		JsonObject part = content ?? (playing.Kit is { } kit && kit.Pieces.Count > 0
 			// A beat is in eighths at the coarsest: two steps a beat
 			? new JsonObject { ["track"] = track, ["beat"] = "eighths", ["rows"] = new JsonObject { [kit.Pieces[0].Piece.Id] = new string('.', beats * 2) } }
 			: kind switch
@@ -577,7 +577,7 @@ public sealed partial class Workbench
 					["spread"] = 0,
 				},
 				_ => new JsonObject { ["track"] = track, ["line"] = "quarters", ["notes"] = Steps(".") },
-			};
+			});
 		// Where in the file's parts it goes: before the track's part at the slot, or just after its last
 		var own = _song.Sections[section].Placements.Where(p => p.Track.Name == track).ToList();
 		int? before = slot is not { } s || own.Count == 0 ? null

@@ -126,6 +126,83 @@ public sealed partial class Workbench
 		return null;
 	}
 
+	/// <summary>
+	/// What kind of music a pattern of the project's is: <c>"beat"</c>, <c>"line"</c>, <c>"strum"</c> or
+	/// <c>"sequence"</c>; null for one that can't be read.
+	/// </summary>
+	public string? PatternKind(string id)
+	{
+		if (_catalog.Root is not { } root)
+			return null;
+		try
+		{
+			var path = Path.Combine(root, "Patterns", id.Replace('/', Path.DirectorySeparatorChar) + ".pattern.json");
+			if (!Files.Exists(path) || JReader.Parse(Files.ReadText(path)) is not JObject json)
+				return null;
+			return json["sequence"] is not null ? "sequence" : json["kind"]?.Str;
+		}
+		catch (Exception ex) when (ex is FormatError or IOException)
+		{
+			return null;
+		}
+	}
+
+	/// <summary>
+	/// Why pattern <paramref name="id"/> wouldn't fit a part of track <paramref name="track"/> (a beat over a patch, a
+	/// line or a strum over a kit, patterns.md §6), or null where it would, or where its kind can't be told.
+	/// </summary>
+	public string? PatternMisfit(string id, string track)
+	{
+		if (_song?.Tracks.FirstOrDefault(t => t.Name == track) is not { } playing)
+			return null;
+		var isKit = playing.Kit is not null;
+		return PatternKind(id) switch
+		{
+			"beat" when !isKit => $"{id} is a beat, for a kit's track; {track} plays a patch.",
+			"line" or "strum" when isKit => $"{id} is a {PatternKind(id)}, for a patch's track; {track} plays a kit.",
+			_ => null,
+		};
+	}
+
+	/// <summary>
+	/// A pattern dropped on Arrange (docs/spec/ui-patterns.md): onto <paramref name="onto"/>, a part of track
+	/// <paramref name="track"/> in section <paramref name="section"/>, it plays the pattern in place of its notes; onto the
+	/// lane's empty ground, a new part of the track plays it, after the track's others there. With
+	/// <paramref name="inline"/> the pattern's content is written into the part instead, its own to edit. One undoable
+	/// step. Why it can't be, or null.
+	/// </summary>
+	public string? DropPattern(string id, string track, int section, PlacementViewModel? onto, bool inline)
+	{
+		if (_editor is null)
+			return "This song is code: drop a pattern on a song with a file.";
+		if (PatternMisfit(id, track) is { } misfit)
+			return misfit;
+		using (Document?.Transaction(inline ? $"copy pattern {id}" : $"use pattern {id}"))
+		{
+			if (onto is not null)
+			{
+				SelectPlacement(onto);
+				if (UsePattern(id) is { } why)
+					return why;
+			}
+			else
+			{
+				Seal();
+				AddPart(section, track, content: new JsonObject { ["track"] = track, ["pattern"] = id });
+				_editor.Save();
+				Seal();
+			}
+			return inline ? DetachSelected() : null;
+		}
+	}
+
+	// The library's patterns dimmed where they wouldn't fit the part chosen, of the track named
+	private void ShowPatternFits(string track)
+	{
+		foreach (var pattern in ViewModel.LibraryPatterns)
+			pattern.Misfit = PatternMisfit(pattern.Id, track);
+	}
+
 	/// <summary>How many parts, in all the project's songs, play pattern <paramref name="id"/>.</summary>
 	public int PatternUses(string id)
 	{

@@ -45,6 +45,8 @@ internal sealed partial class WorkbenchLayout : BinaryVibrance.Vysara.Controls.C
 		SettingsButton.Click += (_, _) => ShowSettings();
 		PinnedLibrary.InstrumentDragged += (name, isKit, at, dropped) => OnInstrumentDragged(PinnedLibrary, name, isKit, at, dropped);
 		FlyoutLibrary.InstrumentDragged += (name, isKit, at, dropped) => OnInstrumentDragged(FlyoutLibrary, name, isKit, at, dropped);
+		PinnedLibrary.PatternDragged += (id, at, dropped) => OnPatternDragged(PinnedLibrary, id, at, dropped);
+		FlyoutLibrary.PatternDragged += (id, at, dropped) => OnPatternDragged(FlyoutLibrary, id, at, dropped);
 	}
 
 	// Whether a point (in an element's space) is over the board, past the library it came from
@@ -72,6 +74,56 @@ internal sealed partial class WorkbenchLayout : BinaryVibrance.Vysara.Controls.C
 		Canvas.SetLeft(DragGhost, point.X + 14f);
 		Canvas.SetTop(DragGhost, point.Y + 10f);
 		DragGhost.Visibility = Visibility.Visible;
+	}
+
+	// The lane cell a pattern's drag is over, lit
+	private LaneCell? _dropCell;
+
+	// A pattern dragged over Arrange: onto a part it plays there, onto a lane's ground a new part plays it, with Shift a
+	// copy of its content; a lane it wouldn't fit is tinted, and refuses it
+	private void OnPatternDragged(CatalogBrowser from, string id, Func<UIElement, Vector2> at, bool dropped)
+	{
+		var hit = ViewModel.IsArrange && !Inside(from, at(from)) ? LaneAt(Board, at) : null;
+		var misfit = hit is { } h ? ViewModel.Workbench.PatternMisfit(id, h.Hit.Track.Name) : null;
+		if (_dropCell != hit?.Cell)
+			_dropCell?.ShowDrop(false, null, true);
+		_dropCell = hit?.Cell;
+		var copy = ViewModel.ShiftHeld;
+		if (dropped)
+		{
+			DragGhost.Visibility = Visibility.Collapsed;
+			_dropCell?.ShowDrop(false, null, true);
+			_dropCell = null;
+			if (hit is { Hit: var target } && (misfit ?? ViewModel.Workbench.DropPattern(id, target.Track.Name, target.Section, target.Part, copy)) is { } why)
+				ViewModel.Error = why;
+			return;
+		}
+		_dropCell?.ShowDrop(true, hit?.Hit.Part, misfit is null);
+		var point = at(DragLayer);
+		DragText.Text = hit is not { Hit: var over } ? ViewModel.IsArrange ? $"{id} (drop on a part, or a lane)" : $"{id} (drop in Arrange, on a part or a lane)"
+			: misfit ?? (over.Part is { } part
+				? $"{(copy ? "Copy" : "Play")} {id} in {part.Title}"
+				: $"New part of {over.Track.Name}: {(copy ? "a copy of " : "")}{id}");
+		var fits = hit is not null && misfit is null;
+		DragText.Foreground = fits ? Theme.AccentInk : Theme.Ink;
+		DragGhost.Background = fits ? Theme.Accent : misfit is null ? Theme.Raised : Theme.ErrorSoft;
+		DragGhost.BorderBrush = fits ? Theme.AccentOver : Theme.LineStrong;
+		Canvas.SetLeft(DragGhost, point.X + 14f);
+		Canvas.SetTop(DragGhost, point.Y + 10f);
+		DragGhost.Visibility = Visibility.Visible;
+	}
+
+	// The lane cell under a point, and what in it a drop would land on
+	private static (LaneCell Cell, (TrackViewModel Track, int Section, PlacementViewModel? Part) Hit)? LaneAt(UIElement under, Func<UIElement, Vector2> at)
+	{
+		if (under is LaneCell cell)
+			return cell.DropAt(at) is { } hit ? (cell, hit) : null;
+		if (under.Visibility != Visibility.Visible)
+			return null;
+		for (var i = 0; i < BinaryVibrance.Vysara.Media.VisualTreeHelper.GetChildrenCount(under); i++)
+			if (LaneAt(BinaryVibrance.Vysara.Media.VisualTreeHelper.GetChild(under, i), at) is { } found)
+				return found;
+		return null;
 	}
 
 	/// <summary>What it shows.</summary>

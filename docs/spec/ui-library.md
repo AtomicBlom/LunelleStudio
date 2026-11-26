@@ -22,4 +22,4 @@ The Files view (the raw files) stays, for a developer.
 ## Still to come
 
 - Libraries other than Lunelle's (a game's, by path) listed as sources of their own.
-- Entries that wouldn't fit what they are dragged onto, dimmed as the drag goes (a beat pattern over a patch track).
+- Patches and kits dimmed as a pattern is (ui-patterns.md), where they wouldn't fit what is chosen.

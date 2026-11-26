@@ -19,8 +19,8 @@ public class ShowcaseTests
 	{
 		var music = MusicFolder.FromDirectory(Showcase);
 		FolderCatalog.Problems(music).ShouldBeEmpty();
-		music.Songs.Select(s => s.Name).ShouldBe(["aurora", "back-porch", "blue-hour", "undertow", "watchtower"]);
-		music.Cues.Select(c => c.Name).ShouldBe(["intensity", "mood"]);
+		music.Songs.Select(s => s.Name).ShouldBe(["aurora", "back-porch", "blue-hour", "double-shot", "undertow", "watchtower"]);
+		music.Cues.Select(c => c.Name).ShouldBe(["intensity", "mood", "caffeine", "time-of-day", "activity"]);
 		music.Macros.Keys.ShouldBe(["bright", "drive", "sweep"], ignoreOrder: true);
 		foreach (var (name, build) in music.Songs)
 		{
@@ -31,39 +31,43 @@ public class ShowcaseTests
 	}
 
 	[Test]
-	public void Every_section_of_every_song_sounds_low_and_high_and_in_every_mood()
+	public void Every_section_of_every_song_sounds_low_and_high_and_with_every_choice()
 	{
 		var music = MusicFolder.FromDirectory(Showcase);
-		var intensity = music.Cues.Single(c => c.Name == "intensity");
-		var mood = music.Cues.Single(c => c.Name == "mood");
-		// Low and calm, then high in each mood: where the parts that cues choose come and go
-		(float Level, int Mood)[] cues = [(0.15f, 0), (0.9f, 0), (0.9f, 1), (0.9f, 2)];
 		foreach (var (name, build) in music.Songs)
-			foreach (var (level, choice) in cues)
-			{
-				var song = build();
-				foreach (var section in song.Sections)
-				{
-					using var session = new OfflineSession(48_000);
-					using var player = new MusicPlayer(session.Engine, session.Engine.Master);
-					player.Play(player.Prepare(song), 0f);
-					player.Set(intensity, level);
-					player.Set(mood, choice);
-					player.Jump(section);
-					// Two bars of the section, whatever its tempo
-					var frames = (int)(2 * 4 * 60.0 / song.Tempo * 48_000);
-					for (var done = 0; done < frames; done += 256)
+		{
+			var song = build();
+			// Each song's own cues: its levels low, then high, each time with every choice cue on each of its options in turn
+			// (a cue with fewer options wraps round), so every option of every cue is heard at both levels
+			var levels = song.Cues.Where(c => c.OptionNames.Count == 0).ToList();
+			var choices = song.Cues.Where(c => c.OptionNames.Count > 0).ToList();
+			var turns = choices.Count == 0 ? 1 : choices.Max(c => c.OptionNames.Count);
+			foreach (var level in new[] { 0.15f, 0.9f })
+				for (var turn = 0; turn < turns; turn++)
+					foreach (var section in song.Sections)
 					{
-						player.Update();
-						session.Render(256);
+						using var session = new OfflineSession(48_000);
+						using var player = new MusicPlayer(session.Engine, session.Engine.Master);
+						player.Play(player.Prepare(song), 0f);
+						foreach (var cue in levels)
+							player.Set(cue, level);
+						foreach (var cue in choices)
+							player.Set(cue, cue.OptionValue(turn % cue.OptionNames.Count));
+						player.Jump(section);
+						// Two bars of the section, whatever its tempo
+						var frames = (int)(2 * 4 * 60.0 / song.Tempo * 48_000);
+						for (var done = 0; done < frames; done += 256)
+						{
+							player.Update();
+							session.Render(256);
+						}
+						var left = session.Left();
+						var where = $"{name} {section.Name} at {level}, {string.Join(", ", choices.Select(c => $"{c.Name} {c.OptionNames[turn % c.OptionNames.Count]}"))}";
+						left.ShouldAllBe(x => float.IsFinite(x), where);
+						left.Max(MathF.Abs).ShouldBeGreaterThan(0.01f, where);
+						left.Max(MathF.Abs).ShouldBeLessThanOrEqualTo(1f, where);
 					}
-					var left = session.Left();
-					var where = $"{name} {section.Name} at {level}, mood {choice}";
-					left.ShouldAllBe(x => float.IsFinite(x), where);
-					left.Max(MathF.Abs).ShouldBeGreaterThan(0.01f, where);
-					left.Max(MathF.Abs).ShouldBeLessThanOrEqualTo(1f, where);
-				}
-			}
+		}
 	}
 
 	[Test]
@@ -80,6 +84,6 @@ public class ShowcaseTests
 			shipped[path].ShouldNotBeEmpty(path);
 			shipped[path].First().Bytes.ShouldBe(File.ReadAllBytes(file), path);
 		}
-		music.Kits.Select(k => k.Name).ShouldBe(["breaks", "breaks-deep", "general", "rock"], ignoreOrder: true);
+		music.Kits.Select(k => k.Name).ShouldBe(["breaks", "breaks-deep", "general", "grind", "rock"], ignoreOrder: true);
 	}
 }

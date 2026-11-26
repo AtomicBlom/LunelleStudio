@@ -12,8 +12,8 @@ split out of the [Kaldra engine](https://github.com/AtomicBlom/Kaldra), once cal
 | `BinaryVibrance.LunelleStudio.App` | `lunelle-studio`, the app: a window on the engine, the music through Sirrow's SDL 3 output; or, with `-r browser-wasm`, the same in the browser ("In the browser"). |
 | `BinaryVibrance.LunelleStudio.Tests` | The tests. |
 | `samples/HelloSynth` | The project `lunelle-studio new` starts from. |
-| `samples/Showcase` | Five songs of music files alone, arranged by their cues as they play: the browser's first project, and a tour of what the files can say (its `README.md`). |
-| `presets/` | The sounds the app ships for a project of files alone to take: 37 patches and five kits, two of them sampled (its `README.md`). |
+| `samples/Showcase` | Six songs of music files alone, arranged by their cues as they play: the browser's first project, and a tour of what the files can say (its `README.md`). |
+| `presets/` | The sounds the app ships for a project of files alone to take: 47 patches and six kits, two of them sampled (its `README.md`). |
 
 ```
 dotnet run --project BinaryVibrance.LunelleStudio.App -- <music project.csproj | folder>

@@ -1,0 +1,23 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "haze-pad",
+  "about": "A hazy pad: four saws a few cents apart spread across the stereo, and a soft sine under them for warmth, slow to swell and slower to go, under a low-pass that drifts open as each chord swells. Bright opens it a little more",
+  "operators": [
+    { "name": "saw1", "kind": "saw", "detune": -11, "envelope": "adsr 0.9 0.6 0.8 1.6", "level": 0.26 },
+    { "name": "saw2", "kind": "saw", "detune": -4, "phase": 0.3, "envelope": "adsr 0.9 0.6 0.8 1.6", "level": 0.26 },
+    { "name": "saw3", "kind": "saw", "detune": 5, "phase": 0.6, "envelope": "adsr 0.9 0.6 0.8 1.6", "level": 0.26 },
+    { "name": "saw4", "kind": "saw", "detune": 12, "phase": 0.85, "envelope": "adsr 0.9 0.6 0.8 1.6", "level": 0.26 },
+    { "name": "warmth", "kind": "sine", "envelope": "adsr 0.9 0.6 0.8 1.6", "level": 0.3 }
+  ],
+  "out": [
+    { "op": "saw1", "pan": -0.8 },
+    { "op": "saw2", "pan": 0.3 },
+    { "op": "saw3", "pan": -0.3 },
+    { "op": "saw4", "pan": 0.8 },
+    { "op": "warmth" }
+  ],
+  "filter": { "kind": "lowPass", "cutoff": 800, "q": 0.9, "keyTrack": 0.3, "envelopeOctaves": 1, "envelope": "adsr 1.5 1.2 0.5 1.6" },
+  "gain": -11,
+  "sends": { "space": 0.5 },
+  "macros": [{ "macro": 0, "target": "filterCutoff", "from": 0.8, "to": 1.8 }]
+}

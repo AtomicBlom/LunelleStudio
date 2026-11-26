@@ -42,11 +42,11 @@ public class PresetLibraryTests
 		library.Problems.ShouldBeEmpty();
 		var patches = library.Presets.Where(p => !p.IsKit).ToList();
 		var kits = library.Presets.Where(p => p.IsKit).ToList();
-		patches.Count.ShouldBe(37);
+		patches.Count.ShouldBe(47);
 		kits.Select(k => (k.Name, k.Category)).ShouldBe(
-			[("breaks", "synthesised"), ("breaks-deep", "synthesised"), ("general", "sampled"), ("rock", "sampled"), ("synth", "synthesised")]);
+			[("breaks", "synthesised"), ("breaks-deep", "synthesised"), ("general", "sampled"), ("grind", "synthesised"), ("rock", "sampled"), ("synth", "synthesised")]);
 		patches.Select(p => p.Category).Distinct().ShouldBe(["bass", "guitars", "keys", "leads", "mallets", "orchestra", "percussion", "synths"]);
-		patches.ShouldNotContain(p => p.Name == "synth-kick" || p.Name == "breaks-snare" || p.Name == "breaks-deep-ride");
+		patches.ShouldNotContain(p => p.Name == "synth-kick" || p.Name == "breaks-snare" || p.Name == "breaks-deep-ride" || p.Name == "grind-kick");
 		patches.ShouldContain(p => p.Name == "synth-bass");
 		library.Presets.ShouldAllBe(p => p.About.Length > 0);
 		library.Presets.ShouldNotContain(p => p.About.Contains("user picked") || p.About.Contains(@"D:\"));
@@ -148,7 +148,7 @@ public class PresetLibraryTests
 		using var bench = new Bench();
 		var model = bench.Workbench.ViewModel;
 		model.HasPresets.ShouldBeTrue();
-		model.Presets.Count.ShouldBe(42);
+		model.Presets.Count.ShouldBe(53);
 		bench.Preset("harp").InProject.ShouldBeFalse();
 
 		bench.Preset("harp").TryCommand.Execute(null);

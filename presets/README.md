@@ -6,9 +6,9 @@ the keys (and a kit's pieces on the pads) as it is here, and **add** copies it i
 
 | Folder | What it holds |
 |---|---|
-| `Patches/<kind>/` | 37 patches (`lunelle-patch/1`), a folder for each kind of instrument: keys, bass, leads, synths, orchestra, guitars, mallets, percussion |
+| `Patches/<kind>/` | 47 patches (`lunelle-patch/1`), a folder for each kind of instrument: keys, bass, leads, synths, orchestra, guitars, mallets, percussion |
 | `Kits/general/`, `Kits/rock/` | Two sampled kits, in velocity layers (`kit.json` and its Ogg Vorbis takes) |
-| `Kits/*.kit.json` | Three kits made of patches, whose pieces' patches are in `Kits/patches/`: `synth`, `breaks` and `breaks-deep` |
+| `Kits/*.kit.json` | Four kits made of patches, whose pieces' patches are in `Kits/patches/`: `synth`, `breaks`, `breaks-deep` and `grind` |
 | `lunelle-project.json` | The names of the macros the patches turn: `bright` (0) opens a filter, `drive` (1) drives harder, `sweep` (2) moves a filter across a section |
 
 A patch is added as `Patches/<name>.patch.json`. A sampled kit brings its whole folder (its samples, `LICENSE.txt` and
@@ -20,10 +20,14 @@ says which file it is.
 
 ## Where they come from
 
-The patches and the kits of patches are RubberTrack's instruments (a game built on Lunelle), without
+Most of the patches and the kits of patches are RubberTrack's instruments (a game built on Lunelle), without
 the game's own sound effects (its impacts, menu sounds and countdown). The kits of patches were C# there,
 written out here as files by `PatchSpec.From` and `PatchFile.Write`. Each patch says what
 it is in its `"about"`.
+
+The `grind` kit and ten patches were written for the showcase's `double-shot`: `glide-sub`, `fm-reese` and `swell-sub`
+(bass), `fm-keys` (keys), `triple-saw-lead`, `buzz-lead` and `soft-pluck` (leads), `fm-bell` (mallets), and `haze-pad` and
+`bubble-riser` (synths). They are named for how they are made, not for an instrument they would only approximate.
 
 The sampled kits were cut from CC0 libraries by Lunelle's `tools/kit-cut.cs`. Each folder's `SOURCE.md` says how, and
 its `LICENSE.txt` is the library's own:

@@ -1,0 +1,16 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "grind-snare",
+  "about": "A tight, bright drum and bass snare: a 200 Hz shell that drops a little as it is hit, a ring at 340 Hz, a sharp snap of noise and a longer rattle of wires under it, driven so it cracks. A ghost note (o) is just the wires",
+  "operators": [
+    { "name": "shell", "kind": "sine", "fixed": 200, "envelope": "decay 0.09" },
+    { "name": "ring", "kind": "sine", "fixed": 340, "envelope": "decay 0.06", "level": 0.35 },
+    { "name": "snap", "kind": "noise", "envelope": "decay 0.035", "level": 0.8 },
+    { "name": "wires", "kind": "noise", "envelope": "decay 0.2", "level": 0.75 }
+  ],
+  "out": [{ "op": "shell" }, { "op": "ring" }, { "op": "snap" }, { "op": "wires" }],
+  "filter": { "kind": "lowPass", "cutoff": 11000 },
+  "drive": 0.45,
+  "sends": { "space": 0.14 },
+  "pitchDrop": { "semitones": 6, "seconds": 0.03 }
+}

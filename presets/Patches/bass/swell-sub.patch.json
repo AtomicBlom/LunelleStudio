@@ -1,0 +1,12 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "swell-sub",
+  "about": "A soft low floor: a warm sine with a breath of its octave, swelling in over most of a second and gliding slowly from root to root, mono so it never strikes again. Body under a quiet pad, not a hit",
+  "operators": [
+    { "name": "floor", "kind": "sine", "envelope": "adsr 0.8 0.5 0.9 1.5" },
+    { "name": "breath", "kind": "sine", "ratio": 2, "envelope": "adsr 0.8 0.5 0.9 1.5", "level": 0.15 }
+  ],
+  "out": [{ "op": "floor" }, { "op": "breath" }],
+  "gain": -13,
+  "mono": { "glide": 0.25 }
+}

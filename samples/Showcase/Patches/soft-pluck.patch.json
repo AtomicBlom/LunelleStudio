@@ -1,0 +1,14 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "soft-pluck",
+  "about": "A soft pluck: a string model picked near its middle, so it is round and hollow rather than bright, ringing about a second and a half and dying faster up high, with a faint woody knock in a small resonant box. Sits between a melody and a bass without fighting either",
+  "operators": [
+    { "name": "plucked", "kind": "string", "decaySeconds": 1.6, "damping": 0.55, "pick": 0.3, "keyDecay": 0.2 },
+    { "name": "knock", "kind": "sine", "fixed": 900, "envelope": "decay 0.003", "velocity": 1 },
+    { "name": "box", "kind": "modes", "modes": ["fixed 240 0.04 0.8", "fixed 520 0.03 0.5"], "drivenBy": ["knock"] }
+  ],
+  "out": [{ "op": "plucked", "level": 0.85 }, { "op": "box", "level": 0.02 }],
+  "filter": { "kind": "lowPass", "cutoff": 3800, "keyTrack": 0.3 },
+  "gain": -3,
+  "sends": { "space": 0.25, "echo": 0.1 }
+}

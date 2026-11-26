@@ -1,0 +1,13 @@
+{
+  "name": "grind",
+  "about": "The double shot's drum and bass kit, made of patches (Patches/grind-*): a clicky kick that keys the bass's duck, a cracking snare, hats that choke, a ride, a crash and a shaker",
+  "pieces": [
+    { "piece": "kick", "patch": "grind-kick" },
+    { "piece": "snare", "patch": "grind-snare" },
+    { "piece": "hat-closed", "patch": "grind-hat-closed", "choke": 1 },
+    { "piece": "hat-open", "patch": "grind-hat-open", "choke": 1 },
+    { "piece": "ride", "patch": "grind-ride" },
+    { "piece": "crash", "patch": "grind-crash" },
+    { "piece": "shaker", "patch": "grind-shaker" }
+  ]
+}

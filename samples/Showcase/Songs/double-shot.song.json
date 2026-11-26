@@ -1,0 +1,253 @@
+{
+  "format": "lunelle-song/2",
+  "name": "double-shot",
+  "about": "Drum and bass at 174 in F minor, over i VI III VII. Caffeine is the arrangement: half awake (wake-up), the groove (brew), and past 0.7 a build (jitters) and the drop (rush); let it fall under 0.15 and the song slumps into half-time. Caffeine also opens the grinder's filter and turns up its drive. The time of day picks the melody (Morning an FM bell, Noon a bright triple-saw lead, Night dark FM keys); the activity picks the counter-melody (Sitting holds long notes, Walking walks, Running arpeggiates, and Dennis gets a buzzing, nasal lead). Each melody and counter-melody is eight bars, a statement and its answer, and each has its own version for every section: fragments while waking, two phrases in the brew that take turns (phrase), an intensified one in the drop and a pared-back one in the slump. The brew's beat is picked at random each time round (two-step most often, a roller, now and then a half-step), the drop's fills are shuffled, and the grinder alternates between two riffs",
+  "tempo": 174,
+  "scale": "F minor",
+  "voices": 48,
+  "effects": {
+    "space": [{ "fx": "reverb", "decaySeconds": 2.2 }],
+    "echo": [{ "fx": "delay", "seconds": 0.259, "feedback": 0.35, "pingPong": true }],
+    "master": [
+      { "fx": "compressor", "thresholdDb": -22, "ratio": 2, "attackSeconds": 0.004, "releaseSeconds": 0.2, "makeupDb": 2, "kneeDb": 6 },
+      { "fx": "eq", "highDb": 2 },
+      { "fx": "compressor", "thresholdDb": -9, "ratio": 3, "attackSeconds": 0.003, "releaseSeconds": 0.12 }
+    ]
+  },
+  "groups": [
+    { "name": "drum bus", "effects": [{ "fx": "compressor", "thresholdDb": -14, "ratio": 3, "attackSeconds": 0.005 }] },
+    {
+      "name": "heavy",
+      "effects": [
+        { "fx": "distortion", "driveDb": 10, "toneHz": 3200, "outputDb": -6 },
+        { "fx": "eq", "lowDb": -12 },
+        { "fx": "duck", "thresholdDb": -30, "ratio": 8, "attackSeconds": 0.002, "releaseSeconds": 0.11 }
+      ]
+    },
+    { "name": "sub bus", "effects": [{ "fx": "duck", "thresholdDb": -30, "ratio": 6, "attackSeconds": 0.002, "releaseSeconds": 0.11 }] },
+    { "name": "wide", "effects": [{ "fx": "chorus", "mix": 0.4 }] }
+  ],
+  "variations": [
+    { "name": "groove", "options": 3, "pick": "random", "weights": [3, 2, 1] },
+    { "name": "fill", "options": 3, "pick": "shuffle" },
+    { "name": "riff", "options": 2, "pick": "cycle" },
+    { "name": "phrase", "options": 2, "pick": "cycle" }
+  ],
+  "tracks": [
+    { "name": "drums", "kit": "grind", "group": "drum bus", "level": -1.5, "humanise": { "ms": 2, "velocity": 0.05 } },
+    { "name": "sub", "patch": "glide-sub", "group": "sub bus", "octave": 1, "level": -1.5 },
+    {
+      "name": "grinder",
+      "patch": "fm-reese",
+      "group": "heavy",
+      "octave": 2,
+      "level": 0,
+      "macros": [
+        { "macro": "bright", "follow": "caffeine", "from": 0.15, "to": 1 },
+        { "macro": "drive", "follow": "caffeine", "from": 0.3, "to": 1 }
+      ]
+    },
+    {
+      "name": "pad",
+      "patch": "haze-pad",
+      "group": "wide",
+      "level": -1,
+      "macros": [{ "macro": "bright", "follow": "caffeine", "from": 0, "to": 0.6 }]
+    },
+    { "name": "morning", "patch": "fm-bell", "octave": 5, "level": -3.5, "pan": 0.15 },
+    {
+      "name": "noon",
+      "patch": "triple-saw-lead",
+      "octave": 5,
+      "level": -4.5,
+      "macros": [{ "macro": "bright", "follow": "caffeine", "from": 0.2, "to": 1 }]
+    },
+    { "name": "night", "patch": "fm-keys", "octave": 4, "level": -3, "pan": -0.1 },
+    { "name": "counter", "patch": "soft-pluck", "octave": 3, "level": 0, "pan": -0.3 },
+    { "name": "drone", "patch": "swell-sub", "octave": 2, "level": 0 },
+    { "name": "dennis", "patch": "buzz-lead", "octave": 4, "level": -3, "pan": 0.25 },
+    { "name": "percolator", "patch": "bubble-riser", "level": 0 }
+  ],
+  "sections": [
+    {
+      "name": "wake-up",
+      "about": "Eyes half open: the hazy pad and a shaker; the melody in fragments with space between (Morning's single bell drops, Noon's pickups into held notes, Night's lonely keys) and the counter-melody at half its pace, Dennis snoring on the buzz lead; the sub and a soft kick stir past 0.15",
+      "bars": 8,
+      "chords": "i | VI | III | VII | i | VI | III | VII",
+      "parts": [
+        { "track": "pad", "strum": "quarters", "notes": "D...", "voicing": "close" },
+        { "track": "drums", "name": "shaker", "beat": "sixteenths", "rows": { "shaker": "x.o. x.o. x.o. xoxo" } },
+        {
+          "track": "drums",
+          "name": "stirring",
+          "beat": "sixteenths",
+          "rows": { "kick": "x... .... .... ..x.", "hat-closed": "..o. ..o. ..o. ..o." },
+          "when": "caffeine > 0.15"
+        },
+        { "track": "sub", "line": "quarters", "notes": "1 - - -", "overChords": true, "when": "caffeine > 0.15" },
+        { "track": "drone", "line": "quarters", "notes": "1 - - -", "overChords": true, "when": "not caffeine > 0.15" },
+        { "track": "morning", "name": "morning drops", "line": "eighths", "notes": "5 . . . . . . . | 8 . . . . . 6 . | 5 . . . 3 . . . | 2 . . . . . . . | 5 . . . . . . . | 8 . . . 3' . . . | 7 . . . 5 . . . | 4 . . . 2 . . .", "when": "time-of-day is Morning", "onPhrase": true },
+        { "track": "noon", "name": "noon pickups", "line": "eighths", "notes": ". . . . . . 5 7 | 8 - - - . . . . | . . . . . . 7 8 | 7 - 4 - . . . . | . . . . . . 5 7 | 8 - 3' - . . . . | . . . . 5 7 8 3' | 2' - - - . . . .", "when": "time-of-day is Noon", "onPhrase": true },
+        { "track": "night", "name": "night alone", "line": "quarters", "notes": ". . 5 - | 3 - - - | . . 3 5, | 7, - - - | . . 5 - | 8 - 6 - | . . 5 3 | 4 - - .", "when": "time-of-day is Night", "onPhrase": true },
+        { "track": "counter", "name": "sitting slouched", "line": "quarters", "notes": "3 - - - | 1 - - - | 5 - - - | 4 - - - | 5 - - - | 3 - - - | 7 - - - | 2 - - -", "when": "activity is Sitting", "onPhrase": true },
+        { "track": "counter", "name": "walking slow", "line": "quarters", "notes": "1 . 5 . | 6, . 3 . | 3 . 7 . | 7, . 4 . | 1 . 3 . | 6, . 1 . | 3 . 5 . | 7, . 2 .", "when": "activity is Walking", "onPhrase": true },
+        { "track": "counter", "name": "running warm-up", "line": "eighths", "notes": "1 3 5 3 1 3 5 3 | 1 5 3 5 8 5 3 5", "overChords": true, "when": "activity is Running", "onPhrase": true },
+        { "track": "dennis", "name": "dennis snoring", "line": "triplets", "notes": "1~ 3~ 1 . . . . . . . . . | 6,~ 1~ 6, . . . . . . . . . | 3~ 5~ 3 . . . . . . . . . | ^7, . . 7,~ 2~ 7, . . . . . .", "when": "activity is Dennis", "onPhrase": true }
+      ],
+      "exits": [{ "when": "caffeine > 0.3", "then": "brew" }, { "then": "wake-up" }]
+    },
+    {
+      "name": "brew",
+      "about": "The groove: a beat picked at random each time round (two-step, roller or half-step, each with its own fill), the grinder's riff (two, in turn) over the sub; the melody and counter-melody take turns between two eight-bar phrases (phrase 1 states, phrase 2 answers higher or busier); the pad stays while the caffeine is under 0.5, and the ride comes in over 0.55",
+      "bars": 8,
+      "chords": "i | VI | III | VII | i | VI | III | VII",
+      "parts": [
+        {
+          "track": "drums",
+          "name": "two-step",
+          "beat": "sixteenths",
+          "rows": { "kick": "X... .... ..x. ....", "snare": ".... X..o .o.. X..o", "hat-closed": "x.x. x.xx x.x. x...", "hat-open": ".... .... .... ..x." },
+          "when": "groove is 1",
+          "endWith": { "beat": "sixteenths", "rows": { "kick": "X... ..x. .... ....", "snare": ".... X..o XoXo XXXX" } }
+        },
+        {
+          "track": "drums",
+          "name": "roller",
+          "beat": "sixteenths",
+          "rows": { "kick": "X.x. .... ..X. .x..", "snare": ".... X..o .o.. X.o.", "hat-closed": "xoxo xoxo xoxo xoxo" },
+          "when": "groove is 2",
+          "endWith": { "beat": "sixteenths", "rows": { "kick": "X... ..X. .... ....", "snare": "X..o X..o XXoX 789X" } }
+        },
+        {
+          "track": "drums",
+          "name": "half-step",
+          "beat": "sixteenths",
+          "rows": { "kick": "X... .... .... ..x.", "snare": ".... .... X... ....", "hat-closed": "x.x. x.x. x.x. x.x.", "shaker": "..x. ..x. ..x. ..x." },
+          "when": "groove is 3",
+          "endWith": { "beat": "sixteenths", "rows": { "kick": "X... X... X.X. XXXX", "snare": ".... .... X... ...." } }
+        },
+        { "track": "drums", "name": "ride", "beat": "sixteenths", "rows": { "ride": "x.x. x.x. x.x. x.x." }, "when": "caffeine > 0.55" },
+        { "track": "sub", "line": "quarters", "notes": "1 - - -", "overChords": true },
+        { "track": "grinder", "name": "riff A", "line": "eighths", "notes": "^1 - - - - . 1 1 | . ^1 - - 8~ 5 3~ 1", "overChords": true, "when": "riff is 1" },
+        { "track": "grinder", "name": "riff B", "line": "eighths", "notes": "^1 . 1 . ^8 . 1 . | 1 1 . 1 ^5~ 3 1 .", "overChords": true, "when": "riff is 2" },
+        { "track": "pad", "strum": "quarters", "notes": "D...", "voicing": "close", "when": "caffeine < 0.5" },
+        { "track": "morning", "name": "morning A", "line": "eighths", "notes": "1 . 3 . 5 . 8 - | 6 - 8 - 3' - - . | 5 . 7 . 8 . 7 . | 7 - 4 - 2 - . . | 1 . 3 . 5 . 8 . | 3' - 8 - 6 - 3 . | 7 - 5 - 3 - 5 7 | 4 - - - 2 - - .", "when": "time-of-day is Morning and phrase is 1", "onPhrase": true },
+        { "track": "morning", "name": "morning B", "line": "eighths", "notes": "8 . 8 7 8 - 5 . | 6 . 8 . 3' - 1' . | 3' . 5' - 3' . 8 . | 7 - - - 4 - . . | 5' - 3' - 8 - 5 . | 6 - 8 - 6 - 3 . | 3 . 5 . 7 . 8 . | 2' - - - - - . .", "when": "time-of-day is Morning and phrase is 2", "onPhrase": true },
+        { "track": "noon", "name": "noon A", "line": "eighths", "notes": "^8 . 7 8 . 5 . 3 | 6 . 8 6 . 3 . 1 | ^3' . 8 7 . 5 . 3 | 4 . 5 7 - - 8 - | ^8 . 7 8 . 5 . 3' | 3' . 1' 8 . 6 . 8 | ^5' . 3' 8 . 7 . 5 | 4 - - 2 - - . .", "when": "time-of-day is Noon and phrase is 1", "onPhrase": true },
+        { "track": "noon", "name": "noon B", "line": "eighths", "notes": "5 5 . 5 . 3 5 . | 6 6 . 6 . 8 6 . | 7 7 . 7 . 5 3 . | 4 . 2 . 7, - - . | 5 5 . 5 . 8 3' . | 3' . 1' . 8 . 6 . | 7 . 8 . 3' . 5' . | ^4' - - 2' - - . .", "when": "time-of-day is Noon and phrase is 2", "onPhrase": true },
+        { "track": "night", "name": "night A", "line": "quarters", "notes": "5 - 4 3 | 1 - - . | 3 - 5, 3, | 7, - - . | 5 - 8 7 | 6 - - . | 5 - 3 7, | 2 - - .", "when": "time-of-day is Night and phrase is 1", "onPhrase": true },
+        { "track": "night", "name": "night B", "line": "eighths", "notes": "8 . 7 . 5 . 4 3 | 1 - - - . . . . | 3 . 7, . 5, . 3, . | 2 - - - . . . . | 5 . 8 . 3' . 8 . | 6 - - - 8 - - - | 7 . 5 . 3 . 5, . | 4 - - - - - . .", "when": "time-of-day is Night and phrase is 2", "onPhrase": true },
+        { "track": "counter", "name": "sitting A", "line": "quarters", "notes": "3 - - - | 3 - - - | 5 - - - | 4 - - - | 1 - - - | 1 - 3 - | 3 - 5 - | 4 - 2 -", "when": "activity is Sitting and phrase is 1", "onPhrase": true },
+        { "track": "counter", "name": "sitting B", "line": "quarters", "notes": "5 - - 3 | 6, - - 1 | 7, - - 3 | 2 - - 4 | 5 - - 8 | 6 - - 3 | 7 - - 5 | 4 - - -", "when": "activity is Sitting and phrase is 2", "onPhrase": true },
+        { "track": "counter", "name": "walking A", "line": "quarters", "notes": "1 3 5 3 | 6, 1 3 1 | 3 5 7 5 | 7, 2 4 2 | 1 3 5 8 | 6 3 1 3 | 3 5 7 5 | 7 4 2 7,", "when": "activity is Walking and phrase is 1", "onPhrase": true },
+        { "track": "counter", "name": "walking B", "line": "quarters", "notes": "1 5 8 5 | 6, 3 6 3 | 3 7 3' 7 | 7, 4 7 4 | 1 5 8 5 | 6, 3 6 3 | 3 5 7 5 | 7, 2 4 7,", "when": "activity is Walking and phrase is 2", "onPhrase": true },
+        { "track": "counter", "name": "running A", "line": "sixteenths", "notes": "1 3 5 8 5 3 1 3 5 8 3' 8 5 3 5 3 | 8 5 3 1 3 5 8 5 3' 8 5 3 1 3 5 8", "overChords": true, "when": "activity is Running and phrase is 1", "onPhrase": true },
+        { "track": "counter", "name": "running B", "line": "sixteenths", "notes": "1 8 5 8 3 8 5 8 1 8 5 8 3' 8 5 8 | 5 3 1 3 5 8 5 3 1 . 1 . 3 . 5 .", "overChords": true, "when": "activity is Running and phrase is 2", "onPhrase": true },
+        { "track": "dennis", "name": "dennis A", "line": "triplets", "notes": "1 . 1' . 1 . 3~ 4~ 5 . 5 . | 6 . 6, . 6 . 6' . . 3 1 6, | 3 . 3' . 3 . 7~ 5~ 3 . 5 . | ^7 ^7 ^7 . . . 7, . 4~ 2~ 7,~ 1", "when": "activity is Dennis and phrase is 1", "onPhrase": true },
+        { "track": "dennis", "name": "dennis marching", "line": "triplets", "notes": "1 . 1 1 . 1 5 . 5 5 . 5 | 6 . 6 6 . 6 8 . 8 8 . 8 | 3 . 3 3 . 3 7 . 7 7 . 7 | ^7 . . ^7 . . ^7~ 8~ 2'~ 4'~ 2'~ 7", "when": "activity is Dennis and phrase is 2", "onPhrase": true }
+      ],
+      "exits": [{ "when": "caffeine > 0.7", "then": "jitters" }, { "when": "caffeine < 0.15", "then": "slump" }, { "then": "brew" }]
+    },
+    {
+      "name": "jitters",
+      "about": "The build: the percolator comes to the boil and the grinder's filter sweeps open over a snare roll that climbs to the drop",
+      "bars": 4,
+      "chords": "VI | VI | VII | VII",
+      "parts": [
+        {
+          "track": "drums",
+          "name": "roll",
+          "beat": "sixteenths",
+          "rows": {
+            "snare": "x... .... x... .... | x... x... x... x... | x.x. x.x. x.x. x.x. | xxxx 5566 7788 99XX",
+            "kick": "X... .... .... .... | X... .... X... .... | X... X... X... X... | X.X. X.X. X.X. X..."
+          }
+        },
+        { "track": "percolator", "line": "quarters", "notes": "1 - - - | - - - - | - - - - | - - - ." },
+        { "track": "grinder", "name": "pump", "line": "eighths", "notes": "^1 . 1 . ^1 . 1 1", "overChords": true },
+        { "track": "sub", "line": "quarters", "notes": "1 - - -", "overChords": true }
+      ],
+      "sweeps": [
+        { "track": "percolator", "macro": "sweep", "from": 0, "to": 1 },
+        { "track": "grinder", "macro": "sweep", "from": 0, "to": 1 }
+      ],
+      "exits": [{ "then": "rush" }]
+    },
+    {
+      "name": "rush",
+      "about": "The drop: the crash, the grinder at full tilt, a fill shuffled each time round; the melody intensified (Morning's bell in octave leaps, Noon's lead hammering repeated notes, Night's keys busier and doubled in octaves) and the counter-melody doubled up (Sitting climbs an octave, Walking breaks into a jog, Running sprints in octave leaps, Dennis goes berserk); twice through, and on while the caffeine holds over 0.7; the ride over 0.85",
+      "bars": 8,
+      "chords": "i | VI | III | VII | i | VI | III | VII",
+      "parts": [
+        {
+          "track": "drums",
+          "name": "drop A",
+          "beat": "sixteenths",
+          "rows": { "kick": "X... .... ..X. ....", "snare": ".... X..o .o.. X...", "hat-closed": "x.xx x.x. x.xx x.x." },
+          "when": "fill is 1",
+          "endWith": { "beat": "sixteenths", "rows": { "kick": "X... .... .... X...", "snare": ".... X..o XXXX X.XX" } }
+        },
+        {
+          "track": "drums",
+          "name": "drop B",
+          "beat": "sixteenths",
+          "rows": { "kick": "X... .... ..X. ....", "snare": ".... X..o .o.. X...", "hat-closed": "x.xx x.x. x.xx x.x." },
+          "when": "fill is 2",
+          "endWith": { "beat": "sixteenths", "rows": { "kick": "X..X ..X. X..X ..X.", "snare": ".... X... .... X.XX" } }
+        },
+        {
+          "track": "drums",
+          "name": "drop C",
+          "beat": "sixteenths",
+          "rows": { "kick": "X... .... ..X. ....", "snare": ".... X..o .o.. X...", "hat-closed": "x.xx x.x. x.xx x.x." },
+          "when": "fill is 3",
+          "endWith": { "beat": "sixteenths", "rows": { "kick": "X... X... X... X...", "snare": "3456 789X XXXX XXXX" } }
+        },
+        {
+          "track": "drums",
+          "name": "crash",
+          "beat": "eighths",
+          "rows": { "crash": "x... .... | .... .... | .... .... | .... .... | x... .... | .... .... | .... .... | .... ...." }
+        },
+        { "track": "drums", "name": "ride", "beat": "sixteenths", "rows": { "ride": "x.x. x.x. x.x. x.x." }, "when": "caffeine > 0.85" },
+        { "track": "sub", "line": "quarters", "notes": "1 - - -", "overChords": true },
+        { "track": "grinder", "name": "riff A", "line": "eighths", "notes": "^1 - - - - . 1 1 | . ^1 - - 8~ 5 3~ 1", "overChords": true, "when": "riff is 1" },
+        { "track": "grinder", "name": "riff B", "line": "eighths", "notes": "^1 . 1 . ^8 . 1 . | 1 1 . 1 ^5~ 3 1 .", "overChords": true, "when": "riff is 2" },
+        { "track": "morning", "name": "morning leaps", "line": "eighths", "notes": "8 . 5 8 . 5 3' . | 8 . 6 8 . 6 3' . | 7 . 5 7 . 5 3' . | 7 . 4 7 . 4 2' . | 8 . 5 8 . 5 5' - | 3' - 1' - 8 - 6 . | 5' - 3' - 7 - 5 . | 4 . 7 . 2' - - .", "when": "time-of-day is Morning", "onPhrase": true },
+        { "track": "noon", "name": "noon hammering", "line": "eighths", "notes": "^8 8 7 8 ^3' 8 7 5 | ^8 8 6 8 ^3' 8 6 3 | ^7 7 5 7 ^3' 7 5 3 | ^7 7 4 7 ^2' 7 4 2 | ^8 8 7 8 ^5' 3' 1' 8 | ^3' 3' 1' 8 6 8 3' 1' | ^5' 3' 7 5 ^3' 7 5 3 | ^4' - - - 2' - 7 -", "when": "time-of-day is Noon", "onPhrase": true },
+        { "track": "night", "name": "night octaves", "line": "eighths", "notes": "5 . 5 4 3 - - . | 1 - - . 8 . 6 . | 3 . 3 5 3 - 7, . | 2 - - . 4 . 2 . | 5 . 5 8 7 - 5 . | 6 - - . 3' . 8 . | 5 . 5 3 7, - - . | 2 - 4 - 7 - - .", "when": "time-of-day is Night", "onPhrase": true },
+        { "track": "night", "name": "night octaves low", "line": "eighths", "notes": "5 . 5 4 3 - - . | 1 - - . 8 . 6 . | 3 . 3 5 3 - 7, . | 2 - - . 4 . 2 . | 5 . 5 8 7 - 5 . | 6 - - . 3' . 8 . | 5 . 5 3 7, - - . | 2 - 4 - 7 - - .", "octave": -1, "when": "time-of-day is Night", "onPhrase": true },
+        { "track": "counter", "name": "sitting up", "line": "quarters", "notes": "8 - - - | 8 - - - | 7 - - - | 7 - - - | 8 - - - | 1' - - - | 7 - - - | 4 - - -", "when": "activity is Sitting", "onPhrase": true },
+        { "track": "counter", "name": "walking jog", "line": "eighths", "notes": "1 . 1 3 5 . 3 . | 1 . 8 . 5 3 1 .", "overChords": true, "when": "activity is Walking", "onPhrase": true },
+        { "track": "counter", "name": "running sprint", "line": "sixteenths", "notes": "1 1' 5 1' 3 1' 5 1' 1 1' 5 1' 3' 1' 5' 1' | 8 5 3 1 8 5 3 1 3' 8 5 3 1 3 5 8", "overChords": true, "when": "activity is Running", "onPhrase": true },
+        { "track": "dennis", "name": "dennis berserk", "line": "triplets", "notes": "1 2 3 4 5 6 7 8 9 8 7 6 | 6 . 6' . 6 . 6' . 6 . 6' . | 3 5 7 3' 7 5 3 5 7 3' 7 5 | ^7~ - - - - - 7, . . . . .", "when": "activity is Dennis", "onPhrase": true }
+      ],
+      "exits": [{ "when": "pass < 2", "then": "rush" }, { "when": "caffeine > 0.7", "then": "rush" }, { "then": "brew" }]
+    },
+    {
+      "name": "slump",
+      "about": "The caffeine crash: half-time, the grinder holding long dark notes (its filter nearly shut this low), the pad back; the melody slowed to a few long notes and the counter-melody back to its waking pace; back to the brew past 0.3, otherwise to bed (wake-up)",
+      "bars": 4,
+      "chords": "i | VI | III | VII",
+      "parts": [
+        {
+          "track": "drums",
+          "name": "half-time",
+          "beat": "sixteenths",
+          "rows": { "kick": "X... .... .... ..x.", "snare": ".... .... X... ....", "hat-closed": "..x. ..x. ..x. ..x." }
+        },
+        { "track": "sub", "line": "quarters", "notes": "1 - - -", "overChords": true },
+        { "track": "grinder", "name": "drone", "line": "eighths", "notes": "1 - - - - - - -", "overChords": true },
+        { "track": "pad", "strum": "quarters", "notes": "D...", "voicing": "close" },
+        { "track": "morning", "name": "morning fading", "line": "quarters", "notes": "8 - - - | 6 - - - | 5 - 3 - | 2 - - -", "when": "time-of-day is Morning", "onPhrase": true },
+        { "track": "noon", "name": "noon flagging", "line": "quarters", "notes": "8 - 7 5 | 6 - - - | 5 - 3 - | 4 - 2 -", "when": "time-of-day is Noon", "onPhrase": true },
+        { "track": "night", "name": "night fading", "line": "quarters", "notes": "5 - - - | 3 - - - | 3 - 5, - | 7, - - -", "when": "time-of-day is Night", "onPhrase": true },
+        { "track": "counter", "name": "sitting slouched", "line": "quarters", "notes": "3 - - - | 1 - - - | 5 - - - | 4 - - -", "when": "activity is Sitting", "onPhrase": true },
+        { "track": "counter", "name": "walking slow", "line": "quarters", "notes": "1 . 5 . | 6, . 3 . | 3 . 7 . | 7, . 4 .", "when": "activity is Walking", "onPhrase": true },
+        { "track": "counter", "name": "running warm-up", "line": "eighths", "notes": "1 3 5 3 1 3 5 3 | 1 5 3 5 8 5 3 5", "overChords": true, "when": "activity is Running", "onPhrase": true },
+        { "track": "dennis", "name": "dennis snoring", "line": "triplets", "notes": "1~ 3~ 1 . . . . . . . . . | 6,~ 1~ 6, . . . . . . . . . | 3~ 5~ 3 . . . . . . . . . | ^7, . . 7,~ 2~ 7, . . . . . .", "when": "activity is Dennis", "onPhrase": true }
+      ],
+      "exits": [{ "when": "caffeine > 0.3", "then": "brew" }, { "then": "wake-up" }]
+    }
+  ]
+}

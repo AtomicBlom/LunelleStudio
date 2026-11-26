@@ -1,0 +1,15 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "grind-hat-closed",
+  "about": "A closed hi-hat, short and crisp for sixteenths at 174: four square waves at clashing frequencies, the metal, over noise, all gone in 50 ms, and only above 7 kHz",
+  "operators": [
+    { "name": "metal1", "kind": "pulse", "fixed": 317, "envelope": "decay 0.05", "level": 0.25 },
+    { "name": "metal2", "kind": "pulse", "fixed": 473, "envelope": "decay 0.05", "level": 0.25 },
+    { "name": "metal3", "kind": "pulse", "fixed": 586, "envelope": "decay 0.05", "level": 0.25 },
+    { "name": "metal4", "kind": "pulse", "fixed": 821, "envelope": "decay 0.05", "level": 0.25 },
+    { "name": "hiss", "kind": "noise", "envelope": "decay 0.04", "level": 0.6 }
+  ],
+  "out": [{ "op": "metal1" }, { "op": "metal2" }, { "op": "metal3" }, { "op": "metal4" }, { "op": "hiss" }],
+  "filter": { "kind": "highPass", "cutoff": 7000, "q": 1 },
+  "gain": -4
+}

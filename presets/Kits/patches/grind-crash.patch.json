@@ -1,0 +1,16 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "grind-crash",
+  "about": "A crash for the top of the drop: the metal and a wash of noise ringing out over nearly two seconds, into the room",
+  "operators": [
+    { "name": "metal1", "kind": "pulse", "fixed": 317, "envelope": "decay 1.5", "level": 0.22 },
+    { "name": "metal2", "kind": "pulse", "fixed": 473, "envelope": "decay 1.5", "level": 0.22 },
+    { "name": "metal3", "kind": "pulse", "fixed": 586, "envelope": "decay 1.5", "level": 0.22 },
+    { "name": "metal4", "kind": "pulse", "fixed": 821, "envelope": "decay 1.5", "level": 0.22 },
+    { "name": "wash", "kind": "noise", "envelope": "decay 1.8", "level": 0.7 }
+  ],
+  "out": [{ "op": "metal1" }, { "op": "metal2" }, { "op": "metal3" }, { "op": "metal4" }, { "op": "wash" }],
+  "filter": { "kind": "highPass", "cutoff": 2800 },
+  "gain": -8,
+  "sends": { "space": 0.35 }
+}

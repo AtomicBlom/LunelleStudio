@@ -1,0 +1,12 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "glide-sub",
+  "about": "A sub: a pure sine, mono, gliding where a line slides, with a trace of its octave so it reads on small speakers. Meant to own everything under 80 Hz, under a bass whose lows are cut",
+  "operators": [
+    { "name": "sine1", "kind": "sine", "envelope": "adsr 0.004 0.1 1 0.05" },
+    { "name": "octave", "kind": "sine", "ratio": 2, "envelope": "adsr 0.004 0.1 1 0.05", "level": 0.08 }
+  ],
+  "out": [{ "op": "sine1" }, { "op": "octave" }],
+  "gain": -3,
+  "mono": { "glide": 0.03 }
+}

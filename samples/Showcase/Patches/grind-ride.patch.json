@@ -1,0 +1,17 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "grind-ride",
+  "about": "A ride: the grind hats' metal ringing over a second, with a bell's ping at 3.1 kHz struck on top, for a rolling top line",
+  "operators": [
+    { "name": "metal1", "kind": "pulse", "fixed": 317, "envelope": "decay 1.3", "level": 0.2 },
+    { "name": "metal2", "kind": "pulse", "fixed": 473, "envelope": "decay 1.3", "level": 0.2 },
+    { "name": "metal3", "kind": "pulse", "fixed": 586, "envelope": "decay 1.3", "level": 0.2 },
+    { "name": "metal4", "kind": "pulse", "fixed": 821, "envelope": "decay 1.3", "level": 0.2 },
+    { "name": "ping", "kind": "sine", "fixed": 3100, "envelope": "decay 0.8", "level": 0.3 },
+    { "name": "wash", "kind": "noise", "envelope": "decay 0.9", "level": 0.25 }
+  ],
+  "out": [{ "op": "metal1" }, { "op": "metal2" }, { "op": "metal3" }, { "op": "metal4" }, { "op": "ping" }, { "op": "wash" }],
+  "filter": { "kind": "highPass", "cutoff": 2500, "q": 0.8 },
+  "gain": -12,
+  "sends": { "space": 0.2 }
+}

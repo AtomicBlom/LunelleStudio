@@ -1,0 +1,15 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "bubble-riser",
+  "about": "A riser that bubbles: noise through a narrow band that Sweep carries up five octaves as it grows louder, under a fast, deep tremolo, like a pot coming to the boil",
+  "operators": [{ "name": "steam", "kind": "noise", "envelope": "adsr 0.3 0.2 1 0.05", "level": 0.55 }],
+  "out": [{ "op": "steam" }],
+  "filter": { "kind": "bandPass", "cutoff": 220, "q": 3 },
+  "gain": 4,
+  "sends": { "space": 0.4 },
+  "tremolo": { "rate": 11, "depth": 0.55 },
+  "macros": [
+    { "macro": 2, "target": "filterOctaves", "from": 0, "to": 5 },
+    { "macro": 2, "target": "gain", "from": 0.12, "to": 1 }
+  ]
+}

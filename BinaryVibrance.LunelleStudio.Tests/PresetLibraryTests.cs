@@ -181,6 +181,20 @@ public class PresetLibraryTests
 		bench.Preset("synths/supersaw").InProject.ShouldBeTrue();
 		bench.Preset("synths/supersaw").AddText.ShouldBe("open");
 
+		// Edited in the designer, it is saved as what it changes over the library's, still based on it
+		model.Designer.AddButtons[0].Command!.Execute(null);
+		for (var seconds = 0.0; seconds < SongEditor.SaveAfterSeconds + 0.1; seconds += 256.0 / 48_000)
+		{
+			bench.Workbench.Update(256.0 / 48_000);
+			bench.Session.Render(256);
+		}
+		var saved = JReader.Parse(bench.Files.ReadText(Path.Combine(bench.Root, "Patches", "synths", "supersaw.patch.json")));
+		saved["base"]!.Str.ShouldBe("lunelle:synths/supersaw");
+		saved["insert"]!.Items.Select(i => i["into"]!.Str).ShouldContain("operators");
+		saved["operators"].ShouldBeNull();
+		bench.ReadAgain();
+		bench.Host.Current!.Problems.ShouldBeEmpty();
+
 		// Added again, it opens the project's own: nothing is written
 		bench.Workbench.ChoosePatch(model.Patches.Single(p => p.Name == "tone").Index);
 		bench.Workbench.AddPreset(bench.Preset("synths/supersaw").Preset).ShouldBeNull();

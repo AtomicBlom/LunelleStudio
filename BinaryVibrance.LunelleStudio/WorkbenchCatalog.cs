@@ -37,6 +37,13 @@ public sealed record WorkbenchCatalog
 	/// <summary>The file a patch is built from (a <c>.patch.json</c>), by the patch's name in the catalog; null for code.</summary>
 	public Func<string, string?> PatchFile { get; init; } = _ => null;
 
+	/// <summary>
+	/// A derived patch (a file with a <c>"base"</c>, overrides.md) by its id: the patch it resolves to, as a whole file's
+	/// text, and the whole patch below it that its file changes; null for a patch whose file is whole. The designer edits
+	/// the whole and saves only what differs from the base (Lunelle's OverrideDiff).
+	/// </summary>
+	public Func<string, (string Whole, BinaryVibrance.Lunelle.Format.JObject Below)?> DerivedPatch { get; init; } = _ => null;
+
 	/// <summary>The class the generator writes the patches' properties into, in full, whose own half holds a patch that is code.</summary>
 	public string? PatchesType { get; init; }
 

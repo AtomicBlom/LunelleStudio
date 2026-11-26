@@ -1539,12 +1539,19 @@ public sealed partial class Workbench : IDisposable
 		_patchFile = _catalog.PatchFile(name);
 		_patchAbout = "";
 		_patchCode = null;
+		_patchBelow = null;
 		IReadOnlyList<string>? names = null;
 		if (_patchFile is not null)
 		{
 			try
 			{
 				var text = Files.ReadText(_patchFile);
+				// A derived patch is edited as what it resolves to, and saved as what it changes
+				if (_catalog.DerivedPatch(name) is { } derived)
+				{
+					text = derived.Whole;
+					_patchBelow = derived.Below;
+				}
 				_patchCode = System.Text.Json.Nodes.JsonNode.Parse(text)?["code"]?.GetValue<string>();
 				if (_patchCode is null)
 				{
@@ -1564,6 +1571,9 @@ public sealed partial class Workbench : IDisposable
 	}
 
 	// The designer's patch written to its file, once its edits have paused (or now, leaving it)
+	// The whole patch a derived patch's file changes, while one is open; null for a whole file
+	private BinaryVibrance.Lunelle.Format.JObject? _patchBelow;
+
 	private void SavePatch()
 	{
 		// A patch that is code is heard as edited, and its file left saying it is code
@@ -1575,6 +1585,10 @@ public sealed partial class Workbench : IDisposable
 		var text = PatchFile.Write(spec, ViewModel.Designer.Names);
 		try
 		{
+			if (_patchBelow is { } below && BinaryVibrance.Lunelle.Format.JReader.Parse(Files.ReadText(_patchFile)) is BinaryVibrance.Lunelle.Format.JObject layer
+				&& BinaryVibrance.Lunelle.Format.JReader.Parse(text) is BinaryVibrance.Lunelle.Format.JObject wanted)
+				text = BinaryVibrance.Lunelle.Format.JWriter.Write(BinaryVibrance.Lunelle.Format.OverrideDiff.Layer(
+					below, wanted, BinaryVibrance.Lunelle.Format.OverrideSchema.Patch, layer)) + "\n";
 			if (!Files.Exists(_patchFile) || Files.ReadText(_patchFile) != text)
 			{
 				Files.WriteText(_patchFile, text);

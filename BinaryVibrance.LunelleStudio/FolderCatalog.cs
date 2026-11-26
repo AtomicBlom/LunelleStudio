@@ -1,4 +1,5 @@
 using BinaryVibrance.Lunelle.Chip;
+using BinaryVibrance.Lunelle.Format;
 using BinaryVibrance.Lunelle.Music;
 
 namespace BinaryVibrance.LunelleStudio;
@@ -32,6 +33,7 @@ public static class FolderCatalog
 				? new SongSource(Full(path), folder.Bindings) { Build = (text, wrap) => folder.BuildSong(name, text, wrap) }
 				: null,
 			PatchFile = name => folder.PatchPath(name) is { } path ? Full(path) : null,
+			DerivedPatch = name => Derived(folder, name),
 			Folder = Path.GetFullPath(root),
 		};
 	}
@@ -50,5 +52,18 @@ public static class FolderCatalog
 				.Where(s => s.Code.Count > 0)
 				.Select(s => $"{s.Name}: its code plays nothing without C# ({string.Join(", ", s.Code)})"),
 		];
+	}
+
+	// A derived patch of the project's: what it resolves to, and the base it changes
+	private static (string Whole, JObject Below)? Derived(MusicFolder folder, string name)
+	{
+		if (folder.Project.Root.Entry(EntryKind.Patch, name) is not { } entry || entry.Json["base"]?.Str is not { } reference)
+			return null;
+		var resolver = folder.Resolver;
+		if (resolver.Resolve(entry) is not { Ok: true } whole
+			|| resolver.Find(entry.Owner, EntryKind.Patch, reference, out _) is not { } baseFile
+			|| resolver.Resolve(baseFile) is not { } below)
+			return null;
+		return (whole.Json.ToString(), below.Json);
 	}
 }

@@ -20,6 +20,11 @@ using BinaryVibrance.LunelleStudio.Projects;
 using BinaryVibrance.Kaldra.Core.Hosting;
 using BinaryVibrance.Kaldra.Hosting.Desktop;
 
+// lunelle-studio
+//     the project opened last, or the showcase in Documents\Lunelle Studio, made the first time
+// lunelle-studio <music.lunelle>
+//     the music in that file, unpacked into Documents\Lunelle Studio as a folder to edit (the same folder again for the
+//     same file)
 // lunelle-studio <project.csproj | folder> [--extension <extension.csproj>] [the extension's own options]
 //     the workbench over that music project, with its extension: the one its LunelleStudioExtension property names, or
 //     the one given (--extension none for none)
@@ -50,11 +55,15 @@ try
 	{
 		["new", var folder, ..] when filesAlone => ProjectTemplate.CreateData(folder),
 		["new", var folder, ..] => ProjectTemplate.Create(folder),
+		[var path, ..] when path.EndsWith(MusicArchive.Extension, StringComparison.OrdinalIgnoreCase) && File.Exists(path)
+			=> StudioHome.Unpack(path, DiskFiles.Instance),
 		[var path, ..] when filesAlone || WorkbenchFolder.IsFilesAlone(path) => FindFolder(path),
 		[var path, ..] => FindProject(path),
-		_ => throw new ArgumentException("Give it a music project's .csproj, or its folder; or \"new <folder>\" to make one."),
+		[] => StudioHome.StartingProject(StudioSettings.Load(DiskFiles.Instance).LastProject, DiskFiles.Instance),
 	};
 	filesAlone = filesAlone || appArgs is not ["new", ..] && Directory.Exists(project);
+	if (filesAlone && File.Exists(project))
+		project = Path.GetDirectoryName(Path.GetFullPath(project))!;
 	// A project with code is built by the SDK: without one, its music files are opened alone
 	if (!filesAlone && DotnetSdk.Find() is null)
 	{
@@ -63,7 +72,7 @@ try
 		filesAlone = true;
 	}
 }
-catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or IOException)
+catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or IOException or UnauthorizedAccessException)
 {
 	Console.Error.WriteLine($"lunelle-studio: {ex.Message}");
 	return 1;

@@ -48,6 +48,35 @@ public class MusicArchiveTests
 	}
 
 	[Test]
+	public void A_file_opened_twice_unpacks_into_one_folder_and_another_by_its_name_into_the_next()
+	{
+		var home = Path.Combine(Path.GetTempPath(), "lunelle-studio-home-" + Guid.NewGuid().ToString("N")[..8]);
+		try
+		{
+			var first = Zip(("lunelle-project.json", "{}"), ("Songs/a.song.json", "{\"tempo\": 90}"));
+			var other = Zip(("lunelle-project.json", "{}"), ("Songs/b.song.json", "{}"));
+
+			var folder = MusicArchive.UnpackBeside(DiskFiles.Instance, home, "Tunes", first);
+			folder.ShouldBe(Path.Combine(home, "Tunes"));
+			File.ReadAllText(Path.Combine(folder, "Songs", "a.song.json")).ShouldBe("{\"tempo\": 90}");
+			// What the workbench keeps beside the music doesn't make it another project's
+			DiskFiles.Instance.WriteText(Path.Combine(folder, ".lunelle-studio", "workbench.json"), "{}");
+			MusicArchive.UnpackBeside(DiskFiles.Instance, home, "Tunes", first).ShouldBe(folder);
+
+			MusicArchive.UnpackBeside(DiskFiles.Instance, home, "Tunes", other).ShouldBe(Path.Combine(home, "Tunes (2)"));
+			// An edit made since is kept: the file opens beside it rather than over it
+			File.WriteAllText(Path.Combine(folder, "Songs", "a.song.json"), "{\"tempo\": 120}");
+			MusicArchive.UnpackBeside(DiskFiles.Instance, home, "Tunes", first).ShouldBe(Path.Combine(home, "Tunes (3)"));
+			File.ReadAllText(Path.Combine(folder, "Songs", "a.song.json")).ShouldBe("{\"tempo\": 120}");
+		}
+		finally
+		{
+			if (Directory.Exists(home))
+				Directory.Delete(home, true);
+		}
+	}
+
+	[Test]
 	public void A_zip_of_the_folder_holding_a_project_is_taken_from_that_folder()
 	{
 		var files = MusicArchive.Unpack(Zip(

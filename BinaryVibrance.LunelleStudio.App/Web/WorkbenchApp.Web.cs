@@ -1,6 +1,4 @@
 using BinaryVibrance.LunelleStudio.App.Web;
-using BinaryVibrance.Vysara;
-using BinaryVibrance.Vysara.Controls;
 
 namespace BinaryVibrance.LunelleStudio.App;
 
@@ -19,18 +17,6 @@ public sealed partial class WorkbenchApp
 		extras.Children.Add(Button("import", "Open a .lunelle file in place of this music", () => _ = ImportAsync()));
 		if (_files is BrowserFiles { Kept: false })
 			_workbench.ViewModel.Notice = "this browser keeps nothing: export the music to keep it";
-	}
-
-	private static Button Button(string text, string tip, Action click)
-	{
-		var button = new Button
-		{
-			Content = new TextBlock { Text = text, FontSize = 13f, Margin = new Thickness(8, 3, 8, 4) },
-			Margin = new Thickness(0, 0, 4, 4),
-		};
-		ToolTipService.SetToolTip(button, tip);
-		button.Click += (_, _) => click();
-		return button;
 	}
 
 	private void Export()

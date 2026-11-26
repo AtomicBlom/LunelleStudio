@@ -82,6 +82,43 @@ public static class MusicArchive
 	}
 
 	// What builds, what the workbench was doing and version control's own: none of it the music
+	/// <summary>
+	/// Unpacks <paramref name="archive"/> into a folder of its own under <paramref name="home"/>, named
+	/// <paramref name="name"/>, and returns it. A folder of that name already holding just these files (unpacked from the
+	/// same file before) is returned as it is; one holding anything else is left alone, and <c>name (2)</c>,
+	/// <c>name (3)</c> and so on are tried.
+	/// </summary>
+	/// <exception cref="InvalidDataException">It isn't a project's file, and nothing is written.</exception>
+	public static string UnpackBeside(IMusicFiles files, string home, string name, byte[] archive)
+	{
+		ArgumentNullException.ThrowIfNull(files);
+		var incoming = Unpack(archive);
+		for (var n = 1; ; n++)
+		{
+			var folder = Path.Combine(home, n == 1 ? name : $"{name} ({n})");
+			if (!files.List(folder).Any())
+			{
+				foreach (var (file, bytes) in incoming)
+					files.WriteBytes(Path.Combine(folder, file), bytes);
+				return folder;
+			}
+			if (Holds(files, folder, incoming))
+				return folder;
+		}
+	}
+
+	// Whether the folder holds just what the archive does (what is left out of an archive aside)
+	private static bool Holds(IMusicFiles files, string folder, IReadOnlyList<(string Path, byte[] Bytes)> incoming)
+	{
+		var there = files.List(folder).Where(p => !LeftOut(p)).ToHashSet(StringComparer.Ordinal);
+		if (there.Count != incoming.Count)
+			return false;
+		foreach (var (file, bytes) in incoming)
+			if (!there.Contains(file) || !files.ReadBytes(Path.Combine(folder, file)).AsSpan().SequenceEqual(bytes))
+				return false;
+		return true;
+	}
+
 	private static bool LeftOut(string path) =>
 		path.StartsWith("bin/", StringComparison.Ordinal) || path.StartsWith("obj/", StringComparison.Ordinal)
 		|| path.StartsWith(".lunelle-studio/", StringComparison.Ordinal) || path.StartsWith(".git/", StringComparison.Ordinal);

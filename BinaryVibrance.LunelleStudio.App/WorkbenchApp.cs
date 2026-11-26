@@ -5,6 +5,7 @@ using BinaryVibrance.Kaldra.Core.Materials;
 using BinaryVibrance.Kaldra.UI.Vysara;
 
 using BinaryVibrance.Vysara;
+using BinaryVibrance.Vysara.Controls;
 
 namespace BinaryVibrance.LunelleStudio.App;
 
@@ -90,6 +91,9 @@ public sealed partial class WorkbenchApp(string projectPath, IWorkbenchExtension
 		// The theme chosen last, in whatever project, before the first view is made; and each new choice kept
 		var settings = _settings = StudioSettings.Load(_files);
 		_workbench.RestorePreferences(settings.Workbench);
+		// The browser has its one project; the desktop opens this one again when started with none named
+		if (!OperatingSystem.IsBrowser())
+			settings.LastProject = Path.GetFullPath(projectPath);
 		if (settings.Theme is { } theme && !_workbench.SetTheme(theme))
 			Console.Error.WriteLine($"[studio] no theme is called '{theme}': showing {Workbench.ThemeName}");
 		var fonts = new StudioFonts(_ui.Fonts);
@@ -154,6 +158,19 @@ public sealed partial class WorkbenchApp(string projectPath, IWorkbenchExtension
 			_state.Save(_workbench.CaptureState());
 			SaveSettings();
 		}
+	}
+
+	// A button for the transport's end, where each host puts its own controls (AddControls)
+	private static Button Button(string text, string tip, Action click)
+	{
+		var button = new Button
+		{
+			Content = new TextBlock { Text = text, FontSize = 13f, Margin = new Thickness(8, 3, 8, 4) },
+			Margin = new Thickness(0, 0, 4, 4),
+		};
+		ToolTipService.SetToolTip(button, tip);
+		button.Click += (_, _) => click();
+		return button;
 	}
 
 	// Keeps the workbench's layout for every project, when it has changed

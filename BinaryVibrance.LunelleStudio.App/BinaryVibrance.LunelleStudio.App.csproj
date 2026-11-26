@@ -17,7 +17,10 @@
 	-->
 	<PropertyGroup Condition="'$(RuntimeIdentifier)' != 'browser-wasm'">
 		<UseVulkan>true</UseVulkan>
-		<UseDirectX12>false</UseDirectX12>
+		<!-- On Windows, DirectX 12 too: the studio prefers Vulkan (WorkbenchApp.Configure), and falls back to it where a
+		     machine has no Vulkan driver -->
+		<UseDirectX12 Condition="$(RuntimeIdentifier.StartsWith('win-')) or ('$(RuntimeIdentifier)' == '' and $([MSBuild]::IsOSPlatform('Windows')))">true</UseDirectX12>
+		<UseDirectX12 Condition="'$(UseDirectX12)' != 'true'">false</UseDirectX12>
 		<UseWebGPU>false</UseWebGPU>
 	</PropertyGroup>
 	<PropertyGroup Condition="'$(RuntimeIdentifier)' == 'browser-wasm'">
@@ -48,6 +51,29 @@
 		<RollForward>LatestMajor</RollForward>
 		<!-- Keep the other build's output out of the app (the desktop's and the browser's are apart) -->
 		<DefaultItemExcludes>$(DefaultItemExcludes);bin/**;obj/**</DefaultItemExcludes>
+	</PropertyGroup>
+
+	<!--
+		The desktop studio as it ships (build/publish.ps1, and the release workflow): published for one runtime, it carries
+		its own .NET (self-contained, so RollForward no longer applies, and a project with code must target this .NET or an
+		older one) and is compiled ahead to start fast (ReadyToRun). Not trimmed, and not Native AOT: Roslyn and the load
+		contexts a project with code is loaded into need the JIT. A Windows release has no console window.
+	-->
+	<PropertyGroup Condition="'$(RuntimeIdentifier)' != 'browser-wasm'">
+		<Product>Lunelle Studio</Product>
+		<Company>BinaryVibrance</Company>
+		<Description>A studio for Lunelle music: songs, patches and kits, alone or in a game's project</Description>
+		<ApplicationIcon>Assets\lunelle-studio.ico</ApplicationIcon>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(RuntimeIdentifier)' != 'browser-wasm' and '$(RuntimeIdentifier)' != ''">
+		<SelfContained>true</SelfContained>
+		<PublishReadyToRun>true</PublishReadyToRun>
+		<!-- The libraries' API docs are for building against them, not for running the studio -->
+		<PublishDocumentationFiles>false</PublishDocumentationFiles>
+		<PublishReferencesDocumentationFiles>false</PublishReferencesDocumentationFiles>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)' == 'Release' and $(RuntimeIdentifier.StartsWith('win-'))">
+		<OutputType>WinExe</OutputType>
 	</PropertyGroup>
 
 	<!-- The presets, for any project of files alone to take (StudioPresets): embedded, as the browser has no folder beside the app -->

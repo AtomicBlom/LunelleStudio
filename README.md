@@ -31,6 +31,26 @@ songs, patches and state through `Workbench.Files` (`IMusicFiles`): the disk, un
 a kit's samples and licence, or its pieces' patches, and the names of the macros it turns. Then it opens. A project with
 code is offered none.
 
+## On the desktop
+
+Started with nothing named, the studio opens the project it had open last, or `Documents\Lunelle Studio\Showcase`,
+which it makes from the showcase the first time. A `.lunelle` file given to it (or opened from Explorer, once installed)
+is unpacked into `Documents\Lunelle Studio` as a folder to edit, into the same folder each time while that folder still
+holds just what the file does. **open**, **open folder** and **export** on the transport use the system's dialogs, and a
+`.lunelle` file, a `.csproj` or a folder dropped on the window opens too, in a studio of its own. A project always opens
+stopped, at the song and mode it was left at; how the workbench is laid out is kept with the studio's settings
+(`%LOCALAPPDATA%\BinaryVibrance\LunelleStudio\settings.json`), for every project alike.
+
+A project with code needs the .NET SDK (`dotnet`) to build it: without one, its music files open alone. It must be
+built against the very Kaldra and Lunelle the studio runs, which it shares with the project; a project built against
+another version is refused, naming both.
+
+**Publishing.** `./build/publish.ps1 -Runtime win-x64` publishes the studio self-contained and ReadyToRun to
+`artifacts/publish/win-x64`, and with Inno Setup installed, makes its installer (`installer/lunelle-studio.iss`, which
+also opens `.lunelle` files in the studio) in `artifacts/installer`. Given a certificate, it signs both. The `Studio`
+workflow does the same on every push, and makes a GitHub release from a `v*` tag. On Windows the studio prefers Vulkan
+and falls back to DirectX 12 where there is no Vulkan driver; `--backend` chooses.
+
 ## In the browser
 
 The app builds for the browser too, on WebGPU (`-r browser-wasm`; Kaldra's SDK picks the WebAssembly SDK by the runtime

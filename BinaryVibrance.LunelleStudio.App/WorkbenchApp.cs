@@ -64,6 +64,10 @@ public sealed partial class WorkbenchApp(string projectPath, IWorkbenchExtension
 		options.Title = $"LunelleStudio - {Name}";
 		options.Width = 1280;
 		options.Height = 800;
+		// Vulkan where it is; on Windows, DirectX 12 where it isn't (the host takes the first backend available then).
+		// --backend still chooses
+		if (!OperatingSystem.IsBrowser())
+			options.EngineSettings.PreferredBackend ??= "Vulkan";
 	}
 
 	protected override void LoadContent()

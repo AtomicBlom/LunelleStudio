@@ -223,4 +223,55 @@ public class WorkbenchFolderTests
 		workbench.ViewModel.IsDirty.ShouldBeFalse();
 		document.CanUndo.ShouldBeFalse();
 	}
+
+	[Test]
+	public void Cues_are_made_imported_renamed_and_deleted_across_the_songs_as_one_step_each()
+	{
+		var root = Path.Combine(Path.GetTempPath(), "lunelle-studio-cues-" + Guid.NewGuid().ToString("N")[..8]);
+		var disk = new MemoryFiles();
+		disk.WriteText(Path.Combine(root, MusicFolder.ProjectFileName), Project);
+		disk.WriteText(Path.Combine(root, "Cues", "tunes.cues.json"), Cues);
+		disk.WriteText(Path.Combine(root, "Patches", "tone.patch.json"),
+			PatchFile.Write(PatchSpec.From(Patch.Build("tone", p => p.Out(p.Sine(1f, Env.Adsr(0.005f, 0.1f, 0.6f, 0.1f)))))));
+		var song = Path.Combine(root, "Songs", "tune.song.json");
+		disk.WriteText(song, Song(120).Replace("\"intensity\": null", "\"intensity\": 0.8", StringComparison.Ordinal));
+		var document = ProjectDocument.Open(disk, root);
+		using var session = new OfflineSession();
+		using var workbench = new Workbench(session.Engine, session.Engine.Master, new WorkbenchCatalog()) { Files = document };
+		using var host = WorkbenchFolder.Open(root, workbench);
+		host.Update();
+		var model = workbench.ViewModel;
+
+		// The panel lists the project's cues, the strip the song's, each starting at its preview
+		model.ProjectCues.Select(c => (c.Id, c.IsImported)).ShouldBe([("intensity", true), ("mood", true)]);
+		model.Cues.Select(c => c.Name).ShouldBe(["intensity", "mood"]);
+		workbench.Player.Get(workbench.CueNamed("intensity")!).ShouldBe(0.8f);
+
+		// A cue the song reads can't be taken out of its imports
+		workbench.UnimportCue("mood").ShouldNotBeNull();
+
+		// A new cue goes into its namespace's file and the song's imports, one step
+		workbench.NewCue("lava/phase", ["Countdown", "Race"], "The lava round").ShouldBeNull();
+		document.ReadText(Path.Combine(root, "Cues", "lava.cues.json")).ShouldContain("\"namespace\": \"lava\"");
+		document.ReadText(song).ShouldContain("\"lava/phase\": null");
+		document.Undo();
+		document.Exists(Path.Combine(root, "Cues", "lava.cues.json")).ShouldBeFalse();
+		document.ReadText(song).ShouldNotContain("lava/phase");
+
+		// A rename reaches every place a song reads it
+		workbench.RenameCue("mood", "feeling").ShouldBeNull();
+		var renamed = document.ReadText(song);
+		renamed.ShouldContain("\"feeling\": null");
+		renamed.ShouldContain("not feeling is Dark");
+		renamed.ShouldNotContain("mood");
+		document.ReadText(Path.Combine(root, "Cues", "tunes.cues.json")).ShouldContain("\"name\": \"feeling\"");
+
+		// A cue a song reads can't be deleted; one none reads can
+		workbench.DeleteCue("feeling").ShouldNotBeNull();
+		workbench.ReadProjectCuesForTest();
+		workbench.UnimportCue("intensity").ShouldBeNull();
+		var deleted = workbench.DeleteCue("intensity");
+		deleted.ShouldBeNull(deleted);
+		document.ReadText(Path.Combine(root, "Cues", "tunes.cues.json")).ShouldNotContain("intensity");
+	}
 }

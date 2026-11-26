@@ -618,6 +618,17 @@ public sealed class WorkbenchViewModel : ViewModel
 	/// <summary>Something the host needs seen, beside the build pill until it goes: "StudioExtras changed: restart to take it up".</summary>
 	public string Notice { get; set => Set(ref field, value); } = "";
 
+	/// <summary>The project's cues, for the cues panel: each with whether the open song imports it.</summary>
+	public System.Collections.ObjectModel.ObservableCollection<CueEntryViewModel> ProjectCues { get; } = [];
+
+	/// <summary>A cue's menu asked for (its "…"): the view shows it.</summary>
+	public event Action<CueEntryViewModel>? CueMenuRequested;
+
+	internal void RequestCueMenu(CueEntryViewModel cue) => CueMenuRequested?.Invoke(cue);
+
+	/// <summary>Whether the project has cue files to list (a project of format 2).</summary>
+	public bool HasProjectCues { get; set => Set(ref field, value); }
+
 	/// <summary>Whether the project has edits not yet saved (the document's, docs/spec/transactions.md).</summary>
 	public bool IsDirty { get; set => Set(ref field, value); }
 }

@@ -82,6 +82,17 @@ public sealed class CueViewModel : ViewModel
 		}
 	}
 
+	// The value the music has now, shown without telling the music again
+	internal void Show(float value)
+	{
+		if (Set(ref _value, value, nameof(Value)) && IsChoice && OptionIndex(Cue, value) is >= 0 and var option)
+		{
+			_selectedOption = option;
+			Changed(nameof(SelectedOption));
+			ShowOption();
+		}
+	}
+
 	private void ShowOption()
 	{
 		foreach (var option in Options)

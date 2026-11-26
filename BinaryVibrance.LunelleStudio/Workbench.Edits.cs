@@ -136,7 +136,9 @@ public sealed partial class Workbench
 		}
 		catch (FormatException ex)
 		{
-			return ex.Message;
+			return ex.Message.Contains("no cue", StringComparison.Ordinal) && _catalog.Root is not null
+				? ex.Message + " Make it with the + under Cues in the library."
+				: ex.Message;
 		}
 	}
 
@@ -148,6 +150,8 @@ public sealed partial class Workbench
 	{
 		if (when is not null && CheckCondition(when) is { } why)
 			return why;
+		if (when is not null)
+			ImportCuesIn(when);
 		EditPart(placement.Section.Index, IndexIn(placement), part =>
 		{
 			if (when is null)

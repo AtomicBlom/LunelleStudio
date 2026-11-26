@@ -52,4 +52,10 @@ public sealed record WorkbenchCatalog
 	/// <see cref="Workbench.Presets"/> is copied; null for a project with code, which takes no presets.
 	/// </summary>
 	public string? Folder { get; init; }
+
+	/// <summary>
+	/// The project's folder, in full, whether its music is files alone or has code: where its cue files are (Cues/), and
+	/// its songs, for edits across them (renaming a cue). Null for a catalog with no files.
+	/// </summary>
+	public string? Root { get; init; }
 }

@@ -35,6 +35,7 @@ public static class FolderCatalog
 			PatchFile = name => folder.PatchPath(name) is { } path ? Full(path) : null,
 			DerivedPatch = name => Derived(folder, name),
 			Folder = Path.GetFullPath(root),
+			Root = Path.GetFullPath(root),
 		};
 	}
 

@@ -553,7 +553,7 @@ public class WorkbenchTests
 			model.SelectedSong = 1;
 			rig.Workbench.Play();
 			model.LoopSection = true;
-			model.Cues[0].Value = 0.75f;
+			rig.Workbench.Player.Set(Energy, 0.75f);
 			model.Tracks[0].Muted = true;
 			saved = rig.Workbench.CaptureState();
 		}

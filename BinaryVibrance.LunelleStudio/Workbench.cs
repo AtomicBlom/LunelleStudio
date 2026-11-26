@@ -230,24 +230,26 @@ public sealed partial class Workbench : IDisposable
 		WorkbenchViewModel.ReplaceChoices(ViewModel.Kits, [.. catalog.Kits.Select(s => s.Name)], ViewModel.AddKit);
 		ShowPresets();
 		ViewModel.FilterLibrary();
+		// The cues keep their values; the strip shows the song's (ShowCues), the panel the project's
 		ViewModel.Cues.Clear();
 		foreach (var cue in catalog.Cues)
-		{
-			var value = cues.TryGetValue(cue.Name, out var was) ? was : Player.Get(cue);
-			Player.Set(cue, value);
-			ViewModel.Cues.Add(new CueViewModel(this, cue, value));
-		}
+			Player.Set(cue, cues.TryGetValue(cue.Name, out var was) ? was : Player.Get(cue));
+		ReadProjectCues();
 
 		_songIndex = Index(catalog.Songs, song);
 		_benchPatch = Index(catalog.Patches, patch);
 		_benchKitIndex = Index(catalog.Kits, kit);
 		_patchChoice = Index(catalog.Patches, patchChoice);
 		_kitChoice = Index(catalog.Kits, kitChoice);
+		var opening = _songIndex < 0 || song != Name(catalog.Songs, _songIndex);
 		if (_songIndex < 0 && catalog.Songs.Count > 0)
 			_songIndex = 0;
 		ViewModel.ShowSelectedSong(_songIndex);
 		ViewModel.ShowBench(_benchPatch, _benchKitIndex);
 		Rebuild();
+		// A song opened afresh (not the same song read again) starts at its previews
+		if (opening)
+			PreviewCues();
 		RebuildBench();
 		if (ViewModel.Mode == WorkbenchMode.Files)
 			RefreshFiles();
@@ -306,6 +308,7 @@ public sealed partial class Workbench : IDisposable
 		ViewModel.ShowSelectedSong(index);
 
 		Rebuild(swap: false);
+		PreviewCues();
 		if (playing && _song is not null)
 			Play();
 	}
@@ -423,9 +426,7 @@ public sealed partial class Workbench : IDisposable
 			ViewModel.Tracks.Add(row);
 		}
 		ViewModel.HasTracks = ViewModel.Tracks.Count > 0;
-		foreach (var cue in song.Cues)
-			if (!ViewModel.Cues.Any(c => c.Cue == cue))
-				ViewModel.Cues.Add(new CueViewModel(this, cue, Player.Get(cue)));
+		ShowCues(song);
 		var used = song.Cues;
 		foreach (var cue in ViewModel.Cues)
 		{

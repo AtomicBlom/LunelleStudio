@@ -1,0 +1,16 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "string-section",
+  "about": "A string section: saws a few cents apart, seated left, middle and right, with a quieter octave above, bowed in gently, with a late vibrato",
+  "operators": [
+    { "name": "saw1", "kind": "saw", "detune": -8, "envelope": "adsr 0.22 0.3 0.85 0.45", "level": 0.35 },
+    { "name": "saw2", "kind": "saw", "envelope": "adsr 0.22 0.3 0.85 0.45", "level": 0.35 },
+    { "name": "saw3", "kind": "saw", "detune": 7, "envelope": "adsr 0.22 0.3 0.85 0.45", "level": 0.35 },
+    { "name": "saw4", "kind": "saw", "ratio": 2, "detune": 3, "envelope": "adsr 0.22 0.3 0.85 0.45", "level": 0.12 }
+  ],
+  "out": [{ "op": "saw1", "pan": -0.6 }, { "op": "saw2" }, { "op": "saw3", "pan": 0.6 }, { "op": "saw4", "pan": 0.2 }],
+  "filter": { "kind": "lowPass", "cutoff": 2600, "keyTrack": 0.4, "velocity": 0.3 },
+  "gain": -5,
+  "sends": { "space": 0.35 },
+  "vibrato": { "rate": 5.4, "depth": 0.1, "delay": 0.35 }
+}

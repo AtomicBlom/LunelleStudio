@@ -1,0 +1,9 @@
+{
+  "format": "lunelle-project/1",
+  "name": "Showcase",
+  "cues": [
+    { "name": "intensity", "initial": 0.4 },
+    { "name": "mood", "options": ["Calm", "Bright", "Dark"], "initial": "Calm" }
+  ],
+  "macros": { "bright": 0, "drive": 1, "sweep": 2 }
+}

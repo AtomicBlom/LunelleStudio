@@ -1,0 +1,14 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "breaks-snare",
+  "operators": [
+    { "name": "sine1", "kind": "sine", "fixed": 210, "envelope": "decay 0.22" },
+    { "name": "noise1", "kind": "noise", "envelope": "decay 0.05", "level": 1.2 },
+    { "name": "noise2", "kind": "noise", "envelope": "decay 0.32", "level": 0.8 }
+  ],
+  "out": [{ "op": "sine1" }, { "op": "noise1" }, { "op": "noise2" }],
+  "filter": { "kind": "lowPass", "cutoff": 9000 },
+  "drive": 0.35,
+  "sends": { "space": 0.12 },
+  "pitchDrop": { "semitones": 14, "seconds": 0.07 }
+}

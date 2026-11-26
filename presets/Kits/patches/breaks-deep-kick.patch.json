@@ -1,0 +1,13 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "breaks-deep-kick",
+  "operators": [
+    { "name": "sine1", "kind": "sine", "fixed": 39, "envelope": "decay 0.45" },
+    { "name": "noise1", "kind": "noise", "envelope": "decay 0.025", "level": 7 }
+  ],
+  "out": [{ "op": "sine1" }, { "op": "noise1" }],
+  "filter": { "kind": "lowPass", "cutoff": 5000 },
+  "drive": 0.4,
+  "sends": { "key": 1 },
+  "pitchDrop": { "semitones": 48, "seconds": 0.1 }
+}

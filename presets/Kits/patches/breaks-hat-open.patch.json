@@ -1,0 +1,24 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "breaks-hat-open",
+  "operators": [
+    { "name": "pulse1", "kind": "pulse", "fixed": 205.3, "envelope": "decay 0.4", "level": 0.25 },
+    { "name": "pulse2", "kind": "pulse", "fixed": 304.4, "envelope": "decay 0.4", "level": 0.25 },
+    { "name": "pulse3", "kind": "pulse", "fixed": 369.6, "envelope": "decay 0.4", "level": 0.25 },
+    { "name": "pulse4", "kind": "pulse", "fixed": 522.7, "envelope": "decay 0.4", "level": 0.25 },
+    { "name": "pulse5", "kind": "pulse", "fixed": 540, "envelope": "decay 0.4", "level": 0.25 },
+    { "name": "pulse6", "kind": "pulse", "fixed": 800, "envelope": "decay 0.4", "level": 0.25 },
+    { "name": "noise1", "kind": "noise", "envelope": "decay 0.32000002", "level": 0.3 }
+  ],
+  "out": [
+    { "op": "pulse1" },
+    { "op": "pulse2" },
+    { "op": "pulse3" },
+    { "op": "pulse4" },
+    { "op": "pulse5" },
+    { "op": "pulse6" },
+    { "op": "noise1" }
+  ],
+  "filter": { "kind": "bandPass", "cutoff": 6500, "q": 0.8 },
+  "gain": -5
+}

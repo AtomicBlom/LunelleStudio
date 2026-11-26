@@ -2,7 +2,8 @@
 <!--
     The library: the catalog's songs, patches and kits as lists under their kinds, each row its kind's icon and its name,
     filtered by the words typed, the one chosen lit. A click opens a row; a list reached with Tab takes the arrows and Enter,
-    while a click gives the keys back to the workbench (WorkbenchFocus). A new song or patch is made from its kind's +. Over the view it folds away once something is chosen; Pin keeps it open as a column of its own.
+    while a click gives the keys back to the workbench (WorkbenchFocus). A new song or patch is made from its kind's +. Under them, for a project of
+    files alone, the presets: a click plays one on the keys, its add copies it into the project (open, once it has it). Over the view it folds away once something is chosen; Pin keeps it open as a column of its own.
 -->
 <ContentControl xmlns="https://github.com/AtomicBlom/Vysara/ui"
                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -101,6 +102,46 @@
                             </DataTemplate>
                         </ListView.ItemTemplate>
                     </ListView>
+                    <StackPanel Visibility="{x:Bind ViewModel.HasPresets, Mode=OneWay}">
+                        <Grid Margin="6,16,4,4">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Path Data="M10,2 L12.4,7.2 L18,7.8 L13.8,11.6 L15,17.2 L10,14.3 L5,17.2 L6.2,11.6 L2,7.8 L7.6,7.2 Z" Width="12" Height="12" Stretch="Uniform" Stroke="{x:Static views:Theme.Faint}" StrokeThickness="1.4"
+                                  StrokeLineJoin="Round" VerticalAlignment="Center" />
+                            <TextBlock Grid.Column="1" Text="PRESETS" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Margin="6,0,0,0" VerticalAlignment="Center" />
+                        </Grid>
+                        <TextBlock Text="Click one to play it on the keys; add copies it into this project." FontSize="11" Foreground="{x:Static views:Theme.Faint}"
+                                   TextWrapping="Wrap" Margin="8,0,6,4" />
+                        <TextBlock Text="{x:Bind ViewModel.PresetAbout, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Dim}"
+                                   TextWrapping="Wrap" Margin="8,0,6,6" />
+                        <ListView x:Name="PresetList" ItemsSource="{x:Bind ViewModel.Presets, Mode=OneWay}" IsItemClickEnabled="True">
+                            <ListView.ItemTemplate>
+                                <DataTemplate x:DataType="wb:PresetViewModel">
+                                    <Grid Tag="{x:Bind Self}" Visibility="{x:Bind IsVisible, Mode=OneWay}">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Path Visibility="{x:Bind IsPatch}" Data="M6.7,5 A2.2,2.2 0 1 1 2.3,5 A2.2,2.2 0 1 1 6.7,5 Z M6.7,15 A2.2,2.2 0 1 1 2.3,15 A2.2,2.2 0 1 1 6.7,15 Z M17.7,10 A2.2,2.2 0 1 1 13.3,10 A2.2,2.2 0 1 1 17.7,10 Z M6.7,5.6 L13.3,9.2 M6.7,14.4 L13.3,10.8" Width="13" Height="13" Stretch="Uniform" Stroke="{x:Static views:Theme.Dim}" StrokeThickness="1.4"
+                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" VerticalAlignment="Center" />
+                                        <Path Visibility="{x:Bind IsKit}" Data="M2.5,2.5 L9,2.5 L9,9 L2.5,9 Z M11,2.5 L17.5,2.5 L17.5,9 L11,9 Z M2.5,11 L9,11 L9,17.5 L2.5,17.5 Z M11,11 L17.5,11 L17.5,17.5 L11,17.5 Z" Width="13" Height="13" Stretch="Uniform" Stroke="{x:Static views:Theme.Dim}" StrokeThickness="1.4"
+                                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" StrokeLineJoin="Round" VerticalAlignment="Center" />
+                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="8,0,6,0" VerticalAlignment="Center">
+                                            <TextBlock Text="{x:Bind Name}" FontSize="13" VerticalAlignment="Center" />
+                                            <TextBlock Text="{x:Bind Category}" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Margin="6,1,0,0" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                        <Button Grid.Column="2" Command="{x:Bind AddCommand}" Padding="7,1,7,2" VerticalAlignment="Center"
+                                                ToolTipService.ToolTip="{x:Bind AddTip, Mode=OneWay}">
+                                            <TextBlock Text="{x:Bind AddText, Mode=OneWay}" FontSize="11" />
+                                        </Button>
+                                    </Grid>
+                                </DataTemplate>
+                            </ListView.ItemTemplate>
+                        </ListView>
+                    </StackPanel>
                 </StackPanel>
             </ScrollViewer>
         </Grid>

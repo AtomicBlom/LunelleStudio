@@ -1,0 +1,41 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "supersaw-air",
+  "about": "The supersaw with its body taken out from below: thin and airy, for a breakdown. Sweep raises the high-pass five octaves, from 150 Hz to nearly 5 kHz, which is a build thinning to nothing before the drop",
+  "operators": [
+    { "name": "saw1", "kind": "saw", "detune": -23, "envelope": "adsr 0.4 0.4 0.85 0.6", "level": 0.22 },
+    { "name": "saw2", "kind": "saw", "detune": -15, "phase": 0.137, "envelope": "adsr 0.4 0.4 0.85 0.6", "level": 0.22 },
+    { "name": "saw3", "kind": "saw", "detune": -7, "phase": 0.274, "envelope": "adsr 0.4 0.4 0.85 0.6", "level": 0.22 },
+    { "name": "saw4", "kind": "saw", "phase": 0.41099998, "envelope": "adsr 0.4 0.4 0.85 0.6", "level": 0.3 },
+    { "name": "saw5", "kind": "saw", "detune": 6, "phase": 0.548, "envelope": "adsr 0.4 0.4 0.85 0.6", "level": 0.22 },
+    {
+      "name": "saw6",
+      "kind": "saw",
+      "detune": 14,
+      "phase": 0.68499994,
+      "envelope": "adsr 0.4 0.4 0.85 0.6",
+      "level": 0.22
+    },
+    {
+      "name": "saw7",
+      "kind": "saw",
+      "detune": 22,
+      "phase": 0.82199997,
+      "envelope": "adsr 0.4 0.4 0.85 0.6",
+      "level": 0.22
+    }
+  ],
+  "out": [
+    { "op": "saw1", "pan": -0.9 },
+    { "op": "saw2", "pan": 0.6 },
+    { "op": "saw3", "pan": -0.35 },
+    { "op": "saw4" },
+    { "op": "saw5", "pan": 0.35 },
+    { "op": "saw6", "pan": -0.6 },
+    { "op": "saw7", "pan": 0.9 }
+  ],
+  "filter": { "kind": "highPass", "cutoff": 150, "q": 1.1 },
+  "gain": -7,
+  "sends": { "space": 0.45 },
+  "macros": [{ "macro": 2, "target": "filterOctaves", "from": 0, "to": 5 }]
+}

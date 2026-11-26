@@ -1,0 +1,49 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "supersaw-stab",
+  "about": "The supersaw struck: a chord stab, bright as it lands and shut a moment after",
+  "operators": [
+    { "name": "saw1", "kind": "saw", "detune": -23, "envelope": "adsr 0.003 0.3 0 0.12", "level": 0.22 },
+    { "name": "saw2", "kind": "saw", "detune": -15, "phase": 0.137, "envelope": "adsr 0.003 0.3 0 0.12", "level": 0.22 },
+    { "name": "saw3", "kind": "saw", "detune": -7, "phase": 0.274, "envelope": "adsr 0.003 0.3 0 0.12", "level": 0.22 },
+    { "name": "saw4", "kind": "saw", "phase": 0.41099998, "envelope": "adsr 0.003 0.3 0 0.12", "level": 0.3 },
+    { "name": "saw5", "kind": "saw", "detune": 6, "phase": 0.548, "envelope": "adsr 0.003 0.3 0 0.12", "level": 0.22 },
+    {
+      "name": "saw6",
+      "kind": "saw",
+      "detune": 14,
+      "phase": 0.68499994,
+      "envelope": "adsr 0.003 0.3 0 0.12",
+      "level": 0.22
+    },
+    {
+      "name": "saw7",
+      "kind": "saw",
+      "detune": 22,
+      "phase": 0.82199997,
+      "envelope": "adsr 0.003 0.3 0 0.12",
+      "level": 0.22
+    }
+  ],
+  "out": [
+    { "op": "saw1", "pan": -0.9 },
+    { "op": "saw2", "pan": 0.6 },
+    { "op": "saw3", "pan": -0.35 },
+    { "op": "saw4" },
+    { "op": "saw5", "pan": 0.35 },
+    { "op": "saw6", "pan": -0.6 },
+    { "op": "saw7", "pan": 0.9 }
+  ],
+  "filter": {
+    "kind": "lowPass",
+    "cutoff": 700,
+    "q": 1.1,
+    "keyTrack": 0.4,
+    "velocity": 0.3,
+    "envelopeOctaves": 3,
+    "envelope": "decay 0.2"
+  },
+  "gain": 1,
+  "sends": { "space": 0.3, "echo": 0.2 },
+  "macros": [{ "macro": 0, "target": "filterOctaves", "from": -1, "to": 1.5 }]
+}

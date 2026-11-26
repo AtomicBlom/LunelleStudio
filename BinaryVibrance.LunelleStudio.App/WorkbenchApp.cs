@@ -83,6 +83,8 @@ public sealed partial class WorkbenchApp(string projectPath, IWorkbenchExtension
 		{
 			CopyText = SetClipboardText,
 			Files = _files,
+			// Offered to a project of files alone (the browser's always is)
+			Presets = StudioPresets.Load(),
 		};
 		// The theme chosen last, in whatever project, before the first view is made; and each new choice kept
 		var settings = StudioSettings.Load(_files);

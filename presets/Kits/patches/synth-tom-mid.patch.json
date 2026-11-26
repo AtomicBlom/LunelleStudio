@@ -1,0 +1,7 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "synth-tom-mid",
+  "operators": [{ "name": "sine1", "kind": "sine", "fixed": 130, "envelope": "decay 0.3" }],
+  "out": [{ "op": "sine1" }],
+  "pitchDrop": { "semitones": 7, "seconds": 0.05 }
+}

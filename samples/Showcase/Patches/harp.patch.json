@@ -1,0 +1,10 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "harp",
+  "about": "A harp: a long string plucked near its middle, so it is round and a little hollow",
+  "operators": [{ "name": "string1", "kind": "string", "decaySeconds": 4.5, "damping": 0.25, "pick": 0.45, "keyDecay": 0.4 }],
+  "out": [{ "op": "string1" }],
+  "filter": { "kind": "lowPass", "cutoff": 5000, "keyTrack": 0.4, "velocity": 0.4 },
+  "gain": 5,
+  "sends": { "space": 0.35 }
+}

@@ -30,6 +30,7 @@ public static class FolderCatalog
 			MacroName = id => folder.MacroName(id) is { } name ? $"Macros.{PatchCode.Pascal(name)}" : null,
 			SongSource = name => folder.SongPath(name) is { } path ? new SongSource(Full(path), folder.Bindings) : null,
 			PatchFile = name => folder.PatchPath(name) is { } path ? Full(path) : null,
+			Folder = Path.GetFullPath(root),
 		};
 	}
 

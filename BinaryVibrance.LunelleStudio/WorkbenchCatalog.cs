@@ -39,4 +39,10 @@ public sealed record WorkbenchCatalog
 
 	/// <summary>The class the generator writes the patches' properties into, in full, whose own half holds a patch that is code.</summary>
 	public string? PatchesType { get; init; }
+
+	/// <summary>
+	/// The project's folder, in full, when it is music files alone (<see cref="FolderCatalog"/>), where a preset added from
+	/// <see cref="Workbench.Presets"/> is copied; null for a project with code, which takes no presets.
+	/// </summary>
+	public string? Folder { get; init; }
 }

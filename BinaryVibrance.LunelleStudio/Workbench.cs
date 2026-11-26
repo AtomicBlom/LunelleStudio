@@ -220,6 +220,7 @@ public sealed partial class Workbench : IDisposable
 		WorkbenchViewModel.ReplaceChoices(ViewModel.Songs, [.. catalog.Songs.Select(s => s.Name)], ViewModel.AddSong);
 		WorkbenchViewModel.ReplaceChoices(ViewModel.Patches, [.. catalog.Patches.Select(s => s.Name)], ViewModel.AddPatch);
 		WorkbenchViewModel.ReplaceChoices(ViewModel.Kits, [.. catalog.Kits.Select(s => s.Name)], ViewModel.AddKit);
+		ShowPresets();
 		ViewModel.FilterLibrary();
 		ViewModel.Cues.Clear();
 		foreach (var cue in catalog.Cues)
@@ -966,6 +967,7 @@ public sealed partial class Workbench : IDisposable
 		var chip = new SynthChip(new ChipOptions { Voices = 16 });
 		_audio.Play(chip, _bus);
 		_bench = chip;
+		ViewModel.ShowTrying(null);
 		return chip;
 	}
 

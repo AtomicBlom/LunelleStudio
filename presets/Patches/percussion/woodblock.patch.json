@@ -1,0 +1,11 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "woodblock",
+  "about": "A woodblock: a hard knock ringing a hollow block for a moment. Around notes 76 to 88",
+  "operators": [
+    { "name": "stick", "kind": "sine", "fixed": 1800, "envelope": "decay 0.002", "level": 0.1, "velocity": 0.5 },
+    { "name": "modes1", "kind": "modes", "modes": ["at 1 0.09", "at 2.5 0.04 0.4"], "drivenBy": ["stick"] }
+  ],
+  "out": [{ "op": "modes1" }],
+  "gain": 2
+}

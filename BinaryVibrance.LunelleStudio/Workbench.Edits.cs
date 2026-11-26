@@ -662,7 +662,7 @@ public sealed partial class Workbench
 				["out"] = new JsonArray(new JsonObject { ["op"] = "sine1" }),
 			};
 		Files.WriteText(path, BinaryVibrance.Lunelle.Music.SongFile.Write(file));
-		Awaiting(stem, song: false);
+		Awaiting(stem, Awaited.Patch);
 		return null;
 	}
 
@@ -778,17 +778,25 @@ public sealed partial class Workbench
 			["sections"] = new JsonArray(new JsonObject { ["name"] = "a", ["bars"] = 4, ["chords"] = "I | IV | V | I", ["parts"] = new JsonArray() }),
 		};
 		Files.WriteText(path, BinaryVibrance.Lunelle.Music.SongFile.Write(file));
-		Awaiting(stem, song: true);
+		Awaiting(stem, Awaited.Song);
 		return null;
 	}
 
-	// A song or patch just made, opened once the project has built again and its catalog lists it
-	private (string Name, bool Song)? _awaiting;
-
-	private void Awaiting(string name, bool song)
+	// What is waiting to be opened: a song, a patch or a kit
+	private enum Awaited
 	{
-		_awaiting = (name, song);
-		ViewModel.BuildText = $"Created {name}. It opens when the build finishes.";
+		Song,
+		Patch,
+		Kit,
+	}
+
+	// A song, patch or kit just made or added, opened once the project has built again and its catalog lists it
+	private (string Name, Awaited Kind)? _awaiting;
+
+	private void Awaiting(string name, Awaited kind, string? text = null)
+	{
+		_awaiting = (name, kind);
+		ViewModel.BuildText = text ?? $"Created {name}. It opens when the build finishes.";
 	}
 
 	// The catalog built again: what was just made, opened if it lists it now; a patch copied for a track, given to it first
@@ -796,12 +804,17 @@ public sealed partial class Workbench
 	{
 		if (_awaiting is not { } awaited)
 			return;
-		if (awaited.Song && Index(_catalog.Songs, awaited.Name) is >= 0 and var song)
+		if (awaited.Kind == Awaited.Song && Index(_catalog.Songs, awaited.Name) is >= 0 and var song)
 		{
 			_awaiting = null;
 			ChooseSong(song);
 		}
-		else if (!awaited.Song && Index(_catalog.Patches, awaited.Name) is >= 0 and var patch)
+		else if (awaited.Kind == Awaited.Kit && Index(_catalog.Kits, awaited.Name) is >= 0 and var kit)
+		{
+			_awaiting = null;
+			ChooseKit(kit);
+		}
+		else if (awaited.Kind == Awaited.Patch && Index(_catalog.Patches, awaited.Name) is >= 0 and var patch)
 		{
 			_awaiting = null;
 			if (_repoint is { } repoint && repoint.Patch == awaited.Name)

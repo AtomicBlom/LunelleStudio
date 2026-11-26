@@ -1,0 +1,27 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "tubular-bell",
+  "about": "A tubular bell: two pairs a little out of tune with each other, so it beats as a bell does",
+  "operators": [
+    { "name": "clang", "kind": "sine", "ratio": 3.5, "envelope": "decay 2.5", "velocity": 0.5 },
+    {
+      "name": "bell",
+      "kind": "sine",
+      "envelope": "decay 4",
+      "level": 0.5,
+      "modulatedBy": [{ "op": "clang", "index": 2.2 }]
+    },
+    { "name": "clangTwo", "kind": "sine", "ratio": 3.5, "detune": 7, "envelope": "decay 1.2" },
+    {
+      "name": "bellTwo",
+      "kind": "sine",
+      "detune": -5,
+      "envelope": "decay 3",
+      "level": 0.35,
+      "modulatedBy": [{ "op": "clangTwo", "index": 1.2 }]
+    }
+  ],
+  "out": [{ "op": "bell", "pan": -0.3 }, { "op": "bellTwo", "pan": 0.3 }],
+  "gain": -6,
+  "sends": { "space": 0.45 }
+}

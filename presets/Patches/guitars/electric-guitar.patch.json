@@ -1,0 +1,13 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "electric-guitar",
+  "about": "An electric guitar as its pickup hears it, after a Fender's raw pickup signal: picked near the bridge, a seventh of the way along, so the seventh harmonic and its multiples are missing; ringing long, the low strings longest (a 60 dB fall in about 30 s on E2, 12 s on E4), its highs dying first. A magnetic pickup hears the string's speed, not where it is, so its harmonics rise 6 dB an octave up to the pickup's own resonance near 4 kHz and fall away past it: a band pass there, which leaves the fundamental under the third and fourth harmonics as the guitar's own is. Meant for a group with a Distortion",
+  "operators": [{ "name": "string1", "kind": "string", "decaySeconds": 14, "damping": 0.15, "pick": 0.14, "keyDecay": 0.38 }],
+  "out": [{ "op": "string1" }],
+  "filter": { "kind": "bandPass", "cutoff": 2400, "q": 0.8, "keyTrack": 1, "velocity": 0.25 },
+  "gain": 2,
+  "macros": [
+    { "macro": 1, "target": "drive", "from": 0, "to": 0.6 },
+    { "macro": 0, "target": "filterCutoff", "from": 0.6, "to": 1.6 }
+  ]
+}

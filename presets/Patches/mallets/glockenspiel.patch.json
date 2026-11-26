@@ -1,0 +1,18 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "glockenspiel",
+  "about": "A glockenspiel: a steel bar's own modes (no tuning of the upper ones) under a hard mallet. For the top octaves",
+  "operators": [
+    { "name": "mallet", "kind": "sine", "fixed": 2500, "envelope": "decay 0.002", "level": 0.1, "velocity": 0.6 },
+    {
+      "name": "bar",
+      "kind": "modes",
+      "modes": ["at 1 2.2", "at 2.76 1.3 0.5", "at 5.4 0.7 0.3", "at 8.93 0.35 0.15"],
+      "drivenBy": ["mallet"],
+      "keyDecay": 0.3
+    }
+  ],
+  "out": [{ "op": "bar" }],
+  "gain": -2,
+  "sends": { "space": 0.4 }
+}

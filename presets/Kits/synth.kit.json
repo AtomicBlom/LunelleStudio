@@ -1,0 +1,15 @@
+{
+  "name": "synth",
+  "about": "A light kit made of patches, so nothing waits for samples: a sine kick dropping onto 50 Hz, a tone under noise for the snare, noise hats, toms and cymbals",
+  "pieces": [
+    { "piece": "kick", "patch": "synth-kick" },
+    { "piece": "snare", "patch": "synth-snare" },
+    { "piece": "hat-closed", "patch": "synth-hat-closed", "choke": 1 },
+    { "piece": "hat-open", "patch": "synth-hat-open", "choke": 1 },
+    { "piece": "tom-high", "patch": "synth-tom-high" },
+    { "piece": "tom-mid", "patch": "synth-tom-mid" },
+    { "piece": "tom-low", "patch": "synth-tom-low" },
+    { "piece": "crash", "patch": "synth-crash" },
+    { "piece": "ride", "patch": "synth-ride" }
+  ]
+}

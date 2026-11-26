@@ -1,0 +1,8 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "shaker",
+  "about": "A shaker: a breath of high noise that swells in for a moment before it goes. Any note",
+  "operators": [{ "name": "noise1", "kind": "noise", "envelope": "adsr 0.015 0.06 0 0.04", "level": 0.5, "velocity": 0.5 }],
+  "out": [{ "op": "noise1" }],
+  "filter": { "kind": "bandPass", "cutoff": 6500, "q": 1 }
+}

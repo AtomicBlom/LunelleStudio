@@ -1,0 +1,27 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "acoustic-guitar",
+  "about": "A steel-strung dreadnought, after a Martin HD-28: a string picked a sixth of the way along, ringing about five seconds wherever it is on the neck, its highs dying first; heard through the box it is strung on. The pick's knock rings the air in the box at 96.5 Hz under every note, 15 to 19 dB down (a knock, not the string, drives it, or a note on it booms); the box hardly sounds below that, so a low string's fundamental sits under its second harmonic; the top's first resonances are near 205 and 395 Hz, and a broad presence at 3 to 4.5 kHz keeps a top string's sparkle. Bright turns that presence up",
+  "operators": [
+    { "name": "plucked", "kind": "string", "decaySeconds": 5.5, "damping": 0.4, "pick": 0.165, "keyDecay": 0.1 },
+    { "name": "knock", "kind": "sine", "fixed": 300, "envelope": "decay 0.004", "velocity": 1 },
+    { "name": "air", "kind": "modes", "modes": ["fixed 96.5 0.8"], "drivenBy": ["knock"], "keyLevel": -8 },
+    { "name": "box", "kind": "modes", "modes": ["fixed 205 0.035 0.7", "fixed 395 0.025 0.4"], "drivenBy": ["plucked"] },
+    {
+      "name": "presence",
+      "kind": "modes",
+      "modes": ["fixed 3200 0.006", "fixed 4600 0.004 0.9"],
+      "drivenBy": ["plucked"]
+    }
+  ],
+  "out": [
+    { "op": "plucked", "level": 0.8 },
+    { "op": "air", "level": 0.009 },
+    { "op": "box", "level": 0.015 },
+    { "op": "presence", "level": 0.045 }
+  ],
+  "filter": { "kind": "highPass", "cutoff": 120, "q": 1 },
+  "gain": -2,
+  "sends": { "space": 0.2 },
+  "macros": [{ "macro": 0, "target": "operatorLevel", "from": 0.5, "to": 1.6, "op": "presence" }]
+}

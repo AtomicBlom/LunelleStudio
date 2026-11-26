@@ -1,0 +1,13 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "upright-bass",
+  "about": "A double bass, plucked: a dull string with the note's own weight under it, in a big box",
+  "operators": [
+    { "name": "plucked", "kind": "string", "decaySeconds": 1.4, "damping": 0.55, "pick": 0.25 },
+    { "name": "box", "kind": "modes", "modes": ["fixed 75 0.04", "fixed 140 0.035 0.6"], "drivenBy": ["plucked"] },
+    { "name": "sine1", "kind": "sine", "envelope": "adsr 0.004 0.5 0.25 0.12", "level": 0.4 }
+  ],
+  "out": [{ "op": "plucked", "level": 0.8 }, { "op": "box", "level": 0.01 }, { "op": "sine1" }],
+  "filter": { "kind": "lowPass", "cutoff": 1800, "keyTrack": 0.3 },
+  "mono": {}
+}

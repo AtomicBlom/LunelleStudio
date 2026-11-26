@@ -1,0 +1,11 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "cowbell",
+  "about": "A cowbell: two square tones that belong to no chord, through a narrow band. Any note",
+  "operators": [
+    { "name": "pulse1", "kind": "pulse", "fixed": 587, "envelope": "decay 0.25", "level": 0.5 },
+    { "name": "pulse2", "kind": "pulse", "fixed": 845, "envelope": "decay 0.25", "level": 0.5 }
+  ],
+  "out": [{ "op": "pulse1" }, { "op": "pulse2" }],
+  "filter": { "kind": "bandPass", "cutoff": 1700, "q": 1.2 }
+}

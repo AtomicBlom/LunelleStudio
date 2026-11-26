@@ -1,0 +1,15 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "square-lead",
+  "about": "A lead: a narrow pulse with a sine under it, sliding from note to note, into the echo",
+  "operators": [
+    { "name": "pulse1", "kind": "pulse", "envelope": "adsr 0.01 0.2 0.8 0.12", "level": 0.5, "pulseWidth": 0.35 },
+    { "name": "sine1", "kind": "sine", "envelope": "adsr 0.01 0.2 0.8 0.12", "level": 0.3 }
+  ],
+  "out": [{ "op": "pulse1" }, { "op": "sine1" }],
+  "filter": { "kind": "lowPass", "cutoff": 3200, "keyTrack": 0.5 },
+  "gain": -4,
+  "sends": { "space": 0.15, "echo": 0.25 },
+  "vibrato": { "rate": 5.5, "depth": 0.15, "delay": 0.3 },
+  "mono": { "glide": 0.05 }
+}

@@ -1,0 +1,140 @@
+{
+  "format": "lunelle-song/2",
+  "name": "undertow",
+  "about": "Drum and bass at 172 in E Phrygian, where the note a half step over home (F) does the menacing. A handpan and a pad open it; past 0.3 the beat drops in, the reese's riff sliding between its notes (a ~ runs a note into the next, and the mono reese glides), its filter opening with the intensity. The beat is the two-step three times in four and a chopped one otherwise, picked at random with weights. Past 0.75 it builds (breach) and drops (riptide). The plucked run comes in past 0.55 unless the mood is Calm, which keeps the handpan instead.",
+  "tempo": 172,
+  "scale": "E phrygian",
+  "voices": 40,
+  "effects": {
+    "space": [{ "fx": "reverb", "decaySeconds": 2.4 }],
+    "echo": [{ "fx": "delay", "seconds": 0.262, "feedback": 0.35, "pingPong": true }]
+  },
+  "groups": [
+    { "name": "drum bus", "effects": [{ "fx": "compressor", "thresholdDb": -14, "ratio": 3 }] },
+    { "name": "bass bus", "effects": [{ "fx": "duck", "thresholdDb": -30, "ratio": 8, "attackSeconds": 0.002, "releaseSeconds": 0.1 }] },
+    { "name": "wide", "effects": [{ "fx": "chorus", "mix": 0.4 }] }
+  ],
+  "variations": [{ "name": "break", "options": 2, "pick": "random", "weights": [3, 1] }],
+  "tracks": [
+    { "name": "drums", "kit": "breaks-deep", "group": "drum bus", "level": 3, "humanise": { "ms": 2, "velocity": 0.05 } },
+    { "name": "sub", "patch": "sub-bass", "group": "bass bus", "octave": 1, "level": -4 },
+    {
+      "name": "reese",
+      "patch": "reese",
+      "group": "bass bus",
+      "octave": 2,
+      "level": -6,
+      "macros": [{ "macro": "bright", "follow": "intensity", "from": 0.2, "to": 1 }]
+    },
+    { "name": "handpan", "patch": "handpan", "octave": 4, "level": -4, "pan": -0.2 },
+    { "name": "pad", "patch": "warm-pad", "group": "wide", "level": -6 },
+    { "name": "stab", "patch": "supersaw-stab", "level": 0 },
+    { "name": "air", "patch": "supersaw-air", "level": -4 },
+    { "name": "riser", "patch": "riser", "level": 3 },
+    {
+      "name": "pluck",
+      "patch": "pluck-lead",
+      "octave": 5,
+      "level": -1,
+      "pan": 0.3,
+      "macros": [{ "macro": "bright", "follow": "intensity", "from": 0.3, "to": 0.9 }]
+    }
+  ],
+  "sections": [
+    {
+      "name": "depths",
+      "about": "The handpan's motif over the pad, two bars a chord; hats past 0.2",
+      "bars": 8,
+      "chords": "i | i | II | II | VI | VI | II | II",
+      "parts": [
+        { "track": "pad", "strum": "quarters", "notes": "D...", "voicing": "close" },
+        { "track": "handpan", "line": "quarters", "notes": "1 . 3 5 | 8 . 7 . | 2 . 1 . | 7, . . .", "onPhrase": true },
+        { "track": "drums", "name": "hats", "beat": "eighths", "rows": { "hat-closed": "oxox oxox" }, "when": "intensity > 0.2" }
+      ],
+      "exits": [{ "when": "intensity > 0.3", "then": "current" }, { "then": "depths" }]
+    },
+    {
+      "name": "current",
+      "about": "The beat and the reese's two-bar riff; the plucked run past 0.55 unless Calm, the handpan when Calm",
+      "bars": 8,
+      "chords": "i | i | II | II | VI | VI | vii | vii",
+      "parts": [
+        {
+          "track": "drums",
+          "name": "two-step",
+          "beat": "sixteenths",
+          "rows": { "kick": "x... .... ..x. ....", "snare": ".... x..o .o.. x...", "hat-closed": "..x. ..x. ..x. ..x." },
+          "when": "break is 1"
+        },
+        {
+          "track": "drums",
+          "name": "chopped",
+          "beat": "sixteenths",
+          "rows": { "kick": "x.x. .... ..x. .x..", "snare": ".... x.ox .o.x x.o.", "hat-closed": "x.x. x.x. x.x. x.x." },
+          "when": "break is 2"
+        },
+        { "track": "sub", "line": "quarters", "notes": "1 - - -", "overChords": true },
+        { "track": "reese", "name": "riff", "line": "eighths", "notes": "1 - - 1 2~ 1 - - | 1 - 3~ 2 1 - 7, -" },
+        { "track": "pad", "strum": "quarters", "notes": "D...", "voicing": "close" },
+        {
+          "track": "pluck",
+          "line": "sixteenths",
+          "notes": "1 5 8 5 3 5 8 5 1 5 8 5 3 5 9 5",
+          "overChords": true,
+          "when": "intensity > 0.55 and not mood is Calm"
+        },
+        { "track": "handpan", "line": "quarters", "notes": "1 . 3 5 | 8 . 7 . | 2 . 1 . | 7, . . .", "when": "mood is Calm", "onPhrase": true }
+      ],
+      "exits": [{ "when": "intensity > 0.75", "then": "breach" }, { "when": "intensity < 0.2", "then": "depths" }, { "then": "current" }]
+    },
+    {
+      "name": "breach",
+      "about": "The build: the riser and the airy supersaw swept up over a roll that climbs to the drop",
+      "bars": 4,
+      "chords": "VI | VI | vii | vii",
+      "parts": [
+        {
+          "track": "drums",
+          "name": "roll",
+          "beat": "sixteenths",
+          "rows": {
+            "snare": "x... x... x... x... | x.x. x.x. x.x. x.x. | xxxx xxxx xxxx xxxx | 5566 7788 99XX XXXX",
+            "kick": "x... .... x... .... | x... .... x... .... | x... x... x... x... | x.x. x.x. x.x. ...."
+          }
+        },
+        { "track": "air", "strum": "quarters", "notes": "D...", "voicing": "triad" },
+        { "track": "riser", "line": "quarters", "notes": "1 - - - | - - - - | - - - - | - - - ." },
+        { "track": "sub", "line": "quarters", "notes": "1 - - -", "overChords": true }
+      ],
+      "sweeps": [
+        { "track": "air", "macro": "sweep", "from": 0, "to": 1 },
+        { "track": "riser", "macro": "sweep", "from": 0, "to": 1 }
+      ],
+      "exits": [{ "then": "riptide" }]
+    },
+    {
+      "name": "riptide",
+      "about": "The drop: everything, stabs on the off-beats, twice round and on while the intensity holds",
+      "bars": 8,
+      "chords": "i | i | II | II | VI | VI | vii | vii",
+      "parts": [
+        {
+          "track": "drums",
+          "beat": "sixteenths",
+          "rows": { "kick": "x... .... ..x. ....", "snare": ".... x..o .o.. x...", "hat-closed": "x.x. x.x. x.x. x.xx" }
+        },
+        {
+          "track": "drums",
+          "name": "crash",
+          "beat": "eighths",
+          "rows": { "crash": "x... .... | .... .... | .... .... | .... .... | x... .... | .... .... | .... .... | .... ...." }
+        },
+        { "track": "sub", "line": "quarters", "notes": "1 - - -", "overChords": true },
+        { "track": "reese", "name": "riff", "line": "eighths", "notes": "1 - - 1 2~ 1 - - | 1 - 3~ 2 1 - 7, -" },
+        { "track": "stab", "strum": "sixteenths", "notes": "..D. ..D. ..D. ..DD", "voicing": "triad" },
+        { "track": "pluck", "line": "sixteenths", "notes": "1 5 8 5 3 5 8 5 1 5 8 5 3 5 9 5", "overChords": true }
+      ],
+      "exits": [{ "when": "pass < 2", "then": "riptide" }, { "when": "intensity > 0.75", "then": "riptide" }, { "then": "current" }]
+    }
+  ]
+}

@@ -50,6 +50,11 @@
 		<DefaultItemExcludes>$(DefaultItemExcludes);bin/**;obj/**</DefaultItemExcludes>
 	</PropertyGroup>
 
+	<!-- The presets, for any project of files alone to take (StudioPresets): embedded, as the browser has no folder beside the app -->
+	<ItemGroup>
+		<EmbeddedResource Include="..\presets\**\*" Exclude="..\presets\README.md" LogicalName="presets/%(RecursiveDir)%(Filename)%(Extension)" />
+	</ItemGroup>
+
 	<PropertyGroup Condition="'$(RuntimeIdentifier)' != 'browser-wasm'">
 		<!-- The generator beside the app, for a project it makes ("new") to name as its analyzer (build/Sources.targets) -->
 		<CopyMusicGenerator>true</CopyMusicGenerator>
@@ -79,10 +84,9 @@
 		<ProjectReference Include="..\BinaryVibrance.LunelleStudio\BinaryVibrance.LunelleStudio.csproj" />
 		<SirrowReference Include="BinaryVibrance.Sirrow.Web" Path="BinaryVibrance.Sirrow.Web\BinaryVibrance.Sirrow.Web.csproj" />
 		<Compile Remove="WorkbenchApp.Desktop.cs" />
-		<EmbeddedResource Include="..\samples\HelloSynth\lunelle-project.json" LogicalName="template/%(Filename)%(Extension)" />
-		<EmbeddedResource Include="..\samples\HelloSynth\Songs\*.song.json" LogicalName="template/Songs/%(Filename)%(Extension)" />
-		<EmbeddedResource Include="..\samples\HelloSynth\Patches\*.patch.json" LogicalName="template/Patches/%(Filename)%(Extension)" />
-		<EmbeddedResource Include="..\samples\HelloSynth\Kits\*.kit.json" LogicalName="template/Kits/%(Filename)%(Extension)" />
+		<!-- The showcase's music, the first visit's project; a sampled kit's takes are the presets' own (BrowserProject), so they aren't embedded twice -->
+		<EmbeddedResource Include="..\samples\Showcase\**\*" Exclude="..\samples\Showcase\**\*.ogg;..\samples\Showcase\README.md"
+		                  LogicalName="template/%(RecursiveDir)%(Filename)%(Extension)" />
 		<AssemblyAttribute Include="System.Runtime.Versioning.SupportedOSPlatformAttribute">
 			<_Parameter1>browser</_Parameter1>
 		</AssemblyAttribute>

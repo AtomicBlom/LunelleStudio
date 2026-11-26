@@ -12,6 +12,8 @@ split out of the [Kaldra engine](https://github.com/AtomicBlom/Kaldra), once cal
 | `BinaryVibrance.LunelleStudio.App` | `lunelle-studio`, the app: a window on the engine, the music through Sirrow's SDL 3 output; or, with `-r browser-wasm`, the same in the browser ("In the browser"). |
 | `BinaryVibrance.LunelleStudio.Tests` | The tests. |
 | `samples/HelloSynth` | The project `lunelle-studio new` starts from. |
+| `samples/Showcase` | Five songs of music files alone, arranged by their cues as they play: the browser's first project, and a tour of what the files can say (its `README.md`). |
+| `presets/` | The sounds the app ships for a project of files alone to take: 37 patches and five kits, two of them sampled (its `README.md`). |
 
 ```
 dotnet run --project BinaryVibrance.LunelleStudio.App -- <music project.csproj | folder>
@@ -22,6 +24,12 @@ dotnet run --project BinaryVibrance.LunelleStudio.App -- <folder> --data
 A folder with no `.csproj`, or any folder with `--data`, is music files alone: its songs, patches, kits and a
 `lunelle-project.json` (its cues and macros) read with no C#, nothing compiled and no extension (Lunelle's `MusicFolder`); `new --data` starts one. Whatever the project, the workbench reads and writes its
 songs, patches and state through `Workbench.Files` (`IMusicFiles`): the disk, unless a host keeps them elsewhere.
+
+**Presets.** A project of files alone is offered the app's presets (`presets/`, embedded, as `Workbench.Presets`, a
+`PresetLibrary`), listed in the library under its own songs, patches and kits and filtered with them, by name or kind
+("bass", "sampled"). A click plays one on the keys as it is, and **add** copies it into the project with what it needs:
+a kit's samples and licence, or its pieces' patches, and the names of the macros it turns. Then it opens. A project with
+code is offered none.
 
 ## In the browser
 
@@ -35,7 +43,8 @@ dotnet run --file <Kaldra's checkout>/tools/kaldra-serve.cs -- <dir> --no-isolat
 
 - **Music files alone.** There is no Roslyn in the browser, so a project is always music files alone, with no extension.
   The browser keeps one project in its storage (IndexedDB, `Web/BrowserFiles.cs`). The first visit starts it with
-  `samples/HelloSynth`'s music. **export** on the transport saves the project as a `.lunelle` file (`MusicArchive`: a zip
+  `samples/Showcase` (its sampled kits' takes copied from the presets', so the app holds them once). A browser that
+  kept a project from an earlier visit keeps it; clearing the site's data starts again from the showcase. **export** on the transport saves the project as a `.lunelle` file (`MusicArchive`: a zip
   of its folder, without `.lunelle-studio/`), and **import** replaces it with one. A zip of a folder holding a project
   works as well.
 - **One thread.** The runtime is single-threaded: the workbench never waits on a thread, and the music mixes on the

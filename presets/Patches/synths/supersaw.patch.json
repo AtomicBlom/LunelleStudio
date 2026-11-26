@@ -1,0 +1,65 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "supersaw",
+  "about": "A supersaw, held: the chords of a drop. Its low-pass opens four octaves with Bright, from under 400 Hz to past 6 kHz, and a section can open it further or shut it with Sweep",
+  "operators": [
+    { "name": "saw1", "kind": "saw", "detune": -23, "envelope": "adsr 0.008 0.25 0.8 0.22", "level": 0.22 },
+    {
+      "name": "saw2",
+      "kind": "saw",
+      "detune": -15,
+      "phase": 0.137,
+      "envelope": "adsr 0.008 0.25 0.8 0.22",
+      "level": 0.22
+    },
+    {
+      "name": "saw3",
+      "kind": "saw",
+      "detune": -7,
+      "phase": 0.274,
+      "envelope": "adsr 0.008 0.25 0.8 0.22",
+      "level": 0.22
+    },
+    { "name": "saw4", "kind": "saw", "phase": 0.41099998, "envelope": "adsr 0.008 0.25 0.8 0.22", "level": 0.3 },
+    {
+      "name": "saw5",
+      "kind": "saw",
+      "detune": 6,
+      "phase": 0.548,
+      "envelope": "adsr 0.008 0.25 0.8 0.22",
+      "level": 0.22
+    },
+    {
+      "name": "saw6",
+      "kind": "saw",
+      "detune": 14,
+      "phase": 0.68499994,
+      "envelope": "adsr 0.008 0.25 0.8 0.22",
+      "level": 0.22
+    },
+    {
+      "name": "saw7",
+      "kind": "saw",
+      "detune": 22,
+      "phase": 0.82199997,
+      "envelope": "adsr 0.008 0.25 0.8 0.22",
+      "level": 0.22
+    }
+  ],
+  "out": [
+    { "op": "saw1", "pan": -0.9 },
+    { "op": "saw2", "pan": 0.6 },
+    { "op": "saw3", "pan": -0.35 },
+    { "op": "saw4" },
+    { "op": "saw5", "pan": 0.35 },
+    { "op": "saw6", "pan": -0.6 },
+    { "op": "saw7", "pan": 0.9 }
+  ],
+  "filter": { "kind": "lowPass", "cutoff": 1000, "q": 0.9, "keyTrack": 0.4 },
+  "gain": -5,
+  "sends": { "space": 0.25 },
+  "macros": [
+    { "macro": 0, "target": "filterOctaves", "from": -1.5, "to": 2.7 },
+    { "macro": 2, "target": "filterOctaves", "from": 0, "to": -3 }
+  ]
+}

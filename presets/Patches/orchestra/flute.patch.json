@@ -1,0 +1,16 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "flute",
+  "about": "A flute: a breath and a little noise blowing the tube, with the breath's noise heard too. The breath is full (1 at a sustain of 0.8) so the tube's low notes speak (Kaldra's docs/synth.md, \"Patches\")",
+  "operators": [
+    { "name": "breath", "kind": "level", "envelope": "adsr 0.04 0.2 0.8 0.12" },
+    { "name": "noise", "kind": "noise", "envelope": "adsr 0.04 0.2 0.5 0.12", "level": 0.1 },
+    { "name": "tube1", "kind": "tube", "drivenBy": ["breath", "noise"] }
+  ],
+  "out": [{ "op": "tube1" }, { "op": "noise", "level": 0.05 }],
+  "filter": { "kind": "lowPass", "cutoff": 5000, "keyTrack": 0.5 },
+  "sends": { "space": 0.3 },
+  "vibrato": { "rate": 5.2, "depth": 0.12, "delay": 0.25 },
+  "mono": { "glide": 0.04 },
+  "macros": [{ "macro": 0, "target": "filterCutoff", "from": 0.6, "to": 1.6 }]
+}

@@ -1,0 +1,12 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "sub-bass",
+  "about": "A sub: a sine with a trace of its octave so it is heard on small speakers, and nothing else",
+  "operators": [
+    { "name": "sine1", "kind": "sine", "envelope": "adsr 0.005 0.2 0.9 0.07", "level": 0.9 },
+    { "name": "sine2", "kind": "sine", "ratio": 2, "envelope": "adsr 0.005 0.2 0.9 0.07", "level": 0.12 }
+  ],
+  "out": [{ "op": "sine1" }, { "op": "sine2" }],
+  "gain": -4,
+  "mono": { "glide": 0.015 }
+}

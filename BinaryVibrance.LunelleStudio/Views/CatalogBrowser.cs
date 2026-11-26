@@ -13,7 +13,8 @@ namespace BinaryVibrance.LunelleStudio.Views;
 /// opens the row. The lists show what is open. While its filter has the keys, the workbench's own keys wait. The + on
 /// Songs and Patches makes a new file of that kind beside the project's others, which it lists once the project has built
 /// again. A patch or kit dragged out of it (<see cref="InstrumentDragged"/>) is for the page to drop on the board as a new
-/// track.
+/// track. Under them the presets (<see cref="Workbench.Presets"/>), offered to a project of files alone: a click on one
+/// plays it on the keys (<see cref="Workbench.TryPreset"/>), and its button adds it (<see cref="Workbench.AddPreset"/>).
 /// </summary>
 internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyChanged
 {
@@ -140,6 +141,11 @@ internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyCh
 				if (e.ClickedItem is ChoiceViewModel choice)
 					choice.IsSelected = true;
 			};
+		PresetList.ItemClick += (_, e) =>
+		{
+			if (e.ClickedItem is PresetViewModel preset)
+				preset.TryCommand.Execute(null);
+		};
 		WireDrag();
 		NewSong.Click += (_, _) => AskForName(NewSong, "New song", "open-road", copy: false);
 		NewPatch.Click += (_, _) => AskForName(NewPatch, "New patch", "warm-pad", copy: true);
@@ -148,7 +154,8 @@ internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyCh
 	private void OnModelChanged(object? sender, PropertyChangedEventArgs e)
 	{
 		if (e.PropertyName is nameof(WorkbenchViewModel.SelectedSong) or nameof(WorkbenchViewModel.SelectedPatch) or nameof(WorkbenchViewModel.SelectedKit)
-			or nameof(WorkbenchViewModel.Songs) or nameof(WorkbenchViewModel.Patches) or nameof(WorkbenchViewModel.Kits))
+			or nameof(WorkbenchViewModel.Songs) or nameof(WorkbenchViewModel.Patches) or nameof(WorkbenchViewModel.Kits)
+			or nameof(WorkbenchViewModel.TryingPreset))
 			ShowChosen();
 	}
 
@@ -160,6 +167,7 @@ internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyCh
 		SongList.SelectedIndex = model.SelectedSong;
 		PatchList.SelectedIndex = model.SelectedPatch;
 		KitList.SelectedIndex = model.SelectedKit;
+		PresetList.SelectedIndex = model.TryingPreset;
 	}
 
 	// A flyout asking for the new file's name (and, for a patch, whether to start from the one open), Enter making it

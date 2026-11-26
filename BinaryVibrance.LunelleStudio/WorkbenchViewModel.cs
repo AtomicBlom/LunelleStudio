@@ -161,6 +161,37 @@ public sealed class WorkbenchViewModel : ViewModel
 
 	internal void AddKit(string name) => Kits.Add(new ChoiceViewModel(Kits.Count, name, index => _workbench.ChooseKit(index)));
 
+	/// <summary>The presets the host ships (<see cref="Workbench.Presets"/>), for a project of files alone; none for one with code.</summary>
+	public System.Collections.ObjectModel.ObservableCollection<PresetViewModel> Presets { get; } = [];
+
+	/// <summary>Whether there are presets to offer, for the library to show their list.</summary>
+	public bool HasPresets
+	{
+		get;
+		internal set => Set(ref field, value);
+	}
+
+	/// <summary>Where in <see cref="Presets"/> the one on the keyboard is, or -1.</summary>
+	public int TryingPreset
+	{
+		get;
+		private set => Set(ref field, value);
+	} = -1;
+
+	/// <summary>What the preset on the keyboard says of itself, under the presets' heading; empty when none is.</summary>
+	public string PresetAbout
+	{
+		get;
+		private set => Set(ref field, value);
+	} = "";
+
+	internal void ShowTrying(Preset? preset)
+	{
+		var at = preset is null ? -1 : Presets.Select(p => p.Preset).ToList().IndexOf(preset);
+		TryingPreset = at;
+		PresetAbout = at < 0 ? "" : $"{preset!.Name} on the keys{(preset.IsKit ? " and pads" : "")}. {preset.About}".TrimEnd();
+	}
+
 	/// <summary>The patch the bench plays, by index, or −1. Setting it acts.</summary>
 	public int SelectedPatch
 	{
@@ -419,6 +450,10 @@ public sealed class WorkbenchViewModel : ViewModel
 		foreach (var list in new[] { Songs, Patches, Kits })
 			foreach (var choice in list)
 				choice.IsVisible = words.All(w => choice.Name.Contains(w, StringComparison.OrdinalIgnoreCase));
+		// A preset by its name or its kind: "bass", "sampled"
+		foreach (var preset in Presets)
+			preset.IsVisible = words.All(w => preset.Name.Contains(w, StringComparison.OrdinalIgnoreCase)
+				|| preset.Category.Contains(w, StringComparison.OrdinalIgnoreCase));
 	}
 
 	// The library's songs, patches or kits for a new catalog: left as they are when the names haven't changed

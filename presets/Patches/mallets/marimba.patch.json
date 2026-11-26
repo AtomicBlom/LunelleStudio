@@ -1,0 +1,18 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "marimba",
+  "about": "A marimba: a rosewood bar under a soft mallet, short and warm, its low notes ringing longest",
+  "operators": [
+    { "name": "mallet", "kind": "sine", "fixed": 300, "envelope": "decay 0.006", "level": 0.1, "velocity": 0.6 },
+    {
+      "name": "bar",
+      "kind": "modes",
+      "modes": ["at 1 0.8", "at 4 0.18 0.3", "at 9.2 0.05 0.1"],
+      "drivenBy": ["mallet"],
+      "keyDecay": 0.5
+    }
+  ],
+  "out": [{ "op": "bar" }],
+  "gain": -12,
+  "sends": { "space": 0.25 }
+}

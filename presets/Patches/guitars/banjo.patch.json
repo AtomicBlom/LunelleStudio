@@ -1,0 +1,16 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "banjo",
+  "about": "A banjo: a short, bright string plucked by the bridge, on a skin that rings high and dies at once",
+  "operators": [
+    { "name": "plucked", "kind": "string", "decaySeconds": 0.9, "damping": 0.1, "pick": 0.08, "keyDecay": 0.3 },
+    {
+      "name": "skin",
+      "kind": "modes",
+      "modes": ["fixed 380 0.06", "fixed 760 0.04 0.6", "fixed 1250 0.03 0.4"],
+      "drivenBy": ["plucked"]
+    }
+  ],
+  "out": [{ "op": "plucked", "level": 0.6 }, { "op": "skin", "level": 0.006 }],
+  "sends": { "space": 0.15 }
+}

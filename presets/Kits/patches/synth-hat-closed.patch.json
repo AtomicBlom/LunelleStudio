@@ -1,0 +1,7 @@
+{
+  "format": "lunelle-patch/1",
+  "name": "synth-hat-closed",
+  "operators": [{ "name": "noise1", "kind": "noise", "envelope": "decay 0.04", "level": 0.5 }],
+  "out": [{ "op": "noise1" }],
+  "filter": { "kind": "highPass", "cutoff": 7000 }
+}

@@ -1,17 +1,17 @@
 {
-  "format": "lunelle-song/2",
-  "name": "blue-hour",
+  "format": "lunelle-song/3",
+  "cues": { "intensity": null },
   "about": "A jazz ballad in F at 76, for the chord symbols: major and minor ninths, a thirteenth, and a secondary dominant with a flat nine (VIM7b9, D7b9, which pulls to the ii). The electric piano voices them without their roots, leaving those to the bass, and comps a different rhythm each pass (a variation picked in turn). Everything swings in triplets (0.667). The bass plays half notes under 0.5 and walks above it; past 0.55 the head gives way to a vibraphone solo in triplets, and past 0.7 an organ swells under it.",
   "tempo": 76,
   "scale": "F major",
   "effects": { "space": [{ "fx": "reverb", "decaySeconds": 2.2 }] },
   "variations": [{ "name": "comp", "options": 3, "pick": "cycle" }],
   "tracks": [
-    { "name": "keys", "patch": "electric-piano", "level": -2, "swing": { "ratio": 0.667, "step": "eighths" } },
-    { "name": "bass", "patch": "upright-bass", "octave": 2, "level": 5, "swing": { "ratio": 0.667, "step": "eighths" } },
-    { "name": "vibes", "patch": "vibraphone", "octave": 5, "level": 7, "pan": 0.25, "swing": { "ratio": 0.667, "step": "eighths" } },
-    { "name": "drums", "kit": "general", "level": 8, "humanise": { "ms": 10, "velocity": 0.15 }, "swing": { "ratio": 0.667, "step": "eighths" } },
-    { "name": "organ", "patch": "organ", "octave": 3, "level": -18, "pan": -0.2 }
+    { "name": "keys", "patch": "lunelle:keys/electric-piano", "level": -2, "swing": { "ratio": 0.667, "step": "eighths" } },
+    { "name": "bass", "patch": "lunelle:bass/upright-bass", "octave": 2, "level": 5, "swing": { "ratio": 0.667, "step": "eighths" } },
+    { "name": "vibes", "patch": "lunelle:mallets/vibraphone", "octave": 5, "level": 7, "pan": 0.25, "swing": { "ratio": 0.667, "step": "eighths" } },
+    { "name": "drums", "kit": "lunelle:general", "level": 8, "humanise": { "ms": 10, "velocity": 0.15 }, "swing": { "ratio": 0.667, "step": "eighths" } },
+    { "name": "organ", "patch": "lunelle:keys/organ", "octave": 3, "level": -18, "pan": -0.2 }
   ],
   "sections": [
     {

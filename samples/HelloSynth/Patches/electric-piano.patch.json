@@ -1,6 +1,5 @@
 {
-  "format": "lunelle-patch/1",
-  "name": "electric piano",
+  "format": "lunelle-patch/2",
   "about": "A tine piano: a struck sine modulated by a fast-dying one at fourteen times, bell-like when hard.",
   "operators": [
     { "name": "tine", "kind": "sine", "ratio": 14, "envelope": "decay 0.12", "level": 0.6, "velocity": 0.8 },

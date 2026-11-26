@@ -352,7 +352,7 @@ public sealed partial class Workbench : IDisposable
 			OpenEditor();
 			_songPatches.Clear();
 			song = _editor is { } editor && _source is { } source
-				? editor.Build(Bindings(source.Bindings))
+				? source.Build is { } resolve ? resolve(editor.Text, Bindings) : editor.Build(Bindings(source.Bindings), name)
 				: build() ?? throw new InvalidOperationException("Its factory returned no song.");
 		}
 		catch (Exception ex)

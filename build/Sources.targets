@@ -74,4 +74,18 @@
           CopyToOutputDirectory="PreserveNewest" Visible="false" />
   </ItemGroup>
 
+  <!--
+    With it, the props that hand a project's music to the generator, and Lunelle's own sounds (its library "lunelle"), so a
+    project the studio makes imports them from beside the studio (lunelle-music.props, Library/): from Lunelle's checkout,
+    or its package, which carries both.
+  -->
+  <PropertyGroup Condition="'$(CopyMusicGenerator)' == 'true'">
+    <_LunelleMusicRoot Condition="'$(LunelleFromSource)' == 'true'">$(LunelleSource)BinaryVibrance.Lunelle\</_LunelleMusicRoot>
+    <_LunelleMusicRoot Condition="'$(LunelleFromSource)' != 'true'">$(NuGetPackageRoot)binaryvibrance.lunelle\$(LunellePackageVersion)\</_LunelleMusicRoot>
+  </PropertyGroup>
+  <ItemGroup Condition="'$(CopyMusicGenerator)' == 'true'">
+    <None Include="$(_LunelleMusicRoot)build\BinaryVibrance.Lunelle.props" Link="lunelle-music.props" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+    <None Include="$(_LunelleMusicRoot)Library\**\*" Link="Library\%(RecursiveDir)%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" Visible="false" />
+  </ItemGroup>
+
 </Project>

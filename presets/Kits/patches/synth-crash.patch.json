@@ -1,7 +1,0 @@
-{
-  "format": "lunelle-patch/1",
-  "name": "synth-crash",
-  "operators": [{ "name": "noise1", "kind": "noise", "envelope": "decay 1.6", "level": 0.4 }],
-  "out": [{ "op": "noise1" }],
-  "filter": { "kind": "highPass", "cutoff": 5000 }
-}

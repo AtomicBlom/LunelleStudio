@@ -28,7 +28,9 @@ public static class FolderCatalog
 			Cues = folder.Cues,
 			// As a project with code would name it, so a patch's code reads the same in either
 			MacroName = id => folder.MacroName(id) is { } name ? $"Macros.{PatchCode.Pascal(name)}" : null,
-			SongSource = name => folder.SongPath(name) is { } path ? new SongSource(Full(path), folder.Bindings) : null,
+			SongSource = name => folder.SongPath(name) is { } path
+				? new SongSource(Full(path), folder.Bindings) { Build = (text, wrap) => folder.BuildSong(name, text, wrap) }
+				: null,
 			PatchFile = name => folder.PatchPath(name) is { } path ? Full(path) : null,
 			Folder = Path.GetFullPath(root),
 		};

@@ -76,11 +76,10 @@
 		<OutputType>WinExe</OutputType>
 	</PropertyGroup>
 
-	<!-- The presets, for any project of files alone to take (StudioPresets): embedded, as the browser has no folder beside the app -->
+	<!-- The showcase's music, the project to start from (StarterProject): its songs and cues; its sounds are Lunelle's own
+	     library's, which Lunelle carries (the presets every project of files alone is offered, StudioPresets) -->
 	<ItemGroup>
-		<EmbeddedResource Include="..\presets\**\*" Exclude="..\presets\README.md" LogicalName="presets/%(RecursiveDir)%(Filename)%(Extension)" />
-		<!-- The showcase's music, the project to start from (StarterProject); a sampled kit's takes are the presets' own, so they aren't embedded twice -->
-		<EmbeddedResource Include="..\samples\Showcase\**\*" Exclude="..\samples\Showcase\**\*.ogg;..\samples\Showcase\README.md;..\samples\Showcase\.lunelle-studio\**"
+		<EmbeddedResource Include="..\samples\Showcase\**\*" Exclude="..\samples\Showcase\README.md;..\samples\Showcase\.lunelle-studio\**"
 		                  LogicalName="template/%(RecursiveDir)%(Filename)%(Extension)" />
 	</ItemGroup>
 

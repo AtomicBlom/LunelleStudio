@@ -1,13 +1,11 @@
-using System.Text.Json;
-using System.Text.Json.Nodes;
-
 using BinaryVibrance.Lunelle.Chip;
+using BinaryVibrance.Lunelle.Format;
 using BinaryVibrance.Lunelle.Music;
 
 namespace BinaryVibrance.LunelleStudio;
 
-// The presets: sounds the host ships (a PresetLibrary), listed in the library under the project's own for a project of
-// files alone, each tried on the keyboard as it is and copied into the project when added
+// The presets: a library's sounds (a PresetLibrary, Lunelle's own), listed in the library under the project's own for a
+// project of files alone, each tried on the keyboard as it is and added to the project as an entry based on it
 public sealed partial class Workbench
 {
 	/// <summary>
@@ -81,10 +79,12 @@ public sealed partial class Workbench
 	}
 
 	/// <summary>
-	/// Copies <paramref name="preset"/> into the project, with what it needs: a patch its file in <c>Patches/</c>; a kit its
-	/// manifest, its samples and licence or each piece's patch; and, in <c>lunelle-project.json</c>, the names the library
-	/// gives the macros its patches turn, where the project uses neither the name nor the number. It opens once the folder
-	/// is read again. One the project has by name already is opened as the project has it. Why it can't be, or null.
+	/// Adds <paramref name="preset"/> to the project as an entry of its own based on it (overrides.md §2): a patch at
+	/// <c>Patches/&lt;id&gt;.patch.json</c> or a kit at <c>Kits/&lt;id&gt;.kit.json</c>, saying only <c>"base":
+	/// "lunelle:&lt;id&gt;"</c>, so it sounds as the library's until the project changes it, and follows the library where
+	/// it doesn't. The project's manifest lists the library, and names the macros the sound turns where it names neither
+	/// the name nor the number. It opens once the folder is read again; one the project has already opens as it is. Why it
+	/// can't be added, or null.
 	/// </summary>
 	public string? AddPreset(Preset preset)
 	{
@@ -103,76 +103,71 @@ public sealed partial class Workbench
 			ChoosePatch(patch);
 			return null;
 		}
-
-		// Every file checked before any is written: one the project has already is the same, or the preset isn't added
-		var writes = new List<(string Path, byte[] Bytes)>();
-		foreach (var file in library.FilesFor(preset))
-		{
-			var path = Path.Combine(folder, file.Path);
-			// A piece's patch the project has already, wherever its file is, is taken as it is when it is the same
-			var have = file.Patch is not null && _catalog.PatchFile(file.Patch) is { } own && Files.Exists(own) ? own
-				: Files.Exists(path) ? path : null;
-			if (have is null)
-				writes.Add((path, file.Bytes));
-			else if (!Same(Files.ReadBytes(have), file.Bytes))
-				return $"The project has {Path.GetRelativePath(folder, have).Replace('\\', '/')} already, and it isn't the preset's. Rename it to add {preset.Name}.";
-		}
-		foreach (var (path, bytes) in writes)
-			Files.WriteBytes(path, bytes);
-		NameMacros(folder, library.MacrosFor(preset));
-		Awaiting(preset.Name, preset.IsKit ? Awaited.Kit : Awaited.Patch, $"Added {preset.Name} from the presets. It opens once the project is read again.");
+		var kind = preset.IsKit ? EntryKind.Kit : EntryKind.Patch;
+		var path = Path.Combine(folder, EntryIds.Folder(kind) + preset.Name + EntryIds.Suffix(kind));
+		if (Files.Exists(path))
+			return $"The project has {EntryIds.Folder(kind)}{preset.Name}{EntryIds.Suffix(kind)} already, and it doesn't read. Mend or rename it to add {preset.Name}.";
+		if (EditManifest(folder, manifest => ListLibrary(manifest, library) | NameMacros(manifest, library.MacrosFor(preset))) is { } problem)
+			return problem;
+		var entry = new JObject()
+			.Set("format", new JString(ProjectLoader.Format(kind)))
+			.Set("base", new JString(preset.Reference));
+		Files.WriteText(path, JWriter.Write(entry) + "\n");
+		Awaiting(preset.Name, preset.IsKit ? Awaited.Kit : Awaited.Patch, $"Added {preset.Name}, based on {preset.Reference}. It opens once the project is read again.");
 		return null;
 	}
 
-	// The same bytes, but for line endings: a text file the library keeps with CRLF is still the same file
-	private static bool Same(byte[] a, byte[] b) =>
-		a.AsSpan().SequenceEqual(b) || (Text(a) is { } x && Text(b) is { } y && x.ReplaceLineEndings() == y.ReplaceLineEndings());
-
-	private static string? Text(byte[] bytes)
+	// Changes the project's manifest by `change`, writing it when it says it changed; why it couldn't be, or null
+	private string? EditManifest(string folder, Func<JObject, bool> change)
 	{
+		var path = Path.Combine(folder, EntryIds.Manifest);
+		JObject manifest;
 		try
 		{
-			return new System.Text.UTF8Encoding(false, throwOnInvalidBytes: true).GetString(bytes);
+			manifest = Files.Exists(path)
+				? JReader.Parse(Files.ReadText(path)) as JObject ?? throw new FormatError("the manifest isn't an object", 0, 0)
+				: new JObject().Set("format", new JString(EntryIds.ManifestFormat)).Set("name", new JString("music"));
 		}
-		catch (System.Text.DecoderFallbackException)
+		catch (Exception ex) when (ex is FormatError or IOException)
 		{
-			return null;
+			return $"The project's {EntryIds.Manifest} can't be read, so nothing is added: {ex.Message}";
 		}
+		if (change(manifest))
+			Files.WriteText(path, JWriter.Write(manifest) + "\n");
+		return null;
 	}
 
-	// The macros a preset's patches turn, named in the project file where it names neither that name nor that number, so
-	// a song can follow a cue with them; a project file that can't be read is left for its owner to mend
-	private void NameMacros(string folder, IReadOnlyDictionary<string, int> macros)
+	// The library listed in "libraries", at its major version, unless it is there already
+	private static bool ListLibrary(JObject manifest, PresetLibrary library)
+	{
+		if (manifest["libraries"] is not JObject libraries)
+			manifest.Set("libraries", libraries = new JObject());
+		if (libraries[PresetLibrary.LibraryName] is not null)
+			return false;
+		var major = library.Version is { } version && SemVer.TryParse(version, out var parsed) ? parsed.Major.ToString(System.Globalization.CultureInfo.InvariantCulture) : "1";
+		libraries.Set(PresetLibrary.LibraryName, new JObject().Set("version", new JString(major)));
+		return true;
+	}
+
+	// The macros a preset's patches turn, named in the manifest where it names neither that name nor that number, so a
+	// song can follow a cue with them
+	private static bool NameMacros(JObject manifest, IReadOnlyDictionary<string, int> macros)
 	{
 		if (macros.Count == 0)
-			return;
-		var path = Path.Combine(folder, MusicFolder.ProjectFileName);
-		JsonObject project;
-		try
-		{
-			project = Files.Exists(path)
-				? JsonNode.Parse(Files.ReadText(path), documentOptions: new JsonDocumentOptions { AllowTrailingCommas = true, CommentHandling = JsonCommentHandling.Skip }) as JsonObject ?? new JsonObject()
-				: new JsonObject { ["format"] = MusicFolder.ProjectFormat };
-		}
-		catch (Exception ex) when (ex is JsonException or IOException)
-		{
-			Console.WriteLine($"[workbench] {path} couldn't be read to name the preset's macros: {ex.Message}");
-			return;
-		}
-		if (project["macros"] is { } existing && existing is not JsonObject)
-			return;
-		if (project["macros"] is not JsonObject named)
-			project["macros"] = named = [];
-		var taken = named.Select(m => m.Value is JsonValue value && value.TryGetValue<int>(out var id) ? id : -1).ToHashSet();
+			return false;
+		if (manifest["macros"] is { } existing && existing is not JObject)
+			return false;
+		if (manifest["macros"] is not JObject named)
+			manifest.Set("macros", named = new JObject());
+		var taken = named.Members.Select(m => (m.Value is JObject o ? o["number"] : m.Value)?.Num is { } n && int.TryParse(n, out var id) ? id : -1).ToHashSet();
 		var changed = false;
 		foreach (var (name, id) in macros.OrderBy(m => m.Value))
 		{
-			if (named.ContainsKey(name) || !taken.Add(id))
+			if (named[name] is not null || !taken.Add(id))
 				continue;
-			named[name] = id;
+			named.Set(name, new JNumber(id));
 			changed = true;
 		}
-		if (changed)
-			Files.WriteText(path, SongFile.Write(project));
+		return changed;
 	}
 }

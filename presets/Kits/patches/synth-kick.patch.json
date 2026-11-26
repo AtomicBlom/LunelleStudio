@@ -1,7 +1,0 @@
-{
-  "format": "lunelle-patch/1",
-  "name": "synth-kick",
-  "operators": [{ "name": "sine1", "kind": "sine", "fixed": 50, "envelope": "decay 0.25" }],
-  "out": [{ "op": "sine1" }],
-  "pitchDrop": { "semitones": 24, "seconds": 0.04 }
-}

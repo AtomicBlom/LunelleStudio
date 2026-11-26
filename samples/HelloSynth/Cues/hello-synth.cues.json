@@ -1,0 +1,7 @@
+{
+  "format": "lunelle-cues/1",
+  "cues": [
+    { "name": "intensity", "initial": 0.3, "about": "How much is going on: the lead comes in past 0.5, and brightens with it" },
+    { "name": "mood", "options": ["Calm", "Bright", "Dark"], "enum": "HelloSynth.Mood", "about": "Which motif plays, each coming in where its phrase starts" }
+  ]
+}

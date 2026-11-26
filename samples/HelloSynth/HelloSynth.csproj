@@ -1,10 +1,10 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<!--
-		A music project to start from, and the one lunelle-studio's "new" makes: a song, four patches and a kit, written in
-		the workbench and played from it with nothing else: open it with lunelle-studio, as README.md says. Its song and
-		patches are files (Songs/*.song.json, Patches/*.patch.json) that Lunelle's music generator makes into C# as it builds;
-		what a file can't say (the kit, the cues, the catalog) is C# here.
+		A music project to start from, and the one lunelle-studio's "new" makes: a song, eight patches and a kit, written in
+		the workbench and played from it with nothing else: open it with lunelle-studio, as README.md says. Its music is files
+		(lunelle.meta.json, Songs/, Patches/, Kits/, Cues/) that Lunelle's music generator makes into C# as it builds; what
+		a file can't say (the catalog) is C# here.
 	-->
 	<PropertyGroup>
 		<TargetFramework>net11.0</TargetFramework>
@@ -15,17 +15,12 @@
 
 	<ItemGroup>
 		<LunelleReference Include="BinaryVibrance.Lunelle" Path="BinaryVibrance.Lunelle\BinaryVibrance.Lunelle.csproj" />
-	</ItemGroup>
-
-	<!-- The music as data: the generator makes C# of each file as the project builds -->
-	<ItemGroup>
-		<AdditionalFiles Include="Patches\*.patch.json;Songs\*.song.json" />
-		<!-- The kits, embedded under their own names for Kits.cs to read -->
-		<EmbeddedResource Include="Kits\*.kit.json" LogicalName="%(Filename)%(Extension)" />
-		<CompilerVisibleProperty Include="RootNamespace" />
-		<CompilerVisibleProperty Include="ProjectDir" />
 		<!-- From source only: the BinaryVibrance.Lunelle package carries the generator as its analyzer -->
 		<LunelleReference Include="BinaryVibrance.Lunelle.Music.Generator" Path="BinaryVibrance.Lunelle.Music.Generator\BinaryVibrance.Lunelle.Music.Generator.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="false" SourceOnly="true" />
 	</ItemGroup>
+
+	<!-- The music as data (lunelle.meta.json and its folders, and Lunelle's own sounds), handed to the generator: the
+	     package's build props do it, and a build of Lunelle from source imports them -->
+	<Import Project="$(LunelleSource)BinaryVibrance.Lunelle\build\BinaryVibrance.Lunelle.props" Condition="'$(LunelleFromSource)' == 'true'" />
 
 </Project>

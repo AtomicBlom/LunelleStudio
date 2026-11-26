@@ -1,5 +1,0 @@
-{
-  "format": "lunelle-project/1",
-  "name": "Presets",
-  "macros": { "bright": 0, "drive": 1, "sweep": 2 }
-}

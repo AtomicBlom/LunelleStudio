@@ -1,0 +1,15 @@
+{
+  "format": "lunelle/2",
+  "name": "showcase",
+  "title": "Showcase",
+  "libraries": {
+    "lunelle": {
+      "version": "1"
+    }
+  },
+  "macros": {
+    "bright": 0,
+    "drive": 1,
+    "sweep": 2
+  }
+}

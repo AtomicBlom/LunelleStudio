@@ -1,11 +1,12 @@
+using BinaryVibrance.Lunelle.Format;
 using BinaryVibrance.Lunelle.Music;
 using BinaryVibrance.Sirrow;
 
 namespace BinaryVibrance.LunelleStudio.Tests;
 
 /// <summary>
-/// samples/Showcase, the browser's first project: it reads whole, every section of every song sounds whatever the cues
-/// say, and every instrument in it is a preset's own file, so the library shows each as the project's.
+/// samples/Showcase, the first project the studio opens: it reads whole, every section of every song sounds whatever the
+/// cues say, and every instrument it plays is Lunelle's own, referenced from its library rather than copied.
 /// </summary>
 public class ShowcaseTests
 {
@@ -20,7 +21,7 @@ public class ShowcaseTests
 		var music = MusicFolder.FromDirectory(Showcase);
 		FolderCatalog.Problems(music).ShouldBeEmpty();
 		music.Songs.Select(s => s.Name).ShouldBe(["aurora", "back-porch", "blue-hour", "double-shot", "undertow", "watchtower"]);
-		music.Cues.Select(c => c.Name).ShouldBe(["intensity", "mood", "caffeine", "time-of-day", "activity"]);
+		music.Cues.Select(c => c.Name).ShouldBe(["activity", "caffeine", "intensity", "mood", "time-of-day"]);
 		music.Macros.Keys.ShouldBe(["bright", "drive", "sweep"], ignoreOrder: true);
 		foreach (var (name, build) in music.Songs)
 		{
@@ -71,19 +72,16 @@ public class ShowcaseTests
 	}
 
 	[Test]
-	public void Every_instrument_in_the_showcase_is_a_preset_s_own()
+	public void Every_instrument_in_the_showcase_is_lunelle_s_own()
 	{
-		var library = PresetLibrary.FromDirectory(Path.Combine(RepositoryRoot(), "presets"));
 		var music = MusicFolder.FromDirectory(Showcase);
-		var shipped = library.Presets.SelectMany(library.FilesFor).ToLookup(f => f.Path);
-		foreach (var file in Directory.EnumerateFiles(Showcase, "*", SearchOption.AllDirectories))
+		music.Patches.ShouldBeEmpty();
+		music.Kits.ShouldBeEmpty();
+		foreach (var (name, _) in music.Songs)
 		{
-			var path = Path.GetRelativePath(Showcase, file).Replace('\\', '/');
-			if (!path.StartsWith("Patches/", StringComparison.Ordinal) && !path.StartsWith("Kits/", StringComparison.Ordinal))
-				continue;
-			shipped[path].ShouldNotBeEmpty(path);
-			shipped[path].First().Bytes.ShouldBe(File.ReadAllBytes(file), path);
+			var resolved = music.Resolved(name)!;
+			resolved.Patches.Keys.Concat(resolved.Kits.Keys).ShouldAllBe(key => key.StartsWith("lunelle:", StringComparison.Ordinal), name);
 		}
-		music.Kits.Select(k => k.Name).ShouldBe(["breaks", "breaks-deep", "general", "grind", "rock"], ignoreOrder: true);
+		music.Resolved("watchtower")!.Kits.Keys.ShouldContain("lunelle:rock");
 	}
 }

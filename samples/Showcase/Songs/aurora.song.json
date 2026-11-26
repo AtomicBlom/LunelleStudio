@@ -1,6 +1,6 @@
 {
-  "format": "lunelle-song/2",
-  "name": "aurora",
+  "format": "lunelle-song/3",
+  "cues": { "intensity": null, "mood": null },
   "about": "The tour: one song that arranges itself from two cues. Drag intensity from 0 to 1 and back. Low, it is a pad and bells (dawn); past 0.35 the beat and bass come in (pulse); past 0.7 it builds (rise), a riser and an airy supersaw swept up over a snare roll, and drops (lift); falling, it steps back down. Mood picks the bells' motif, each coming in only where its phrase starts, and in lift a Dark mood swaps the lead for a Phrygian line. Every pass of pulse and lift ends on one of three fills, shuffled. The bass ducks under the kick (the bass bus's duck keys on the breaks kit's kick), and the filters on the bass, chords, arp and lead open with intensity (their tracks' bright macro follows it).",
   "tempo": 122,
   "scale": "A minor",
@@ -16,29 +16,29 @@
   ],
   "variations": [{ "name": "fill", "options": 3, "pick": "shuffle" }],
   "tracks": [
-    { "name": "drums", "kit": "breaks", "group": "drum bus", "level": 1, "humanise": { "ms": 3, "velocity": 0.06 } },
-    { "name": "sub", "patch": "sub-bass", "group": "bass bus", "octave": 1, "level": -4 },
+    { "name": "drums", "kit": "lunelle:breaks", "group": "drum bus", "level": 1, "humanise": { "ms": 3, "velocity": 0.06 } },
+    { "name": "sub", "patch": "lunelle:bass/sub-bass", "group": "bass bus", "octave": 1, "level": -4 },
     {
       "name": "bass",
-      "patch": "synth-bass",
+      "patch": "lunelle:bass/synth-bass",
       "group": "bass bus",
       "octave": 2,
       "level": -6,
       "macros": [{ "macro": "bright", "follow": "intensity", "from": 0.2, "to": 0.9 }]
     },
-    { "name": "pad", "patch": "warm-pad", "group": "wide", "level": -4 },
+    { "name": "pad", "patch": "lunelle:synths/warm-pad", "group": "wide", "level": -4 },
     {
       "name": "chords",
-      "patch": "supersaw",
+      "patch": "lunelle:synths/supersaw",
       "group": "wide",
       "level": -4,
       "macros": [{ "macro": "bright", "follow": "intensity", "from": 0.3, "to": 1 }]
     },
-    { "name": "stab", "patch": "supersaw-stab", "level": -3 },
-    { "name": "air", "patch": "supersaw-air", "level": -4 },
+    { "name": "stab", "patch": "lunelle:synths/supersaw-stab", "level": -3 },
+    { "name": "air", "patch": "lunelle:synths/supersaw-air", "level": -4 },
     {
       "name": "arp",
-      "patch": "pluck-lead",
+      "patch": "lunelle:leads/pluck-lead",
       "octave": 5,
       "level": -2,
       "pan": -0.25,
@@ -46,13 +46,13 @@
     },
     {
       "name": "lead",
-      "patch": "saw-lead",
+      "patch": "lunelle:leads/saw-lead",
       "octave": 5,
       "level": 2,
       "macros": [{ "macro": "bright", "follow": "intensity", "from": 0.4, "to": 1 }]
     },
-    { "name": "bells", "patch": "glockenspiel", "octave": 6, "level": -4, "pan": 0.3 },
-    { "name": "riser", "patch": "riser", "level": -2 }
+    { "name": "bells", "patch": "lunelle:mallets/glockenspiel", "octave": 6, "level": -4, "pan": 0.3 },
+    { "name": "riser", "patch": "lunelle:synths/riser", "level": -2 }
   ],
   "sections": [
     {

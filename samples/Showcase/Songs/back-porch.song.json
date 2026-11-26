@@ -1,26 +1,26 @@
 {
-  "format": "lunelle-song/2",
-  "name": "back-porch",
+  "format": "lunelle-song/3",
+  "cues": { "intensity": null, "mood": null },
   "about": "Strings, plucked and strummed: G major at 96, every track swung (0.62 of each pair of eighths) and the sampled jazz kit humanised. The guitar strums open chords, its strum chucked (x, a muted hit) once the intensity passes 0.6, and brightens with it; a banjo rolls past 0.5, or whenever the mood is Bright. The chorus borrows the minor four (IVm, C minor in G) on its way home. The flute's tune turns bluesy when the mood is Dark, and a harp picks the chords when it is Calm.",
   "tempo": 96,
   "scale": "G major",
   "effects": { "space": [{ "fx": "reverb", "decaySeconds": 1.6 }] },
   "tracks": [
-    { "name": "drums", "kit": "general", "level": 6, "humanise": { "ms": 8, "velocity": 0.12 }, "swing": { "ratio": 0.62, "step": "eighths" } },
-    { "name": "bass", "patch": "upright-bass", "octave": 2, "level": 2, "swing": { "ratio": 0.62, "step": "eighths" } },
+    { "name": "drums", "kit": "lunelle:general", "level": 6, "humanise": { "ms": 8, "velocity": 0.12 }, "swing": { "ratio": 0.62, "step": "eighths" } },
+    { "name": "bass", "patch": "lunelle:bass/upright-bass", "octave": 2, "level": 2, "swing": { "ratio": 0.62, "step": "eighths" } },
     {
       "name": "guitar",
-      "patch": "acoustic-guitar",
+      "patch": "lunelle:guitars/acoustic-guitar",
       "octave": 3,
       "level": -7,
       "pan": -0.25,
       "swing": { "ratio": 0.62, "step": "eighths" },
       "macros": [{ "macro": "bright", "follow": "intensity", "from": 0.2, "to": 0.8 }]
     },
-    { "name": "banjo", "patch": "banjo", "level": 9, "pan": 0.35, "swing": { "ratio": 0.62, "step": "sixteenths" } },
-    { "name": "flute", "patch": "flute", "octave": 5, "level": -6, "swing": { "ratio": 0.62, "step": "eighths" } },
-    { "name": "harp", "patch": "harp", "octave": 4, "level": -2, "pan": 0.2, "swing": { "ratio": 0.62, "step": "eighths" } },
-    { "name": "bells", "patch": "glockenspiel", "octave": 6, "level": -4, "pan": -0.3 }
+    { "name": "banjo", "patch": "lunelle:guitars/banjo", "level": 9, "pan": 0.35, "swing": { "ratio": 0.62, "step": "sixteenths" } },
+    { "name": "flute", "patch": "lunelle:orchestra/flute", "octave": 5, "level": -6, "swing": { "ratio": 0.62, "step": "eighths" } },
+    { "name": "harp", "patch": "lunelle:orchestra/harp", "octave": 4, "level": -2, "pan": 0.2, "swing": { "ratio": 0.62, "step": "eighths" } },
+    { "name": "bells", "patch": "lunelle:mallets/glockenspiel", "octave": 6, "level": -4, "pan": -0.3 }
   ],
   "sections": [
     {

@@ -1,6 +1,6 @@
 {
-  "format": "lunelle-song/2",
-  "name": "double-shot",
+  "format": "lunelle-song/3",
+  "cues": { "caffeine": null, "time-of-day": null, "activity": null },
   "about": "Drum and bass at 174 in F minor, over i VI III VII. Caffeine is the arrangement: half awake (wake-up), the groove (brew), and past 0.7 a build (jitters) and the drop (rush); let it fall under 0.15 and the song slumps into half-time. Caffeine also opens the grinder's filter and turns up its drive. The time of day picks the melody (Morning an FM bell, Noon a bright triple-saw lead, Night dark FM keys); the activity picks the counter-melody (Sitting holds long notes, Walking walks, Running arpeggiates, and Dennis gets a buzzing, nasal lead). Each melody and counter-melody is eight bars, a statement and its answer, and each has its own version for every section: fragments while waking, two phrases in the brew that take turns (phrase), an intensified one in the drop and a pared-back one in the slump. The brew's beat is picked at random each time round (two-step most often, a roller, now and then a half-step), the drop's fills are shuffled, and the grinder alternates between two riffs",
   "tempo": 174,
   "scale": "F minor",
@@ -34,11 +34,11 @@
     { "name": "phrase", "options": 2, "pick": "cycle" }
   ],
   "tracks": [
-    { "name": "drums", "kit": "grind", "group": "drum bus", "level": -1.5, "humanise": { "ms": 2, "velocity": 0.05 } },
-    { "name": "sub", "patch": "glide-sub", "group": "sub bus", "octave": 1, "level": -1.5 },
+    { "name": "drums", "kit": "lunelle:grind", "group": "drum bus", "level": -1.5, "humanise": { "ms": 2, "velocity": 0.05 } },
+    { "name": "sub", "patch": "lunelle:bass/glide-sub", "group": "sub bus", "octave": 1, "level": -1.5 },
     {
       "name": "grinder",
-      "patch": "fm-reese",
+      "patch": "lunelle:bass/fm-reese",
       "group": "heavy",
       "octave": 2,
       "level": 0,
@@ -49,24 +49,24 @@
     },
     {
       "name": "pad",
-      "patch": "haze-pad",
+      "patch": "lunelle:synths/haze-pad",
       "group": "wide",
       "level": -1,
       "macros": [{ "macro": "bright", "follow": "caffeine", "from": 0, "to": 0.6 }]
     },
-    { "name": "morning", "patch": "fm-bell", "octave": 5, "level": -3.5, "pan": 0.15 },
+    { "name": "morning", "patch": "lunelle:mallets/fm-bell", "octave": 5, "level": -3.5, "pan": 0.15 },
     {
       "name": "noon",
-      "patch": "triple-saw-lead",
+      "patch": "lunelle:leads/triple-saw-lead",
       "octave": 5,
       "level": -4.5,
       "macros": [{ "macro": "bright", "follow": "caffeine", "from": 0.2, "to": 1 }]
     },
-    { "name": "night", "patch": "fm-keys", "octave": 4, "level": -3, "pan": -0.1 },
-    { "name": "counter", "patch": "soft-pluck", "octave": 3, "level": 0, "pan": -0.3 },
-    { "name": "drone", "patch": "swell-sub", "octave": 2, "level": 0 },
-    { "name": "dennis", "patch": "buzz-lead", "octave": 4, "level": -3, "pan": 0.25 },
-    { "name": "percolator", "patch": "bubble-riser", "level": 0 }
+    { "name": "night", "patch": "lunelle:keys/fm-keys", "octave": 4, "level": -3, "pan": -0.1 },
+    { "name": "counter", "patch": "lunelle:leads/soft-pluck", "octave": 3, "level": 0, "pan": -0.3 },
+    { "name": "drone", "patch": "lunelle:bass/swell-sub", "octave": 2, "level": 0 },
+    { "name": "dennis", "patch": "lunelle:leads/buzz-lead", "octave": 4, "level": -3, "pan": 0.25 },
+    { "name": "percolator", "patch": "lunelle:synths/bubble-riser", "level": 0 }
   ],
   "sections": [
     {

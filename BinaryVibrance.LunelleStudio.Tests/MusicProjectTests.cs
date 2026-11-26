@@ -217,9 +217,10 @@ public class MusicProjectTests
 		build.Catalog.Songs[0].Build().Sections.Select(s => s.Name).ShouldBe(["verse", "chorus"]);
 		build.Catalog.SongSource("demo").ShouldNotBeNull().Type.ShouldBe("My_Tunes.Songs.Demo");
 
-		// Its lunelle-project.json says the cues and macro its C# does, so it opens as music files alone too
+		// Its music is files throughout, so it opens as music files alone too
 		var folderMusic = MusicFolder.FromDirectory(folder);
-		folderMusic.Name.ShouldBe("My Tunes");
+		folderMusic.Name.ShouldBe("my-tunes");
+		folderMusic.Title.ShouldBe("My Tunes");
 		folderMusic.Problems.ShouldBeEmpty();
 		folderMusic.Cues.Select(c => (c.Name, c.GetType().Name)).ShouldBe([("intensity", "Cue"), ("mood", "ChoiceCue")]);
 		((Cue)folderMusic.Cues[0]).Initial.ShouldBe(((Cue)build.Catalog.Cues[0]).Initial);

@@ -1,0 +1,10 @@
+{
+  "format": "lunelle-cues/1",
+  "cues": [
+    {"name": "intensity", "initial": 0.4},
+    {"name": "mood", "options": ["Calm", "Bright", "Dark"], "initial": "Calm"},
+    {"name": "caffeine", "initial": 0.3},
+    {"name": "time-of-day", "options": ["Morning", "Noon", "Night"], "initial": "Morning"},
+    {"name": "activity", "options": ["Sitting", "Walking", "Running", "Dennis"], "initial": "Sitting"}
+  ]
+}

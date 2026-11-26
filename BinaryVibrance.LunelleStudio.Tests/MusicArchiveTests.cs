@@ -30,7 +30,7 @@ public class MusicArchiveTests
 		var folder = Path.Combine(Path.GetTempPath(), "lunelle-studio-archive-" + Guid.NewGuid().ToString("N")[..8], "Packed");
 		ProjectTemplate.CreateData(folder);
 		DiskFiles.Instance.WriteText(Path.Combine(folder, ".lunelle-studio", "workbench.json"), "{}");
-		var written = DiskFiles.Instance.List(folder).Where(p => !p.StartsWith(".lunelle-studio/", StringComparison.Ordinal)).Order().ToList();
+		var written = DiskFiles.Instance.List(folder).Where(p => !BinaryVibrance.Lunelle.Format.EntryIds.LeftOut(p)).Order().ToList();
 
 		var archive = MusicArchive.Pack(DiskFiles.Instance, folder);
 		var files = MusicArchive.Unpack(archive);
@@ -40,7 +40,8 @@ public class MusicArchiveTests
 			bytes.ShouldBe(File.ReadAllBytes(Path.Combine(folder, path)));
 		var unpacked = MusicFolder.Load(files.Select(f => f.Path), path => files.Single(f => f.Path == path).Bytes);
 		var original = MusicFolder.FromDirectory(folder);
-		unpacked.Name.ShouldBe("Packed");
+		unpacked.Name.ShouldBe("packed");
+		unpacked.Title.ShouldBe("Packed");
 		unpacked.Songs.Select(s => s.Name).ShouldBe(original.Songs.Select(s => s.Name));
 		unpacked.Patches.Select(p => p.Name).ShouldBe(original.Patches.Select(p => p.Name));
 		unpacked.Kits.Select(k => k.Name).ShouldBe(original.Kits.Select(k => k.Name));
@@ -53,8 +54,8 @@ public class MusicArchiveTests
 		var home = Path.Combine(Path.GetTempPath(), "lunelle-studio-home-" + Guid.NewGuid().ToString("N")[..8]);
 		try
 		{
-			var first = Zip(("lunelle-project.json", "{}"), ("Songs/a.song.json", "{\"tempo\": 90}"));
-			var other = Zip(("lunelle-project.json", "{}"), ("Songs/b.song.json", "{}"));
+			var first = Zip(("lunelle.meta.json", "{}"), ("Songs/a.song.json", "{\"tempo\": 90}"));
+			var other = Zip(("lunelle.meta.json", "{}"), ("Songs/b.song.json", "{}"));
 
 			var folder = MusicArchive.UnpackBeside(DiskFiles.Instance, home, "Tunes", first);
 			folder.ShouldBe(Path.Combine(home, "Tunes"));
@@ -80,19 +81,19 @@ public class MusicArchiveTests
 	public void A_zip_of_the_folder_holding_a_project_is_taken_from_that_folder()
 	{
 		var files = MusicArchive.Unpack(Zip(
-			("Tunes/lunelle-project.json", "{}"),
+			("Tunes/lunelle.meta.json", "{}"),
 			("Tunes/Songs/a.song.json", "{}"),
 			("Tunes/.lunelle-studio/workbench.json", "{}"),
-			("__MACOSX/Tunes/._lunelle-project.json", "")));
-		files.Select(f => f.Path).ShouldBe(["lunelle-project.json", "Songs/a.song.json"], ignoreOrder: true);
+			("__MACOSX/Tunes/._lunelle.meta.json", "")));
+		files.Select(f => f.Path).ShouldBe(["lunelle.meta.json", "Songs/a.song.json"], ignoreOrder: true);
 	}
 
 	[Test]
 	public void Nothing_is_taken_from_a_zip_that_isn_t_a_project_or_reaches_outside_one()
 	{
 		Should.Throw<InvalidDataException>(() => MusicArchive.Unpack(Zip(("Songs/a.song.json", "{}"))));
-		Should.Throw<InvalidDataException>(() => MusicArchive.Unpack(Zip(("lunelle-project.json", "{}"), ("../evil.json", "{}"))));
-		Should.Throw<InvalidDataException>(() => MusicArchive.Unpack(Zip(("a/b/lunelle-project.json", "{}"))));
+		Should.Throw<InvalidDataException>(() => MusicArchive.Unpack(Zip(("lunelle.meta.json", "{}"), ("../evil.json", "{}"))));
+		Should.Throw<InvalidDataException>(() => MusicArchive.Unpack(Zip(("a/b/lunelle.meta.json", "{}"))));
 		Should.Throw<InvalidDataException>(() => MusicArchive.Unpack(Encoding.UTF8.GetBytes("not a zip")));
 	}
 

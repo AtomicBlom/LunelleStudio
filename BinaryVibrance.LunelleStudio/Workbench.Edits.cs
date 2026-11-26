@@ -650,14 +650,15 @@ public sealed partial class Workbench
 		JsonObject file;
 		if (copyOf is not null && _catalog.PatchFile(copyOf) is { } source && Files.Exists(source))
 		{
+			// A patch's id is its file's path: the copy is the new file's
 			file = JsonNode.Parse(Files.ReadText(source))!.AsObject();
-			file["name"] = stem;
+			file.Remove("name");
+			file.Remove("title");
 		}
 		else
 			file = new JsonObject
 			{
-				["format"] = "lunelle-patch/1",
-				["name"] = stem,
+				["format"] = BinaryVibrance.Lunelle.Chip.PatchFile.Format,
 				["operators"] = new JsonArray(new JsonObject { ["name"] = "sine1", ["kind"] = "sine", ["envelope"] = "adsr 0.01 0.1 0.8 0.2", ["level"] = 0.5 }),
 				["out"] = new JsonArray(new JsonObject { ["op"] = "sine1" }),
 			};
@@ -771,7 +772,6 @@ public sealed partial class Workbench
 		var file = new JsonObject
 		{
 			["format"] = BinaryVibrance.Lunelle.Music.SongFile.Format,
-			["name"] = stem,
 			["tempo"] = 110,
 			["scale"] = "C major",
 			["tracks"] = patch is null ? new JsonArray() : new JsonArray(new JsonObject { ["name"] = "lead", ["patch"] = patch }),

@@ -1,5 +1,5 @@
 {
-  "name": "demo-kit",
+  "format": "lunelle-kit/1",
   "pieces": [
     { "piece": "kick", "patch": "kick" },
     { "piece": "snare", "patch": "snare" },

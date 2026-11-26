@@ -15,17 +15,20 @@ public class WorkbenchFolderTests
 {
 	private const string Project = """
 		{
-		  "format": "lunelle-project/1",
-		  "name": "Tunes",
-		  "cues": [{ "name": "intensity", "initial": 0.5 }, { "name": "mood", "options": ["Calm", "Dark"] }],
+		  "format": "lunelle/2",
+		  "name": "tunes",
 		  "macros": { "bright": 0 }
 		}
 		""";
 
+	private const string Cues = """
+		{ "format": "lunelle-cues/1", "cues": [{ "name": "intensity", "initial": 0.5 }, { "name": "mood", "options": ["Calm", "Dark"] }] }
+		""";
+
 	private static string Song(int tempo) => $$"""
 		{
-		  "format": "lunelle-song/2",
-		  "name": "tune",
+		  "format": "lunelle-song/3",
+		  "cues": { "intensity": null, "mood": null },
 		  "tempo": {{tempo}},
 		  "tracks": [{ "name": "lead", "patch": "tone" }],
 		  "sections": [
@@ -47,6 +50,8 @@ public class WorkbenchFolderTests
 		Directory.CreateDirectory(Path.Combine(folder, "Songs"));
 		Directory.CreateDirectory(Path.Combine(folder, "Patches"));
 		File.WriteAllText(Path.Combine(folder, MusicFolder.ProjectFileName), Project);
+		Directory.CreateDirectory(Path.Combine(folder, "Cues"));
+		File.WriteAllText(Path.Combine(folder, "Cues", "tunes.cues.json"), Cues);
 		File.WriteAllText(Path.Combine(folder, "Patches", "tone.patch.json"),
 			PatchFile.Write(PatchSpec.From(Patch.Build("tone", p => p.Out(p.Sine(1f, Env.Adsr(0.005f, 0.1f, 0.6f, 0.1f)))))));
 		File.WriteAllText(Path.Combine(folder, "Songs", "tune.song.json"), Song(120));
@@ -117,7 +122,8 @@ public class WorkbenchFolderTests
 		WorkbenchFolder.IsFilesAlone(folder).ShouldBeTrue();
 
 		var music = MusicFolder.FromDirectory(folder);
-		music.Name.ShouldBe("Data Tunes");
+		music.Name.ShouldBe("data-tunes");
+		music.Title.ShouldBe("Data Tunes");
 		FolderCatalog.Problems(music).ShouldBeEmpty();
 		music.Songs.ShouldHaveSingleItem().Build().Sections.Select(s => s.Name).ShouldBe(["verse", "chorus"]);
 		music.Cues.Select(c => c.Name).ShouldBe(["intensity", "mood"]);
@@ -141,6 +147,7 @@ public class WorkbenchFolderTests
 		var root = Path.Combine(Path.GetTempPath(), "lunelle-studio-nowhere-" + Guid.NewGuid().ToString("N")[..8]);
 		var files = new MemoryFiles();
 		files.WriteText(Path.Combine(root, MusicFolder.ProjectFileName), Project);
+		files.WriteText(Path.Combine(root, "Cues", "tunes.cues.json"), Cues);
 		files.WriteText(Path.Combine(root, "Patches", "tone.patch.json"),
 			PatchFile.Write(PatchSpec.From(Patch.Build("tone", p => p.Out(p.Sine(1f, Env.Adsr(0.005f, 0.1f, 0.6f, 0.1f)))))));
 		files.WriteText(Path.Combine(root, "Songs", "tune.song.json"), Song(120));
@@ -152,7 +159,7 @@ public class WorkbenchFolderTests
 		var first = host.Current.ShouldNotBeNull();
 		workbench.ViewModel.SongName.ShouldBe("tune");
 		workbench.NewSong("fresh").ShouldBeNull();
-		files.ReadText(Path.Combine(root, "Songs", "fresh.song.json")).ShouldContain("\"name\": \"fresh\"");
+		files.ReadText(Path.Combine(root, "Songs", "fresh.song.json")).ShouldContain("\"format\": \"lunelle-song/3\"");
 		workbench.NewPatch("bell", copyOf: "tone").ShouldBeNull();
 		files.Exists(Path.Combine(root, "Patches", "bell.patch.json")).ShouldBeTrue();
 

@@ -228,4 +228,32 @@ public class MusicProjectTests
 		folderMusic.MacroName(0).ShouldBe("bright");
 		build.Release();
 	}
+
+	[Test]
+	public async Task A_project_s_unsaved_edits_compile_from_the_document()
+	{
+		var folder = Path.Combine(Path.GetTempPath(), "lunelle-studio-document-" + Guid.NewGuid().ToString("N")[..8], "Edited");
+		var path = ProjectTemplate.Create(folder, Path.GetDirectoryName(typeof(Song).Assembly.Location));
+		var document = ProjectDocument.Open(DiskFiles.Instance, folder);
+		using var project = await MusicProject.OpenAsync(path, MusicProjectTests.Configured, document);
+		var first = project.TakeBuild().ShouldNotBeNull();
+		first.Errors.ShouldBeEmpty();
+		first.Catalog!.Songs[0].Build().Tempo.ShouldBe(112f);
+		first.Release();
+
+		var song = Path.Combine(folder, "Songs", "demo.song.json");
+		var saved = File.ReadAllText(song);
+		document.WriteText(song, saved.Replace("\"tempo\": 112", "\"tempo\": 90", StringComparison.Ordinal));
+		var edited = await NextBuildAsync(project);
+		edited.Errors.ShouldBeEmpty();
+		edited.Catalog!.Songs[0].Build().Tempo.ShouldBe(90f);
+		File.ReadAllText(song).ShouldBe(saved);
+
+		// Undone, the next build is the file's again
+		document.Undo();
+		var undone = await NextBuildAsync(project);
+		undone.Catalog!.Songs[0].Build().Tempo.ShouldBe(112f);
+		edited.Release();
+		undone.Release();
+	}
 }

@@ -14,7 +14,7 @@ public sealed partial class WorkbenchApp
 	private bool _opened;
 
 	partial void OpenProject() =>
-		_opening = MusicProject.OpenAsync(projectPath, new Dictionary<string, string> { ["Configuration"] = Configuration });
+		_opening = MusicProject.OpenAsync(projectPath, new Dictionary<string, string> { ["Configuration"] = Configuration }, Document);
 
 	partial void UpdateProject()
 	{

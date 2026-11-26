@@ -15,7 +15,7 @@ internal static class CatalogReader
 	/// patches' sources. A song edited in the workbench is resolved as its file is (MusicFolder.BuildSong), its sounds the
 	/// project's built ones where it has them, its cues the catalog's own, its code the song's class's members.
 	/// </summary>
-	public static (WorkbenchCatalog? Catalog, string? Problem) Read(Assembly assembly, IReadOnlyList<string> files)
+	public static (WorkbenchCatalog? Catalog, string? Problem) Read(Assembly assembly, IReadOnlyList<string> files, IMusicFiles? source = null)
 	{
 		if (assembly.GetCustomAttribute<MusicCatalogAttribute>() is not { } attribute)
 			return (null, $"{assembly.GetName().Name} names no catalog: add [assembly: MusicCatalog(typeof(...))] to it.");
@@ -37,7 +37,10 @@ internal static class CatalogReader
 		{
 			try
 			{
-				music = MusicFolder.FromDirectory(root);
+				// The studio's document where it has one, so an edit not yet saved is what the song is resolved against
+				music = source is null
+					? MusicFolder.FromDirectory(root)
+					: MusicFolder.Load(new MemorySource(source.List(root), path => source.ReadBytes(Path.Combine(root, path)), root));
 			}
 			catch (DirectoryNotFoundException)
 			{

@@ -6,7 +6,7 @@ namespace BinaryVibrance.LunelleStudio;
 /// A cue of the project's in the cues panel (docs/spec/ui-cues.md): its id, its namespace and name, what it is, and
 /// whether the open song imports it; ticking it imports the cue, unticking takes it out (refused while the song reads it).
 /// </summary>
-public sealed class CueEntryViewModel : ViewModel
+public sealed class CueEntryViewModel : LibraryRowViewModel
 {
 	private readonly Workbench _workbench;
 	private bool _imported;
@@ -33,7 +33,7 @@ public sealed class CueEntryViewModel : ViewModel
 	public string? Delete() => _workbench.DeleteCue(Id);
 
 	/// <summary>Its id: <c>lava/heat</c>.</summary>
-	public string Id { get; }
+	public override string Id { get; }
 
 	/// <summary>Its namespace, or "" for none.</summary>
 	public string Namespace { get; }

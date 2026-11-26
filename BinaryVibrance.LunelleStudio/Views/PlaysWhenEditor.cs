@@ -29,6 +29,7 @@ internal sealed class PlaysWhenEditor : ContentControl
 	private readonly TextBlock _held = Text("", 11f, Theme.Error);
 	private readonly TextBlock _problem = Text("", 11f, Theme.Error);
 	private readonly List<Action> _refreshers = [];
+	private readonly CueMaker _maker;
 	private ConditionShape? _shape;
 	private string? _when;
 	private bool _asText;
@@ -50,6 +51,17 @@ internal sealed class PlaysWhenEditor : ContentControl
 		_now.TextWrapping = TextWrapping.Wrap;
 		_held.TextWrapping = TextWrapping.Wrap;
 		_problem.TextWrapping = TextWrapping.Wrap;
+		// A condition naming a cue the project hasn't offers to make it, then is taken again
+		_maker = new CueMaker(part.Workbench, condition =>
+		{
+			var why = _apply(condition);
+			Problem(why, condition);
+			if (why is null)
+			{
+				_when = condition;
+				Build();
+			}
+		});
 		Content = _column;
 		Build();
 	}
@@ -98,6 +110,8 @@ internal sealed class PlaysWhenEditor : ContentControl
 		_column.Children.Add(TextClause());
 		_problem.Visibility = Visibility.Collapsed;
 		_column.Children.Add(_problem);
+		_maker.Offer(null);
+		_column.Children.Add(_maker);
 		ShowSentence();
 		ShowNow();
 	}
@@ -305,7 +319,7 @@ internal sealed class PlaysWhenEditor : ContentControl
 			{
 				var typed = text.Text.Trim();
 				var why = _apply(typed.Length == 0 ? null : typed);
-				Problem(why);
+				Problem(why, typed);
 				if (why is null)
 				{
 					_when = typed.Length == 0 ? null : typed;
@@ -345,7 +359,7 @@ internal sealed class PlaysWhenEditor : ContentControl
 			return;
 		var when = _shape.Write();
 		var why = _apply(when);
-		Problem(why);
+		Problem(why, when);
 		if (why is null)
 			_when = when;
 	}
@@ -364,10 +378,11 @@ internal sealed class PlaysWhenEditor : ContentControl
 		}
 	}
 
-	private void Problem(string? why)
+	private void Problem(string? why, string? condition = null)
 	{
 		_problem.Text = why ?? "";
 		_problem.Visibility = why is null ? Visibility.Collapsed : Visibility.Visible;
+		_maker.Offer(why is null ? null : condition);
 	}
 
 	private void ShowSentence() => _sentence.Text = _shape?.Sentence() ?? $"Plays when {_when}.";

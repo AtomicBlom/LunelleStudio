@@ -276,6 +276,59 @@ public class WorkbenchFolderTests
 	}
 
 	[Test]
+	public void A_cue_a_condition_names_is_made_as_it_reads_and_a_cue_s_file_is_edited_from_its_menu()
+	{
+		var root = Path.Combine(Path.GetTempPath(), "lunelle-studio-cue-edits-" + Guid.NewGuid().ToString("N")[..8]);
+		var disk = new MemoryFiles();
+		disk.WriteText(Path.Combine(root, MusicFolder.ProjectFileName), Project);
+		disk.WriteText(Path.Combine(root, "Cues", "tunes.cues.json"), Cues);
+		disk.WriteText(Path.Combine(root, "Patches", "tone.patch.json"),
+			PatchFile.Write(PatchSpec.From(Patch.Build("tone", p => p.Out(p.Sine(1f, Env.Adsr(0.005f, 0.1f, 0.6f, 0.1f)))))));
+		var song = Path.Combine(root, "Songs", "tune.song.json");
+		disk.WriteText(song, Song(120));
+		var document = ProjectDocument.Open(disk, root);
+		using var session = new OfflineSession();
+		using var workbench = new Workbench(session.Engine, session.Engine.Master, new WorkbenchCatalog()) { Files = document };
+		using var host = WorkbenchFolder.Open(root, workbench);
+		host.Update();
+		workbench.HasCode.ShouldBeFalse();
+		workbench.CodeWarning("lava/heat").ShouldBe("");
+
+		// What a condition names that is no cue, as it reads it
+		const string condition = "lava/heat > 0.5 and biome is Forest and mood is Dark and pass < 2";
+		workbench.UnknownCuesIn(condition).Select(u => (u.Id, string.Join(",", u.Options))).ShouldBe([("lava/heat", ""), ("biome", "Forest")]);
+		workbench.CheckCondition(condition).ShouldNotBeNull();
+		workbench.MakeCuesIn(condition).ShouldBeNull();
+		workbench.ProjectCues.Select(c => c.Id).ShouldBe(["biome", "intensity", "lava/heat", "mood"]);
+		workbench.ProjectCues.Single(c => c.Id == "biome").Options.Select(o => o.Name).ShouldBe(["Forest", "Other"]);
+		document.ReadText(song).ShouldContain("\"lava/heat\": null");
+		// The condition holds now, before the project is read again
+		workbench.CheckCondition(condition).ShouldBeNull();
+		// Both made as one step
+		document.Undo();
+		document.Exists(Path.Combine(root, "Cues", "lava.cues.json")).ShouldBeFalse();
+		document.Redo();
+
+		// The menu edits a choice's options (one a song names stays), where it starts, and what it is for
+		var cues = Path.Combine(root, "Cues", "tunes.cues.json");
+		workbench.EditCue("mood", ["Calm", "Bright"], null, null).ShouldNotBeNull();
+		workbench.EditCue("mood", ["Bright", "Calm", "Dark"], "Bright", "How the scene feels").ShouldBeNull();
+		var edited = document.ReadText(cues);
+		edited.ShouldContain("\"options\": [\"Bright\", \"Calm\", \"Dark\"]");
+		edited.ShouldContain("\"initial\": \"Bright\"");
+		edited.ShouldContain("\"about\": \"How the scene feels\"");
+		workbench.EditCue("intensity", ["A", "B"], null, null).ShouldNotBeNull();
+		workbench.EditCue("intensity", null, "1.5", null).ShouldNotBeNull();
+		workbench.EditCue("intensity", null, "0.25", null).ShouldBeNull();
+		document.ReadText(cues).ShouldContain("\"initial\": 0.25");
+
+		// The strip's value kept as the song's preview
+		workbench.Player.Set(workbench.CueNamed("intensity")!, 0.7f);
+		workbench.PreviewCueHere("intensity").ShouldBeNull();
+		document.ReadText(song).ShouldContain("\"intensity\": 0.7");
+	}
+
+	[Test]
 	public void A_part_s_notes_are_extracted_into_a_pattern_detached_again_and_a_pattern_used_in_a_part()
 	{
 		var root = Path.Combine(Path.GetTempPath(), "lunelle-studio-patterns-" + Guid.NewGuid().ToString("N")[..8]);

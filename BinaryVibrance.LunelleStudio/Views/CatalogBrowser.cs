@@ -171,71 +171,16 @@ internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyCh
 		NewCue.Click += (_, _) => AskForCue();
 	}
 
-	// A flyout making a cue: its id (a namespace before a '/'), a level or a choice among options, and what it is for
 	private void AskForCue()
 	{
-		if (ViewModel?.Workbench is not { } workbench)
-			return;
-		var id = new TextBox { Width = 240f };
-		ToolTipService.SetToolTip(id, "Lowercase letters, digits and hyphens, a namespace before a '/': intensity, lava/heat");
-		var choice = new ToggleSwitch { OnContent = "A choice", OffContent = "A level, 0 to 1" };
-		var options = new TextBox { Width = 240f, Visibility = Visibility.Collapsed };
-		ToolTipService.SetToolTip(options, "The options, by commas: Calm, Bright, Dark");
-		choice.Toggled += (_, _) => options.Visibility = choice.IsOn ? Visibility.Visible : Visibility.Collapsed;
-		var about = new TextBox { Width = 240f };
-		ToolTipService.SetToolTip(about, "What it is for, shown as its tooltip and in the game's code");
-		var problem = new TextBlock { FontSize = 11f, Foreground = Theme.Error, TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed, Width = 240f };
-		var column = new StackPanel { Orientation = Orientation.Vertical };
-		column.Children.Add(new TextBlock { Text = "New cue, imported into this song", FontSize = 12f, Foreground = Theme.Dim, Margin = new Thickness(0f, 0f, 0f, 6f) });
-		column.Children.Add(id);
-		column.Children.Add(choice);
-		column.Children.Add(options);
-		column.Children.Add(new TextBlock { Text = "About", FontSize = 11f, Foreground = Theme.Faint, Margin = new Thickness(0f, 6f, 0f, 2f) });
-		column.Children.Add(about);
-		var make = new Button { Content = new TextBlock { Text = "make", FontSize = 12f }, Margin = new Thickness(0f, 8f, 0f, 0f) };
-		column.Children.Add(make);
-		column.Children.Add(problem);
-		var flyout = new Flyout { Content = column, Placement = FlyoutPlacementMode.RightEdgeAlignedTop };
-		make.Click += (_, _) =>
-		{
-			var named = choice.IsOn ? options.Text.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries) : null;
-			var why = workbench.NewCue(id.Text, named, about.Text);
-			problem.Text = why ?? "";
-			problem.Visibility = why is null ? Visibility.Collapsed : Visibility.Visible;
-			if (why is null)
-				flyout.Hide();
-		};
-		flyout.ShowAt(NewCue);
+		if (ViewModel?.Workbench is { } workbench)
+			CueFlyouts.AskForCue(workbench, NewCue);
 	}
 
-	// A cue's menu: renamed in every song, or deleted when no song reads it
 	private void ShowCueMenu(CueEntryViewModel cue)
 	{
-		var name = new TextBox { Width = 220f, Text = cue.Id };
-		var problem = new TextBlock { FontSize = 11f, Foreground = Theme.Error, TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed, Width = 220f };
-		var rename = new Button { Content = new TextBlock { Text = "rename", FontSize = 12f }, Margin = new Thickness(0f, 6f, 6f, 0f) };
-		var delete = new Button { Content = new TextBlock { Text = "delete", FontSize = 12f }, Margin = new Thickness(0f, 6f, 0f, 0f) };
-		var buttons = new StackPanel { Orientation = Orientation.Horizontal };
-		buttons.Children.Add(rename);
-		buttons.Children.Add(delete);
-		var column = new StackPanel { Orientation = Orientation.Vertical };
-		column.Children.Add(new TextBlock { Text = cue.Id, FontSize = 12f, Foreground = Theme.Dim, Margin = new Thickness(0f, 0f, 0f, 6f) });
-		if (cue.About.Length > 0)
-			column.Children.Add(new TextBlock { Text = cue.About, FontSize = 11f, Foreground = Theme.Faint, TextWrapping = TextWrapping.Wrap, Width = 220f });
-		column.Children.Add(name);
-		column.Children.Add(buttons);
-		column.Children.Add(problem);
-		var flyout = new Flyout { Content = column, Placement = FlyoutPlacementMode.RightEdgeAlignedTop };
-		void Done(string? why)
-		{
-			problem.Text = why ?? "";
-			problem.Visibility = why is null ? Visibility.Collapsed : Visibility.Visible;
-			if (why is null)
-				flyout.Hide();
-		}
-		rename.Click += (_, _) => Done(cue.Rename(name.Text));
-		delete.Click += (_, _) => Done(cue.Delete());
-		flyout.ShowAt(CueList);
+		if (ViewModel?.Workbench is { } workbench)
+			CueFlyouts.ShowCueMenu(workbench, cue, CueList);
 	}
 
 	private void OnModelChanged(object? sender, PropertyChangedEventArgs e)

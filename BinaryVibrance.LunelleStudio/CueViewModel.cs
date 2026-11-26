@@ -56,6 +56,9 @@ public sealed class CueViewModel : ViewModel
 	/// <summary>It, for a view drawing from all of it at once.</summary>
 	public CueViewModel Self => this;
 
+	/// <summary>Has the open song start this cue at the value it has now (its preview value).</summary>
+	public System.Windows.Input.ICommand StartHereCommand => field ??= new ActionCommand(() => _workbench.ViewModel.Notice = _workbench.PreviewCueHere(Cue.Name) ?? "");
+
 	/// <summary>A level's value, 0 to 1. Setting it tells the music.</summary>
 	public float Value
 	{

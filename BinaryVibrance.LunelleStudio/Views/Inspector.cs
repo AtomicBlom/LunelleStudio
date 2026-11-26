@@ -309,7 +309,7 @@ internal sealed class Inspector : ContentControl
 					exits[at] = (when, exits[at].Then);
 					Send();
 					return null;
-				}));
+				}, Workbench));
 				panel.Children.Add(new Border
 				{
 					Background = Theme.Sunk,

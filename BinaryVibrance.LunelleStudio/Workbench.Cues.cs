@@ -49,6 +49,7 @@ public sealed partial class Workbench
 			rows.Clear();
 			foreach (var cue in ProjectCues)
 				rows.Add(new CueEntryViewModel(this, cue));
+			ViewModel.FilterLibrary();
 		}
 		foreach (var row in rows)
 		{

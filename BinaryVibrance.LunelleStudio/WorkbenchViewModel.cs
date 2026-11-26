@@ -459,6 +459,7 @@ public sealed class WorkbenchViewModel : ViewModel
 		Group("patch", Patches, words);
 		Group("kit", Kits, words);
 		Group("pattern", LibraryPatterns, words);
+		Group("cue", ProjectCues, words);
 		// A preset by its name or its kind: "bass", "sampled"
 		foreach (var preset in Presets)
 			preset.IsVisible = words.All(w => preset.Name.Contains(w, StringComparison.OrdinalIgnoreCase)

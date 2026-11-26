@@ -131,13 +131,13 @@ public sealed partial class Workbench
 	{
 		try
 		{
-			ConditionText.Parse(text, CueNamed);
+			ConditionText.Parse(text, name => CueNamed(name) ?? DefinedCue(name));
 			return null;
 		}
 		catch (FormatException ex)
 		{
 			return ex.Message.Contains("no cue", StringComparison.Ordinal) && _catalog.Root is not null
-				? ex.Message + " Make it with the + under Cues in the library."
+				? ex.Message + (UnknownCuesIn(text).Count > 0 ? " Make it below, or with the + under Cues." : " Make it with the + under Cues in the library.")
 				: ex.Message;
 		}
 	}

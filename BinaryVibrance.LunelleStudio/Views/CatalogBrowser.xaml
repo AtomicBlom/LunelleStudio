@@ -215,22 +215,31 @@
                         <ListView x:Name="CueList" ItemsSource="{x:Bind ViewModel.ProjectCues, Mode=OneWay}">
                             <ListView.ItemTemplate>
                                 <DataTemplate x:DataType="wb:CueEntryViewModel">
-                                    <Grid Tag="{x:Bind Self}" ToolTipService.ToolTip="{x:Bind About}">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-                                        <CheckBox IsChecked="{x:Bind IsImported, Mode=TwoWay}" VerticalAlignment="Center" />
-                                        <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="6,0,6,0" VerticalAlignment="Center">
-                                            <TextBlock Text="{x:Bind Id}" FontSize="13" VerticalAlignment="Center" />
-                                            <TextBlock Text="{x:Bind Kind}" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Margin="6,1,0,0" VerticalAlignment="Center" />
-                                        </StackPanel>
-                                        <Button Grid.Column="2" Command="{x:Bind MenuCommand}" Padding="7,1,7,2" VerticalAlignment="Center"
-                                                ToolTipService.ToolTip="Rename or delete this cue, in every song">
-                                            <TextBlock Text="…" FontSize="11" />
+                                    <StackPanel Tag="{x:Bind Self}">
+                                        <Button Visibility="{x:Bind ShowsFolder, Mode=OneWay}" Command="{x:Bind FoldCommand}" Padding="4,0,8,1" Margin="0,4,0,2" HorizontalAlignment="Left"
+                                                ToolTipService.ToolTip="Fold this namespace away, or open it">
+                                            <StackPanel Orientation="Horizontal">
+                                                <TextBlock Text="{x:Bind FolderGlyph, Mode=OneWay}" FontSize="11" Foreground="{x:Static views:Theme.Faint}" VerticalAlignment="Center" />
+                                                <TextBlock Text="{x:Bind Folder}" FontSize="11" Foreground="{x:Static views:Theme.Dim}" Margin="5,0,0,0" VerticalAlignment="Center" />
+                                            </StackPanel>
                                         </Button>
-                                    </Grid>
+                                        <Grid Visibility="{x:Bind IsVisible, Mode=OneWay}" Margin="{x:Bind views:Display.Indent(Folder)}" ToolTipService.ToolTip="{x:Bind About}">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <CheckBox IsChecked="{x:Bind IsImported, Mode=TwoWay}" VerticalAlignment="Center" />
+                                            <StackPanel Grid.Column="1" Orientation="Horizontal" Margin="6,0,6,0" VerticalAlignment="Center">
+                                                <TextBlock Text="{x:Bind Leaf}" FontSize="13" VerticalAlignment="Center" />
+                                                <TextBlock Text="{x:Bind Kind}" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Margin="6,1,0,0" VerticalAlignment="Center" />
+                                            </StackPanel>
+                                            <Button Grid.Column="2" Command="{x:Bind MenuCommand}" Padding="7,1,7,2" VerticalAlignment="Center"
+                                                    ToolTipService.ToolTip="Edit this cue (its options, where it starts, what it is for), rename it in every song, or delete it">
+                                                <TextBlock Text="…" FontSize="11" />
+                                            </Button>
+                                        </Grid>
+                                    </StackPanel>
                                 </DataTemplate>
                             </ListView.ItemTemplate>
                         </ListView>

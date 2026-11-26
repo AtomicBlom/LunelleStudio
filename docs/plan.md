@@ -140,7 +140,7 @@ The format is a contract between Lunelle's runtime, its generator, the studio an
 specified before it is built. Each spec says: the schema with examples, how it resolves, the errors it reports, what
 is deliberately out of scope, and the test cases an implementation must pass. Specs live with whoever owns them.
 
-**Written up front (before Phase 2):** drafts of 1 and 2 are on Lunelle's `format-2-specs` branch.
+**Written up front (before Phase 2):** drafts of all five are on Lunelle's `format-2-specs` branch.
 1. **Lunelle, `docs/spec/project.md`**: `.lunelle` packing and unpacking, `lunelle.meta.json`, the content folders,
    library references, bundling, and `description`.
 2. **Lunelle, `docs/spec/overrides.md`**: stable ids, override path syntax, the resolution order across the three

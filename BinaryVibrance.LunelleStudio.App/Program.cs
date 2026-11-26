@@ -55,6 +55,13 @@ try
 		_ => throw new ArgumentException("Give it a music project's .csproj, or its folder; or \"new <folder>\" to make one."),
 	};
 	filesAlone = filesAlone || appArgs is not ["new", ..] && Directory.Exists(project);
+	// A project with code is built by the SDK: without one, its music files are opened alone
+	if (!filesAlone && DotnetSdk.Find() is null)
+	{
+		Console.Error.WriteLine($"[workbench] {DotnetSdk.Missing}");
+		project = Path.GetDirectoryName(project)!;
+		filesAlone = true;
+	}
 }
 catch (Exception ex) when (ex is ArgumentException or InvalidOperationException or IOException)
 {

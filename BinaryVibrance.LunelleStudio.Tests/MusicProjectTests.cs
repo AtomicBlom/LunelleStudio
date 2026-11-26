@@ -177,8 +177,12 @@ public class MusicProjectTests
 
 		// Another build of BinaryVibrance.Lunelle: any other assembly stands in for it, its module's id differing
 		var other = typeof(AudioTap).Assembly.Location;
-		SharedReferences.Mismatch(new Dictionary<string, string> { ["BinaryVibrance.Lunelle"] = other })
-			.ShouldNotBeNull().ShouldContain($"BinaryVibrance.Lunelle: the project's is {other}, the workbench runs {synth}");
+		var mismatch = SharedReferences.Mismatch(new Dictionary<string, string> { ["BinaryVibrance.Lunelle"] = other }).ShouldNotBeNull();
+		// Another version is named as one; the same version built again is a rebuild, which a restart mends
+		if (SharedReferences.Version(other) is { } theirs && SharedReferences.Version(synth) is { } ours && theirs != ours)
+			mismatch.ShouldStartWith($"This project uses BinaryVibrance.Lunelle {theirs}; this studio is {ours}.");
+		else
+			mismatch.ShouldContain($"BinaryVibrance.Lunelle: the project's is {other}, the studio runs {synth}");
 	}
 
 	[Test]

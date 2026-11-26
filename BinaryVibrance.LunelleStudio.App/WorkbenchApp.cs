@@ -5,7 +5,9 @@ using BinaryVibrance.Kaldra.Core.Materials;
 using BinaryVibrance.Kaldra.UI.Vysara;
 
 using BinaryVibrance.Vysara;
+using BinaryVibrance.Lunelle.Music;
 using BinaryVibrance.Vysara.Controls;
+using BinaryVibrance.Vysara.Controls.Primitives;
 
 namespace BinaryVibrance.LunelleStudio.App;
 
@@ -128,6 +130,7 @@ public sealed partial class WorkbenchApp(string projectPath, IWorkbenchExtension
 		var view = new WorkbenchView(_workbench.ViewModel);
 		extension?.Attach(new WorkbenchExtensionContext(_workbench, Audio, view.TransportExtras, arguments ?? []));
 		AddSave(view);
+		AddExports(view);
 		AddControls(view);
 		_view.Root.Content = view;
 		WatchExtension();
@@ -186,6 +189,72 @@ public sealed partial class WorkbenchApp(string projectPath, IWorkbenchExtension
 		};
 		Show();
 		view.TransportExtras.Children.Add(button);
+	}
+
+	// The host's way to keep rendered files: a folder the user chooses (the desktop), or downloads (the browser); what it said
+	private partial Task<string> DeliverAsync(IReadOnlyList<(string Name, byte[] Bytes)> files);
+
+	// Exports, at the transport's end: the open song's, each rendered to a WAV (or all of them), and a new one recorded from
+	// the cues moved as the song plays (docs/spec/ui-exports.md)
+	private void AddExports(WorkbenchView view)
+	{
+		var button = new Button { Content = new TextBlock { Text = "exports", FontSize = 13f, Margin = new Thickness(8, 3, 8, 4) }, Margin = new Thickness(0, 0, 4, 4) };
+		ToolTipService.SetToolTip(button, "Render the song's exports to WAV, the same every time, or record a new one");
+		button.Click += (_, _) => ShowExports(button);
+		view.TransportExtras.Children.Add(button);
+	}
+
+	private void ShowExports(Button anchor)
+	{
+		var workbench = _workbench;
+		var column = new StackPanel { Orientation = Orientation.Vertical };
+		var said = new TextBlock { FontSize = 11f, TextWrapping = TextWrapping.Wrap, Width = 260f };
+		var flyout = new Flyout { Content = column, Placement = FlyoutPlacementMode.Bottom };
+		column.Children.Add(new TextBlock { Text = "This song's exports", FontSize = 12f, Margin = new Thickness(0f, 0f, 0f, 6f) });
+		var song = workbench.ViewModel.SongName;
+		async Task Render(IReadOnlyList<string> exports)
+		{
+			var files = new List<(string, byte[])>();
+			foreach (var export in exports)
+			{
+				using var wav = new MemoryStream();
+				if (workbench.RenderExport(export, wav) is { } why)
+				{
+					said.Text = $"{export}: {why}";
+					return;
+				}
+				files.Add((SongExport.FileName(song, export), wav.ToArray()));
+			}
+			said.Text = await DeliverAsync(files);
+		}
+		var exports = workbench.SongExports;
+		if (exports.Count == 0)
+			column.Children.Add(new TextBlock { Text = "None yet: record one, or add \"exports\" to the song's file.", FontSize = 11f, TextWrapping = TextWrapping.Wrap, Width = 260f });
+		foreach (var (exportName, title) in exports)
+		{
+			var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0f, 2f, 0f, 0f) };
+			row.Children.Add(new TextBlock { Text = title, FontSize = 12f, Width = 190f, VerticalAlignment = VerticalAlignment.Center });
+			row.Children.Add(Button("render", $"Render {exportName} to {SongExport.FileName(song, exportName)}", () => _ = Render([exportName])));
+			column.Children.Add(row);
+		}
+		if (exports.Count > 1)
+			column.Children.Add(Button("render all", "Render every export of this song", () => _ = Render([.. exports.Select(e => e.Name)])));
+		if (!workbench.CanRenderExports)
+			said.Text = "This project's songs can't be rendered here yet: their code would play as rests.";
+		var name = new TextBox { Width = 160f, Text = "take" };
+		ToolTipService.SetToolTip(name, "The new export's name: lowercase letters, digits and hyphens");
+		var record = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0f, 10f, 0f, 0f) };
+		record.Children.Add(name);
+		record.Children.Add(Button(workbench.IsRecording ? "stop" : "record",
+			"Record: the song plays from its start, and every cue you move becomes an event on its beat; stop writes the export",
+			() =>
+			{
+				said.Text = (workbench.IsRecording ? workbench.StopRecording(name.Text) : workbench.StartRecording()) ?? (workbench.IsRecording ? "Recording: move the cues." : "Recorded.");
+				flyout.Hide();
+			}));
+		column.Children.Add(record);
+		column.Children.Add(said);
+		flyout.ShowAt(anchor);
 	}
 
 	// A button for the transport's end, where each host puts its own controls (AddControls)

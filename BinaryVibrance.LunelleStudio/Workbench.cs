@@ -844,7 +844,11 @@ public sealed partial class Workbench : IDisposable
 					clip.State = state;
 	}
 
-	internal void SetCue(CueBase cue, float value) => Player.Set(cue, value);
+	internal void SetCue(CueBase cue, float value)
+	{
+		Player.Set(cue, value);
+		Record(cue, value);
+	}
 
 	internal void SetLoop(bool loop)
 	{

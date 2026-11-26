@@ -72,6 +72,18 @@ public sealed partial class WorkbenchApp
 
 	private bool _asking;
 
+	// Rendered files into a folder the user chooses
+	private async partial Task<string> DeliverAsync(IReadOnlyList<(string Name, byte[] Bytes)> files)
+	{
+		if (!CanShowFileDialogs)
+			return "This studio can't ask where to write the files.";
+		if (await AskAsync(new FileDialog { Kind = FileDialogKind.OpenFolder, DefaultLocation = StudioHome.Folder }) is not { } folder)
+			return "";
+		foreach (var (name, bytes) in files)
+			await File.WriteAllBytesAsync(Path.Combine(folder, name), bytes);
+		return $"Wrote {string.Join(", ", files.Select(f => f.Name))} to {folder}.";
+	}
+
 	// Open, open a folder and export, at the transport's end; and a project dropped on the window opens too
 	partial void AddControls(WorkbenchView view)
 	{

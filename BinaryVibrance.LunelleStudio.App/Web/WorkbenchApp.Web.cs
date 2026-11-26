@@ -10,6 +10,13 @@ public sealed partial class WorkbenchApp
 
 	private partial bool ProjectHasMusic() => false;
 
+	// Rendered files as downloads, one each
+	private partial Task<string> DeliverAsync(IReadOnlyList<(string Name, byte[] Bytes)> files)
+	{
+		var kept = files.Where(f => SaveFile(f.Name, "audio/wav", f.Bytes)).Select(f => f.Name).ToList();
+		return Task.FromResult(kept.Count == files.Count ? $"Saved {string.Join(", ", kept)}." : "The browser didn't keep every file.");
+	}
+
 	partial void AddControls(WorkbenchView view)
 	{
 		var extras = view.TransportExtras;

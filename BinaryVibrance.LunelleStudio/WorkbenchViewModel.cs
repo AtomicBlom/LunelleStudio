@@ -635,6 +635,9 @@ public sealed class WorkbenchViewModel : ViewModel
 	/// <summary>Whether the project has cue files to list (a project of format 2).</summary>
 	public bool HasProjectCues { get; set => Set(ref field, value); }
 
+	/// <summary>Whether an export is being recorded from the cues moved as the song plays.</summary>
+	public bool IsRecording { get; set => Set(ref field, value); }
+
 	/// <summary>Whether the project has edits not yet saved (the document's, docs/spec/transactions.md).</summary>
 	public bool IsDirty { get; set => Set(ref field, value); }
 }

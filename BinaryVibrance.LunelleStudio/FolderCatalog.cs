@@ -36,6 +36,11 @@ public static class FolderCatalog
 			DerivedPatch = name => Derived(folder, name),
 			Folder = Path.GetFullPath(root),
 			Root = Path.GetFullPath(root),
+			RenderExport = (song, export, output) =>
+			{
+				SongExport.Render(folder, song, export, output);
+				return null;
+			},
 			Patterns = [.. folder.Project.Root.Entries(EntryKind.Pattern).Keys.Order(StringComparer.Ordinal)],
 			ResolveSong = (name, text) => folder.Resolve(name, text) is var (song, problem) ? (song.Json, problem?.Message) : default,
 		};

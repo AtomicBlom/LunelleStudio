@@ -331,4 +331,52 @@ public class WorkbenchFolderTests
 		document.Undo();
 		document.ReadText(song).ShouldBe(detached);
 	}
+
+	[Test]
+	public void A_song_s_exports_are_listed_rendered_and_a_new_one_recorded_from_the_cues_moved()
+	{
+		var root = Path.Combine(Path.GetTempPath(), "lunelle-studio-exports-" + Guid.NewGuid().ToString("N")[..8]);
+		var disk = new MemoryFiles();
+		disk.WriteText(Path.Combine(root, MusicFolder.ProjectFileName), Project);
+		disk.WriteText(Path.Combine(root, "Cues", "tunes.cues.json"), Cues);
+		disk.WriteText(Path.Combine(root, "Patches", "tone.patch.json"),
+			PatchFile.Write(PatchSpec.From(Patch.Build("tone", p => p.Out(p.Sine(1f, Env.Adsr(0.005f, 0.1f, 0.6f, 0.1f)))))));
+		var song = Path.Combine(root, "Songs", "tune.song.json");
+		disk.WriteText(song, Song(120).Replace("\"tempo\": 120,", "\"tempo\": 120, \"exports\": [{ \"name\": \"short\", \"title\": \"A short one\", \"end\": { \"at\": \"3:1\", \"tail\": \"0s\" } }],", StringComparison.Ordinal));
+		var document = ProjectDocument.Open(disk, root);
+		using var session = new OfflineSession();
+		using var workbench = new Workbench(session.Engine, session.Engine.Master, new WorkbenchCatalog()) { Files = document };
+		using var host = WorkbenchFolder.Open(root, workbench);
+		host.Update();
+		host.Current!.Problems.ShouldBeEmpty();
+
+		workbench.SongExports.ShouldBe([("short", "A short one")]);
+		using (var wav = new MemoryStream())
+		{
+			workbench.RenderExport("short", wav).ShouldBeNull();
+			System.Text.Encoding.ASCII.GetString(wav.ToArray(), 0, 4).ShouldBe("RIFF");
+			wav.Length.ShouldBeGreaterThan(2 * 48_000 * 3 * 2);
+		}
+
+		// A recording: the song from its start, a cue moved in its second bar, an event there
+		workbench.StartRecording().ShouldBeNull();
+		workbench.ViewModel.IsRecording.ShouldBeTrue();
+		void Bars(double bars)
+		{
+			for (var frames = 0; frames < bars * 96_000; frames += 256)
+			{
+				workbench.Update(256 / 48_000.0);
+				session.Render(256);
+			}
+		}
+		Bars(1.25);
+		workbench.ViewModel.Cues.Single(c => c.Name == "mood").SelectedOption = 1;
+		Bars(1);
+		workbench.StopRecording("take").ShouldBeNull();
+		var recorded = document.ReadText(song);
+		recorded.ShouldContain("\"name\": \"take\"");
+		recorded.ShouldContain("\"cue\": \"mood\"");
+		recorded.ShouldContain("\"to\": \"Dark\"");
+		recorded.ShouldContain("\"at\": \"2:");
+	}
 }

@@ -59,6 +59,12 @@ public sealed record WorkbenchCatalog
 	/// </summary>
 	public string? Root { get; init; }
 
+	/// <summary>
+	/// Renders a song's export (by song and export name) to a stream as a WAV (Lunelle's SongExport); why it couldn't, or
+	/// null. Null where the catalog can't render.
+	/// </summary>
+	public Func<string, string, Stream, string?>? RenderExport { get; init; }
+
 	/// <summary>The project's patterns, by id (format 2's Patterns/), for the library to offer a part.</summary>
 	public IReadOnlyList<string> Patterns { get; init; } = [];
 

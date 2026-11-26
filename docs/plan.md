@@ -31,10 +31,10 @@ The work spans four repositories: **Lunelle** (format, resolver, generator, play
   lossless round trip. A player opens `.lunelle` files. Games author in the unpacked folder, with git for the JSON and
   Git LFS for samples.
 - **`lunelle.meta.json`** is the manifest, at the root of both forms. It holds:
-  - `format`, `name`, and optional author, licence and description;
+  - `format`, `name`, and optional title, version, about, author and licence;
   - `libraries`: named references, each pinned to a `version` or pointing at a `path` (a folder or another `.lunelle`);
   - `macros`;
-  - `cues`, or cue files under `Cues/` (open question);
+  - cues are *not* here: they are entries under `Cues/` (decided in the project spec);
   - `songs`: an optional order for players, with unlisted songs after the listed ones.
 - **What the manifest doesn't hold:**
   - The content itself, which is found by convention in `Songs/`, `Patches/`, `Kits/`, `Patterns/` and `Cues/`.
@@ -45,14 +45,14 @@ The work spans four repositories: **Lunelle** (format, resolver, generator, play
   editable.
 - **JSON stays; no comments.** The studio rewrites files, so comments would be silently lost (JSONC), or would mean a
   new parser that keeps them (YAML, TOML) in the netstandard2.0 generator. Instead, every cue, cue option, macro, song,
-  patch, kit and pattern gets a **`description`** field. The studio shows it, and the generator emits it as XML doc
+  patch, kit and pattern gets an **`about`** field (the name songs and patches already use). The studio shows it, and the generator emits it as XML doc
   comments in code mode.
 - A new game project in folder form gets a `.gitattributes` that sends samples (`*.ogg`, `*.flac`, `*.wav`) to LFS.
 
 ### Libraries and overrides
 - There are three layers: **Lunelle's built-in library** (today's `presets/`), **the game's library**, and **the song**.
   Any project can be a library.
-- **References are namespaced**, such as `"base": "lunelle/fm-keys"` or `"base": "game/lead"`. There are no
+- **References are prefixed with a library's local name**, such as `"base": "lunelle:fm-keys"` or `"base": "game:lead"`; `/` only ever separates folders within an id, and an entry's id is its path below its kind's folder. There are no
   precedence rules and no collisions.
 - **Overrides are a flat list of `path → value`, where paths address array items by stable key** (an operator's id),
   never by index. RFC 6902 JSON Patch is index-based and silently retargets when the base changes. JSON Merge Patch
@@ -78,7 +78,7 @@ The work spans four repositories: **Lunelle** (format, resolver, generator, play
   - Beats are keyed by kit piece name (`kick`, `hat-closed`), so they work on any kit with those pieces.
   - Lines are scale degrees.
   - Strums voice the current chord.
-- A part refers to one with `"pattern": "game/four-on-the-floor"`, and the pattern repeats to fill the part.
+- A part refers to one with `"pattern": "game:four-on-the-floor"`, and the pattern repeats to fill the part.
 - **Overrides on a reference are a few transforms only**: velocity scale, swing, humanise, offset. Changing the notes
   means **detach**.
 - Patterns can be made of patterns (with a cycle check).
@@ -140,7 +140,7 @@ The format is a contract between Lunelle's runtime, its generator, the studio an
 specified before it is built. Each spec says: the schema with examples, how it resolves, the errors it reports, what
 is deliberately out of scope, and the test cases an implementation must pass. Specs live with whoever owns them.
 
-**Written up front (before Phase 2):**
+**Written up front (before Phase 2):** drafts of 1 and 2 are on Lunelle's `format-2-specs` branch.
 1. **Lunelle, `docs/spec/project.md`**: `.lunelle` packing and unpacking, `lunelle.meta.json`, the content folders,
    library references, bundling, and `description`.
 2. **Lunelle, `docs/spec/overrides.md`**: stable ids, override path syntax, the resolution order across the three
@@ -185,7 +185,7 @@ Phases 0 and 1 need no specs. They are self-contained, and this plan is enough f
 
 ### Phase 2: format 2 (Lunelle)
 1. `lunelle.meta.json`, the content-by-convention folders, `.lunelle` packing and unpacking (round-trip test), and
-   `description` fields.
+   `about` fields.
 2. Libraries: the built-in library from `presets/`, namespaced references, pinned versions, and bundling when
    packing.
 3. Stable ids on patch operators and effects, keyed-path overrides, the shared resolver (`MusicFolder` + generator),
@@ -230,8 +230,6 @@ Phases 0 and 1 need no specs. They are self-contained, and this plan is enough f
 ---
 
 ## Open questions
-- Cues: in `lunelle.meta.json`, or in `Cues/*.cues.json` files? The second is friendlier for merges once there are
-  hundreds.
 - `songs` in the manifest: optional order (preferred), or an explicit include list?
 - The exact syntax of override paths and keys.
 - Which transforms a pattern reference allows.

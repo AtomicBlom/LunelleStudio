@@ -6,12 +6,19 @@ using BinaryVibrance.Lunelle.Music;
 namespace BinaryVibrance.LunelleStudio;
 
 // Song exports (docs/spec/ui-exports.md, Lunelle's exports.md): the open song's exports listed, each rendered to a WAV
-// the same every time, and a new one recorded from what the user does as the song plays: every cue moved becomes an event
-// at the beat it was moved on
+// the same every time, and a new one recorded from what the user does as the song plays: every cue moved, and every
+// track's macro held or let go, becomes an event at the beat nearest where it was moved
 public sealed partial class Workbench
 {
-	private List<(string Cue, int Bar, int Beat, float Value)>? _recording;
+	// A move recorded: a cue's, or a track's macro's (null: let go), at a bar and beat
+	private sealed record Recorded(string? Cue, string? Track, int Macro, int Bar, int Beat, float? Value);
+
+	private List<Recorded>? _recording;
 	private Dictionary<string, float> _recordedStart = [];
+
+	// The beat playing, and how long it has, for snapping a move to the nearest beat
+	private (long Bar, int Beat) _beatAt;
+	private double _beatSince;
 
 	/// <summary>The open song's exports, by name, with their titles; none for a song with no file.</summary>
 	public IReadOnlyList<(string Name, string Title)> SongExports
@@ -75,15 +82,94 @@ public sealed partial class Workbench
 		return null;
 	}
 
-	// A cue moved while recording: an event at the beat it was moved on, a later move on the same beat taking its place
+	// A cue moved while recording: an event at the beat nearest the move, a later move on the same beat taking its place
 	private void Record(CueBase cue, float value)
 	{
 		if (_recording is not { } recording || !Player.IsPlaying)
 			return;
+		var (bar, beat) = SnappedBeat();
+		recording.RemoveAll(e => e.Cue == cue.Name && e.Bar == bar && e.Beat == beat);
+		recording.Add(new Recorded(cue.Name, null, -1, bar, beat, value));
+	}
+
+	// A track's macro held (or let go) while recording: an event as a cue's is
+	private void RecordMacro(string track, int macro, float? value)
+	{
+		if (_recording is not { } recording || !Player.IsPlaying)
+			return;
+		var (bar, beat) = SnappedBeat();
+		recording.RemoveAll(e => e.Track == track && e.Macro == macro && e.Bar == bar && e.Beat == beat);
+		recording.Add(new Recorded(null, track, macro, bar, beat, value));
+	}
+
+	// Once a frame: how long the beat playing has had
+	private void TrackBeat(double deltaSeconds)
+	{
+		if (!Player.IsPlaying)
+			return;
+		var now = Player.Position;
+		if ((now.AbsoluteBar, now.Beat) != _beatAt)
+		{
+			_beatAt = (now.AbsoluteBar, now.Beat);
+			_beatSince = 0;
+		}
+		else
+			_beatSince += deltaSeconds;
+	}
+
+	/// <summary>
+	/// The bar (from 1) and beat a move now lands on: the beat playing, or the next where more than half of this one has
+	/// gone (the bar's first beat after its last).
+	/// </summary>
+	internal (int Bar, int Beat) SnappedBeat()
+	{
 		var position = Player.Position;
 		var bar = (int)position.AbsoluteBar + 1;
-		recording.RemoveAll(e => e.Cue == cue.Name && e.Bar == bar && e.Beat == position.Beat);
-		recording.Add((cue.Name, bar, position.Beat, value));
+		var beat = position.Beat;
+		if (_song is { } song && (position.AbsoluteBar, position.Beat) == _beatAt && _beatSince > 30.0 / song.Tempo * 4.0 / song.Meter.Unit)
+		{
+			beat++;
+			if (beat > song.Meter.Beats)
+			{
+				beat = 1;
+				bar++;
+			}
+		}
+		return (bar, beat);
+	}
+
+	/// <summary>
+	/// The macros track <paramref name="track"/>'s patch has, by id, each with its name (the manifest's, else its number)
+	/// and where the song holds it now (null: not held); none for a kit's track or a track the song hasn't.
+	/// </summary>
+	public IReadOnlyList<(int Id, string Name, float? Held)> TrackMacros(string track)
+	{
+		if (_song?.Tracks.FirstOrDefault(t => t.Name == track) is not { Patch: { } patch })
+			return [];
+		var names = ManifestMacros().ToDictionary(m => m.Value, m => m.Key);
+		return [.. patch.Macros.Select(m => m.Macro.Id).Distinct().Order()
+			.Select(id => (id, names.GetValueOrDefault(id) ?? $"macro {id}", _heldMacros.TryGetValue((track, id), out var held) ? held : (float?)null))];
+	}
+
+	// The macros held from the track inspector, by track and macro, so it shows them as held
+	private readonly Dictionary<(string Track, int Macro), float> _heldMacros = [];
+
+	/// <summary>
+	/// Holds track <paramref name="track"/>'s macro <paramref name="macro"/> at <paramref name="value"/> as the song plays
+	/// (Lunelle's HoldMacro), or lets it go (null) to what the song makes it follow; recorded while recording.
+	/// </summary>
+	public void HoldTrackMacro(string track, int macro, float? value)
+	{
+		if (_song?.Tracks.All(t => t.Name != track) != false)
+			return;
+		// Held on the song playing; one not playing takes it up as it starts (Play)
+		if (Player.IsPlaying && Player.Song?.Tracks.FirstOrDefault(t => t.Name == track) is { } playing)
+			Player.HoldMacro(playing, new BinaryVibrance.Lunelle.Chip.Macro(macro), value);
+		if (value is { } held)
+			_heldMacros[(track, macro)] = held;
+		else
+			_heldMacros.Remove((track, macro));
+		RecordMacro(track, macro, value);
 	}
 
 	/// <summary>
@@ -117,9 +203,20 @@ public sealed partial class Workbench
 		if (cues.Count > 0)
 			export["cues"] = cues;
 		var events = new JsonArray();
-		foreach (var (cue, bar, beat, value) in recording.OrderBy(e => e.Bar).ThenBy(e => e.Beat))
-			if (ViewModel.Cues.FirstOrDefault(c => c.Name == cue) is { } row)
-				events.Add(new JsonObject { ["at"] = $"{bar}:{beat}", ["cue"] = cue, ["to"] = JsonNode.Parse(Value(row.Cue, value)) });
+		var macroNames = ManifestMacros().ToDictionary(m => m.Value, m => m.Key);
+		foreach (var move in recording.OrderBy(e => e.Bar).ThenBy(e => e.Beat))
+		{
+			if (move.Cue is { } cue && ViewModel.Cues.FirstOrDefault(c => c.Name == cue) is { } row)
+				events.Add(new JsonObject { ["at"] = $"{move.Bar}:{move.Beat}", ["cue"] = cue, ["to"] = JsonNode.Parse(Value(row.Cue, move.Value!.Value)) });
+			else if (move.Track is { } track)
+				events.Add(new JsonObject
+				{
+					["at"] = $"{move.Bar}:{move.Beat}",
+					["track"] = track,
+					["macro"] = macroNames.TryGetValue(move.Macro, out var named) ? JsonValue.Create(named) : JsonValue.Create(move.Macro),
+					["to"] = move.Value is { } held ? JsonValue.Create(MathF.Round(held, 3)) : null,
+				});
+		}
 		if (events.Count > 0)
 			export["events"] = events;
 		export["end"] = new JsonObject { ["at"] = $"{end}:1" };

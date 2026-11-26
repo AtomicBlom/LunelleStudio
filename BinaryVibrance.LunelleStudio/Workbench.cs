@@ -345,6 +345,9 @@ public sealed partial class Workbench : IDisposable
 					Player.Force(placement, state);
 		if (_loop)
 			Player.LoopSection(true);
+		foreach (var ((track, macro), value) in _heldMacros)
+			if (song.Tracks.FirstOrDefault(t => t.Name == track) is { } held)
+				Player.HoldMacro(held, new Macro(macro), value);
 		ViewModel.ShowPlaying(true);
 	}
 
@@ -696,6 +699,8 @@ public sealed partial class Workbench : IDisposable
 			ViewModel.Error = ex.Message;
 			Console.WriteLine($"[workbench] {ex.Message}");
 		}
+		TrackBeat(deltaSeconds);
+		StepLiveExport(deltaSeconds);
 		if (_patchSince >= 0 && (_patchSince += deltaSeconds) >= SongEditor.SaveAfterSeconds)
 			SavePatch();
 		if (_heardSince >= 0 && (_heardSince += deltaSeconds) >= HeardAfterSeconds)

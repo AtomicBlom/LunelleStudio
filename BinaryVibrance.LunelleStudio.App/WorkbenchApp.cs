@@ -234,6 +234,21 @@ public sealed partial class WorkbenchApp(string projectPath, IWorkbenchExtension
 		{
 			var row = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0f, 2f, 0f, 0f) };
 			row.Children.Add(new TextBlock { Text = title, FontSize = 12f, Width = 190f, VerticalAlignment = VerticalAlignment.Center });
+			var live = workbench.LiveExport == exportName;
+			row.Children.Add(Button(live ? "stop" : "play", live ? "Stop playing it live" : $"Play {exportName} live: its events applied as the song plays, each on its beat", () =>
+			{
+				if (live)
+				{
+					workbench.StopLiveExport();
+					workbench.Stop();
+				}
+				else if (workbench.PlayExport(exportName) is { } why)
+				{
+					said.Text = why;
+					return;
+				}
+				flyout.Hide();
+			}));
 			row.Children.Add(Button("render", $"Render {exportName} to {SongExport.FileName(song, exportName)}", () => _ = Render([exportName])));
 			column.Children.Add(row);
 		}
@@ -246,10 +261,10 @@ public sealed partial class WorkbenchApp(string projectPath, IWorkbenchExtension
 		var record = new StackPanel { Orientation = Orientation.Horizontal, Margin = new Thickness(0f, 10f, 0f, 0f) };
 		record.Children.Add(name);
 		record.Children.Add(Button(workbench.IsRecording ? "stop" : "record",
-			"Record: the song plays from its start, and every cue you move becomes an event on its beat; stop writes the export",
+			"Record: the song plays from its start, and every cue you move, and every track macro you hold in the inspector, becomes an event on the nearest beat; stop writes the export",
 			() =>
 			{
-				said.Text = (workbench.IsRecording ? workbench.StopRecording(name.Text) : workbench.StartRecording()) ?? (workbench.IsRecording ? "Recording: move the cues." : "Recorded.");
+				said.Text = (workbench.IsRecording ? workbench.StopRecording(name.Text) : workbench.StartRecording()) ?? (workbench.IsRecording ? "Recording: move the cues, or a track's macros." : "Recorded.");
 				flyout.Hide();
 			}));
 		column.Children.Add(record);

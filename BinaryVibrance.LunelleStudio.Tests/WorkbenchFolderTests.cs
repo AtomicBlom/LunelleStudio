@@ -474,12 +474,34 @@ public class WorkbenchFolderTests
 		}
 		Bars(1.25);
 		workbench.ViewModel.Cues.Single(c => c.Name == "mood").SelectedOption = 1;
+		// Most of bar 2's second beat gone: a track's macro held now lands on its third
+		Bars(0.2);
+		workbench.SnappedBeat().ShouldBe((2, 3));
+		workbench.HoldTrackMacro("lead", 0, 0.4f);
 		Bars(1);
 		workbench.StopRecording("take").ShouldBeNull();
 		var recorded = document.ReadText(song);
 		recorded.ShouldContain("\"name\": \"take\"");
 		recorded.ShouldContain("\"cue\": \"mood\"");
 		recorded.ShouldContain("\"to\": \"Dark\"");
-		recorded.ShouldContain("\"at\": \"2:");
+		recorded.ShouldContain("\"at\": \"2:2\"");
+		recorded.ShouldContain("\"track\": \"lead\"");
+		recorded.ShouldContain("\"macro\": \"bright\"");
+		recorded.ShouldContain("\"to\": 0.4");
+		recorded.ShouldContain("\"at\": \"2:3\"");
+
+		// Played live: from its start, the cue moved where it was recorded, stopped at its end
+		var mood = workbench.CueNamed("mood")!;
+		workbench.HoldTrackMacro("lead", 0, null);
+		workbench.PlayExport("take").ShouldBeNull();
+		workbench.ViewModel.LiveExport.ShouldBe("take");
+		workbench.Player.Get(mood).ShouldBe(0f);
+		Bars(0.5);
+		workbench.Player.Get(mood).ShouldBe(0f);
+		Bars(1);
+		workbench.Player.Get(mood).ShouldBe(1f);
+		Bars(2.5);
+		workbench.ViewModel.LiveExport.ShouldBeNull();
+		workbench.ViewModel.IsPlaying.ShouldBeFalse();
 	}
 }

@@ -439,6 +439,7 @@ public sealed partial class Workbench : IDisposable
 		}
 		ViewModel.HasTracks = ViewModel.Tracks.Count > 0;
 		ShowCues(song);
+		ShowLane();
 		var used = song.Cues;
 		foreach (var cue in ViewModel.Cues)
 		{

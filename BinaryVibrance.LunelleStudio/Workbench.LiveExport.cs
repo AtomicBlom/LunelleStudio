@@ -77,6 +77,7 @@ public sealed partial class Workbench
 		if (export["start"]?.Str is { } start && _song?.Sections.FirstOrDefault(s => s.Name == start) is { } section)
 			Player.Jump(section);
 		_live = new LiveRun(name, pending, end);
+		_exportPaths.Remove(name);
 		ViewModel.LiveExport = name;
 		return null;
 	}
@@ -129,6 +130,8 @@ public sealed partial class Workbench
 			startedTime = live.Times[now.Section] = live.Times.GetValueOrDefault(now.Section) + 1;
 		}
 		live.Last = now;
+		if (started is not null)
+			NoteLivePath(live.Name, now.AbsoluteBar, now.SectionIndex);
 		bool Reached(ExportPosition p) => p.Section is null
 			? now.AbsoluteBar + 1 > p.Bar || (now.AbsoluteBar + 1 == p.Bar && now.Beat >= (int)Math.Floor(p.Beat))
 			: p.IsEnd ? p.Section == ended && p.Time == endedTime : p.Section == started && p.Time == startedTime;

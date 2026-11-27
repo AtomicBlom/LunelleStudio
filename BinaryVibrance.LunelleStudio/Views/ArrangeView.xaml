@@ -69,9 +69,12 @@
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="Auto" />
+                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
+                    <!-- Under the lanes: an export's events over the sections (the automation lane) -->
+                    <views:AutomationLane Grid.Row="2" ViewModel="{x:Bind ViewModel, Mode=OneWay}" />
                     <!-- Under the last lane: a track added, playing a patch or kit chosen from a list -->
-                    <Button x:Name="AddTrack" Grid.Row="2" Width="164" Margin="6,6,0,12" Padding="10,4,12,5" HorizontalAlignment="Left"
+                    <Button x:Name="AddTrack" Grid.Row="3" Width="164" Margin="6,6,0,12" Padding="10,4,12,5" HorizontalAlignment="Left"
                             Background="{x:Static views:Theme.Clear}" BorderBrush="{x:Static views:Theme.Line}" BorderThickness="1"
                             ToolTipService.ToolTip="Add a track. You can also drag a patch or kit from the library onto the board.">
                         <TextBlock Text="+ Add track" FontSize="11.5" Foreground="{x:Static views:Theme.Faint}" />

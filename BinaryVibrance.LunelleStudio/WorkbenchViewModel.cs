@@ -717,6 +717,18 @@ public sealed class WorkbenchViewModel : ViewModel
 	/// <summary>Whether the project has cue files to list (a project of format 2).</summary>
 	public bool HasProjectCues { get; set { if (Set(ref field, value)) Changed(nameof(CuesShown)); } }
 
+	/// <summary>The export Arrange's automation lane shows, or null for none.</summary>
+	public string? LaneExport { get; set => Set(ref field, value); }
+
+	/// <summary>The open song's exports, for the lane to choose among.</summary>
+	public IReadOnlyList<string> LaneExports { get; set => Set(ref field, value); } = [];
+
+	/// <summary>The marks of the export the lane shows, each an event of it.</summary>
+	public IReadOnlyList<AutomationMark> LaneMarks { get; set => Set(ref field, value); } = [];
+
+	/// <summary>Whether the lane's bars are placed as the export last played live (else along the sections in order).</summary>
+	public bool LanePlaced { get; set => Set(ref field, value); }
+
 	/// <summary>The export playing live (its events applied as the song plays), or null.</summary>
 	public string? LiveExport { get; set => Set(ref field, value); }
 

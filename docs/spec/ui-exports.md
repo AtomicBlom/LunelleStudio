@@ -1,12 +1,18 @@
 # Spec: song exports in the studio (UI, Phase 4.5)
 
-Status: **implemented, the automation lane to come**. Builds on Lunelle's `docs/spec/exports.md`.
+Status: **implemented**. Builds on Lunelle's `docs/spec/exports.md`.
 
 ## What it shows
 
 **exports**, at the transport's end, opens the open song's exports: each by its title, with **play** (or **stop**, while
 it plays) and **render**, and **render all** where there are several. Under them, a name and **record** (or **stop**,
 while recording).
+
+**The automation lane**, under Arrange's tracks, shows one export's events over the sections, chosen at its head. Each
+event is a mark labelled with what it does (`mood → Dark`, `lead bright → 0.4 over 2 beats`, `jump → chorus`), in a
+section's column: an event at a section's start or end there; one at a bar in the section the song was in at that bar
+when the export last played live, or, until it has, along the sections in their order from the export's start. A
+click on a mark edits it (where, what, to, over) or deletes it; **+ event** adds one. Each is one undoable step.
 
 A track's inspector in Arrange has **Macros**: a slider for each macro its patch has, holding it as the song plays
 (Lunelle's `HoldMacro`) over what the song makes it follow, and **let go** to give it back.
@@ -30,5 +36,5 @@ A track's inspector in Arrange has **Macros**: a slider for each macro its patch
 
 ## Still to come
 
-- An automation lane in Arrange, showing an export's events over the sections and editing them.
+- Dragging a mark along the lane to move its event.
 - Rendering a project with code, through its build.

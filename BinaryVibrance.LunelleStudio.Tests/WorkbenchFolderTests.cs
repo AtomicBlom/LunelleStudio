@@ -503,5 +503,26 @@ public class WorkbenchFolderTests
 		Bars(2.5);
 		workbench.ViewModel.LiveExport.ShouldBeNull();
 		workbench.ViewModel.IsPlaying.ShouldBeFalse();
+
+		// The automation lane: the export's events over the sections, placed as it last played
+		workbench.ShowLane("take");
+		var model = workbench.ViewModel;
+		model.LanePlaced.ShouldBeTrue();
+		model.LaneMarks.Select(m => (m.At, m.Label, m.Section)).ShouldBe([("2:2", "mood → Dark", 0), ("2:3", "lead bright → 0.4", 0)]);
+		model.LaneMarks[0].Across.ShouldBe(0.25f, 0.001f);
+		var targets = workbench.LaneTargets();
+		targets.Select(t => t.Label).ShouldBe(["intensity", "mood", "jump"]);
+		workbench.PutExportEvent("take", null, "3:1", targets[0], "1.5", null).ShouldNotBeNull();
+		workbench.PutExportEvent("take", null, "3:1", targets[0], "0.9", "2 beats").ShouldBeNull();
+		model.LaneMarks.Select(m => m.Label).ShouldBe(["mood → Dark", "lead bright → 0.4", "intensity → 0.9 over 2 beats"]);
+		workbench.ExportEvent("take", 2).ShouldBe(("3:1", targets[0], "0.9", "2 beats"));
+		workbench.PutExportEvent("take", 0, "section verse#2", targets[1], "Calm", null).ShouldBeNull();
+		model.LaneMarks[0].Label.ShouldBe("mood → Calm");
+		model.LaneMarks[0].Across.ShouldBe(0f);
+		workbench.DeleteExportEvent("take", 1).ShouldBeNull();
+		model.LaneMarks.Count.ShouldBe(2);
+		// Each was one step
+		workbench.UndoEdit();
+		model.LaneMarks.Count.ShouldBe(3);
 	}
 }

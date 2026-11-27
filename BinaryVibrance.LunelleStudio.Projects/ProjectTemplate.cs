@@ -72,7 +72,7 @@ public static class ProjectTemplate
 	}
 
 	/// <summary>The feed the studio's packages are copied into: the user's own, kept across installs and updates.</summary>
-	public static string DefaultFeed => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Lunelle Studio", "packages");
+	public static string DefaultFeed => Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "BinaryVibrance", "LunelleStudio", "packages");
 
 	// The studio's packages copied into the feed, and the version of Lunelle's. A package already there with other bytes
 	// under the same version (a build from source, changed) replaces it, and NuGet's extracted copy of that version is

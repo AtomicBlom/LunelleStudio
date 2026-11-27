@@ -30,12 +30,14 @@ Ctrl+Z and Ctrl+Y undo and redo across every file, **save** (Ctrl+S) writes them
 recovered from `.lunelle-studio/journal.jsonl` when the project opens again. A project with code compiles from the
 document, unsaved edits and all.
 
-**The library** lists the project's songs, patches and kits by id, with their folders; its patterns, which a part can
-play (extract a part's notes into one, detach one back); its cues, each imported into the open song with a tick, and
-made, renamed and deleted across every song; and **Lunelle's sounds** (`lunelle:…`, `PresetLibrary`). A click plays one
-on the keys, and **add** makes a sound of the project's based on it, which saves only what it changes: the designer says
-what it is based on and each change, with **revert**. **exports** renders a song's exports to WAV, and records new ones
-from the cues moved as it plays. The UI's specs are `docs/spec/ui-*.md`.
+**The library** is a tree of the project's songs, patches, kits and patterns by folder, and its cues by namespace,
+filtered by words and by kind. A pattern dragged onto a part in Arrange plays there, onto a lane it is a new part, and
+with Shift a copy; a part's notes extract into one, and one detaches back. A cue is imported into the open song with a
+tick; made from the library, the strip, or a condition naming it; and edited, renamed and deleted across every song.
+**Lunelle's sounds** (`lunelle:…`, `PresetLibrary`) play on the keys with a click, and **add** makes a sound of the
+project's based on one, which saves only what it changes: the designer marks each line it changes, with **revert**.
+**exports** plays a song's exports live, renders them to WAV, and records new ones from the cues and track macros moved
+as it plays; the automation lane under Arrange's tracks shows and edits an export's events. The UI's specs are `docs/spec/ui-*.md`.
 
 ## On the desktop
 

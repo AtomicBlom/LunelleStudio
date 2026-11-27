@@ -251,7 +251,7 @@ Built, tested and pushed, on branches that stack (each from the last):
 | 2 | Lunelle `format-2` | Done: the shared resolver (runtime and generator), libraries and Lunelle's own, overrides, cues, patterns, packing, exports with `HoldMacro`, `FromPackage` |
 | — | studio `format-2` | The studio on format 2: presets as Lunelle's library, the Showcase and HelloSynth converted |
 | 3 | studio `editing-model` | Done: the document and journal, undo across files, save, recovery, outside changes; code mode compiles from it |
-| 4 | studio `studio-ui` | Done in part: cues panel, patterns (extract, detach, use), overrides in the designer, exports (render, record), the library by folder. What is still to come is listed in each `docs/spec/ui-*.md`: drag and drop of patterns, the automation lane, a collapsible library tree, per-control override marks |
+| 4 | studio `studio-ui` | Done: the library as a tree by folder with kind filters; cues made from the library, the strip or a condition, edited, renamed and deleted, with code-mode warnings; patterns dragged onto parts and lanes (Shift for a copy), extracted and detached; override marks on each designer line with its revert; exports played live, rendered, recorded from cue and macro moves snapped to the beat, and an automation lane in Arrange. Smaller follow-ups are listed under each `docs/spec/ui-*.md`'s "Still to come" |
 
 To merge: Kaldra `file-dialogs`, then Lunelle `format-2`, then the studio's branches in order. The studio's CI checks
 out its siblings' master branches, so it goes green once those are merged.

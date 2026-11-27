@@ -18,6 +18,7 @@ on:
 
 permissions:
   contents: write   # a release, on a tag
+  packages: read    # BinaryVibrance's test builds, which Kaldra's nuget.config takes from GitHub Packages
 
 jobs:
   studio:
@@ -25,6 +26,8 @@ jobs:
     runs-on: windows-latest
     env:
       RELEASE: ${{ startsWith(github.ref, 'refs/tags/v') }}
+      # Kaldra's nuget.config signs in to GitHub Packages with it; without it, restoring Kaldra's projects fails (401)
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - uses: actions/checkout@v4
         with:

@@ -334,9 +334,9 @@ public class RollTests
 		try
 		{
 			var click = Path.Combine(folder, "click.patch.json");
-			File.WriteAllText(click, """{ "format": "lunelle-patch/1", "name": "click", "operators": [ { "name": "sine1", "kind": "sine", "envelope": "decay 0.01", "level": 0.5 } ], "out": [ { "op": "sine1" } ] }""");
+			File.WriteAllText(click, """{ "format": "lunelle-patch/2", "operators": [ { "name": "sine1", "kind": "sine", "envelope": "decay 0.01", "level": 0.5 } ], "out": [ { "op": "sine1" } ] }""");
 			var other = Path.Combine(folder, "other.song.json");
-			File.WriteAllText(other, """{ "format": "lunelle-song/2", "name": "other", "tempo": 100, "scale": "C major", "tracks": [ { "name": "bell", "patch": "click" } ], "sections": [ { "name": "a", "bars": 1, "parts": [] } ] }""");
+			File.WriteAllText(other, """{ "format": "lunelle-song/3", "tempo": 100, "scale": "C major", "tracks": [ { "name": "bell", "patch": "click" } ], "sections": [ { "name": "a", "bars": 1, "parts": [] } ] }""");
 			var copy = Path.Combine(folder, "click-first.patch.json");
 			var bindings = new SongBindings { Patch = n => n.StartsWith("click", StringComparison.Ordinal) ? MusicRig.Click : null, Cue = n => n == "energy" ? Energy : null };
 			var catalog = rig.Catalog with
@@ -354,7 +354,9 @@ public class RollTests
 
 			model.Tracks[0].CopyPatchForSong().ShouldBeNull();
 			File.Exists(copy).ShouldBeTrue();
-			JsonNode.Parse(File.ReadAllText(copy))!["name"]!.GetValue<string>().ShouldBe("click-first");
+			// A patch's id is its file's path, so the copy names nothing inside
+			JsonNode.Parse(File.ReadAllText(copy))!["name"].ShouldBeNull();
+			JsonNode.Parse(File.ReadAllText(copy))!["operators"].ShouldNotBeNull();
 
 			// Once the project has built with the copy, the track plays it and the other song keeps the original
 			rig.Workbench.UseCatalog(catalog with { Patches = [.. catalog.Patches, ("click-first", () => MusicRig.Click)] });

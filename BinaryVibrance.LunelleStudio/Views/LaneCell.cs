@@ -26,6 +26,9 @@ internal sealed class LaneCell : ContentControl
 
 	private readonly Border _ground = new();
 
+	// The parts' clips as built, to find the one a drop is over
+	private readonly List<(Border Clip, PlacementViewModel Part)> _clips = [];
+
 	public LaneCell()
 	{
 		IsTabStop = false;
@@ -69,8 +72,13 @@ internal sealed class LaneCell : ContentControl
 		Width = cell.Width;
 		Height = track.Height;
 		var column = new StackPanel { Orientation = Orientation.Vertical, Margin = new Thickness(Inset, Inset, Inset, 0f), VerticalAlignment = VerticalAlignment.Top };
+		_clips.Clear();
 		foreach (var part in cell.Placements)
-			column.Children.Add(PartClip(part, cell.Width - 2f * Inset));
+		{
+			var clip = PartClip(part, cell.Width - 2f * Inset);
+			_clips.Add((clip, part));
+			column.Children.Add(clip);
+		}
 		_ground.Background = Display.Column(cell.IsCurrent);
 		_ground.BorderBrush = Theme.Line;
 		_ground.BorderThickness = new Thickness(1f, 0f, 0f, 1f);
@@ -82,6 +90,35 @@ internal sealed class LaneCell : ContentControl
 		if (track.CanEdit && cell.Placements.Count == 0)
 			grid.Children.Add(AddSlot(track, cell.Section));
 		Content = grid;
+	}
+
+	/// <summary>
+	/// What a drop at a point (in an element's space) would land on in this cell: its track and section, and the part
+	/// under the point, or none for the lane's ground; null off the cell.
+	/// </summary>
+	internal (TrackViewModel Track, int Section, PlacementViewModel? Part)? DropAt(Func<UIElement, System.Numerics.Vector2> at)
+	{
+		if (Track is not { } track || Cell is not { } cell || !Inside(this, at(this)))
+			return null;
+		foreach (var (clip, part) in _clips)
+			if (Inside(clip, at(clip)))
+				return (track, cell.Section, part);
+		return (track, cell.Section, null);
+	}
+
+	private static bool Inside(FrameworkElement element, System.Numerics.Vector2 point) =>
+		point.X >= 0f && point.Y >= 0f && point.X < element.LayoutRect.Width && point.Y < element.LayoutRect.Height;
+
+	/// <summary>
+	/// Shows a drag over the cell: the part it would land on, or its ground, lit in the accent where it fits and in the
+	/// error's tint where it doesn't; <paramref name="over"/> false shows it as it was.
+	/// </summary>
+	internal void ShowDrop(bool over, PlacementViewModel? onto, bool fits)
+	{
+		var tint = fits ? Theme.AccentSoft : Theme.ErrorSoft;
+		_ground.Background = over && onto is null ? tint : Display.Column(Cell?.IsCurrent ?? false);
+		foreach (var (clip, part) in _clips)
+			clip.Background = over && part == onto ? tint : part.IsSelected ? Theme.AccentSoft : Theme.Clear;
 	}
 
 	// In an empty cell: a slot that adds the track's first part in the section

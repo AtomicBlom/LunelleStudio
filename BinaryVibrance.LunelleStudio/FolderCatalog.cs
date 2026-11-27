@@ -1,4 +1,5 @@
 using BinaryVibrance.Lunelle.Chip;
+using BinaryVibrance.Lunelle.Format;
 using BinaryVibrance.Lunelle.Music;
 
 namespace BinaryVibrance.LunelleStudio;
@@ -28,8 +29,20 @@ public static class FolderCatalog
 			Cues = folder.Cues,
 			// As a project with code would name it, so a patch's code reads the same in either
 			MacroName = id => folder.MacroName(id) is { } name ? $"Macros.{PatchCode.Pascal(name)}" : null,
-			SongSource = name => folder.SongPath(name) is { } path ? new SongSource(Full(path), folder.Bindings) : null,
+			SongSource = name => folder.SongPath(name) is { } path
+				? new SongSource(Full(path), folder.Bindings) { Build = (text, wrap) => folder.BuildSong(name, text, wrap) }
+				: null,
 			PatchFile = name => folder.PatchPath(name) is { } path ? Full(path) : null,
+			DerivedPatch = name => Derived(folder, name),
+			Folder = Path.GetFullPath(root),
+			Root = Path.GetFullPath(root),
+			RenderExport = (song, export, output) =>
+			{
+				SongExport.Render(folder, song, export, output);
+				return null;
+			},
+			Patterns = [.. folder.Project.Root.Entries(EntryKind.Pattern).Keys.Order(StringComparer.Ordinal)],
+			ResolveSong = (name, text) => folder.Resolve(name, text) is var (song, problem) ? (song.Json, problem?.Message) : default,
 		};
 	}
 
@@ -47,5 +60,18 @@ public static class FolderCatalog
 				.Where(s => s.Code.Count > 0)
 				.Select(s => $"{s.Name}: its code plays nothing without C# ({string.Join(", ", s.Code)})"),
 		];
+	}
+
+	// A derived patch of the project's: what it resolves to, and the base it changes
+	private static (string Whole, JObject Below)? Derived(MusicFolder folder, string name)
+	{
+		if (folder.Project.Root.Entry(EntryKind.Patch, name) is not { } entry || entry.Json["base"]?.Str is not { } reference)
+			return null;
+		var resolver = folder.Resolver;
+		if (resolver.Resolve(entry) is not { Ok: true } whole
+			|| resolver.Find(entry.Owner, EntryKind.Patch, reference, out _) is not { } baseFile
+			|| resolver.Resolve(baseFile) is not { } below)
+			return null;
+		return (whole.Json.ToString(), below.Json);
 	}
 }

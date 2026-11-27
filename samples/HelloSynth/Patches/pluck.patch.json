@@ -1,6 +1,5 @@
 {
-  "format": "lunelle-patch/1",
-  "name": "pluck",
+  "format": "lunelle-patch/2",
   "about": "A plucked string, its pluck shaped at the pick point.",
   "operators": [{ "name": "stringOp", "kind": "string", "decaySeconds": 2.5, "damping": 0.4 }],
   "out": [{ "op": "stringOp" }],

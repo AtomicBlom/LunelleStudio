@@ -1,0 +1,272 @@
+{
+  "format": "lunelle-song/3",
+  "cues": { "intensity": null, "mood": null },
+  "about": "The tour: one song that arranges itself from two cues. Drag intensity from 0 to 1 and back. Low, it is a pad and bells (dawn); past 0.35 the beat and bass come in (pulse); past 0.7 it builds (rise), a riser and an airy supersaw swept up over a snare roll, and drops (lift); falling, it steps back down. Mood picks the bells' motif, each coming in only where its phrase starts, and in lift a Dark mood swaps the lead for a Phrygian line. Every pass of pulse and lift ends on one of three fills, shuffled. The bass ducks under the kick (the bass bus's duck keys on the breaks kit's kick), and the filters on the bass, chords, arp and lead open with intensity (their tracks' bright macro follows it).",
+  "tempo": 122,
+  "scale": "A minor",
+  "voices": 48,
+  "effects": {
+    "space": [{ "fx": "reverb", "decaySeconds": 2.8 }],
+    "echo": [{ "fx": "delay", "seconds": 0.369, "feedback": 0.4, "pingPong": true }]
+  },
+  "groups": [
+    { "name": "drum bus", "effects": [{ "fx": "compressor", "thresholdDb": -16, "ratio": 3 }] },
+    { "name": "bass bus", "effects": [{ "fx": "duck", "thresholdDb": -30, "ratio": 8, "attackSeconds": 0.002, "releaseSeconds": 0.12 }] },
+    { "name": "wide", "effects": [{ "fx": "chorus", "mix": 0.35 }] }
+  ],
+  "variations": [{ "name": "fill", "options": 3, "pick": "shuffle" }],
+  "tracks": [
+    { "name": "drums", "kit": "lunelle:breaks", "group": "drum bus", "level": 1, "humanise": { "ms": 3, "velocity": 0.06 } },
+    { "name": "sub", "patch": "lunelle:bass/sub-bass", "group": "bass bus", "octave": 1, "level": -4 },
+    {
+      "name": "bass",
+      "patch": "lunelle:bass/synth-bass",
+      "group": "bass bus",
+      "octave": 2,
+      "level": -6,
+      "macros": [{ "macro": "bright", "follow": "intensity", "from": 0.2, "to": 0.9 }]
+    },
+    { "name": "pad", "patch": "lunelle:synths/warm-pad", "group": "wide", "level": -4 },
+    {
+      "name": "chords",
+      "patch": "lunelle:synths/supersaw",
+      "group": "wide",
+      "level": -4,
+      "macros": [{ "macro": "bright", "follow": "intensity", "from": 0.3, "to": 1 }]
+    },
+    { "name": "stab", "patch": "lunelle:synths/supersaw-stab", "level": -3 },
+    { "name": "air", "patch": "lunelle:synths/supersaw-air", "level": -4 },
+    {
+      "name": "arp",
+      "patch": "lunelle:leads/pluck-lead",
+      "octave": 5,
+      "level": -2,
+      "pan": -0.25,
+      "macros": [{ "macro": "bright", "follow": "intensity", "from": 0.2, "to": 0.8 }]
+    },
+    {
+      "name": "lead",
+      "patch": "lunelle:leads/saw-lead",
+      "octave": 5,
+      "level": 2,
+      "macros": [{ "macro": "bright", "follow": "intensity", "from": 0.4, "to": 1 }]
+    },
+    { "name": "bells", "patch": "lunelle:mallets/glockenspiel", "octave": 6, "level": -4, "pan": 0.3 },
+    { "name": "riser", "patch": "lunelle:synths/riser", "level": -2 }
+  ],
+  "sections": [
+    {
+      "name": "dawn",
+      "about": "The intro: the pad's chords and a motif for the mood; hats past 0.2, the arp past 0.3, louder as the intensity rises",
+      "bars": 8,
+      "chords": "i | VI | III | VII | i | VI | iv | VM",
+      "parts": [
+        { "track": "pad", "strum": "quarters", "notes": "D...", "voicing": "close" },
+        {
+          "track": "bells",
+          "name": "calm motif",
+          "line": "quarters",
+          "notes": "5 - 3 - | 1 - - - | 3 - 5 - | 2 - - -",
+          "when": "mood is Calm",
+          "onPhrase": true
+        },
+        {
+          "track": "bells",
+          "name": "bright motif",
+          "line": "eighths",
+          "notes": "8 7 8 5 3 5 8 - | 6 5 6 3 1 3 6 - | 5 4 5 3 1 3 5 - | 7 6 7 5 2 5 7 -",
+          "when": "mood is Bright",
+          "onPhrase": true
+        },
+        {
+          "track": "bells",
+          "name": "dark motif",
+          "line": "quarters",
+          "notes": "1 - b2 - | 1 - - . | 3 - b2 - | 1 - - .",
+          "when": "mood is Dark",
+          "onPhrase": true
+        },
+        { "track": "drums", "name": "first hats", "beat": "sixteenths", "rows": { "hat-closed": "..o. ..o. ..o. ..x." }, "when": "intensity > 0.2" },
+        {
+          "track": "arp",
+          "line": "sixteenths",
+          "notes": "1 3 5 8 5 3 5 8 1 3 5 8 9 8 5 3",
+          "overChords": true,
+          "when": "intensity > 0.3",
+          "level": "intensity"
+        }
+      ],
+      "exits": [{ "when": "intensity > 0.35", "then": "pulse" }, { "then": "dawn" }]
+    },
+    {
+      "name": "pulse",
+      "about": "The groove: a broken beat ending each pass on a fill the song shuffles, the sub and a bass ducking under the kick, stabs past 0.6",
+      "bars": 8,
+      "chords": "i | VI | III | VII | i | VI | III | VII",
+      "parts": [
+        {
+          "track": "drums",
+          "name": "beat, snare fill",
+          "beat": "sixteenths",
+          "rows": { "kick": "x... .... ..x. ....", "snare": ".... x... .... x..o", "hat-closed": "x.x. x.x. x.x. x.x." },
+          "when": "fill is 1",
+          "endWith": { "beat": "sixteenths", "rows": { "kick": "x... .... x... ....", "snare": ".... x..x .xx. xxXX" } }
+        },
+        {
+          "track": "drums",
+          "name": "beat, tom fill",
+          "beat": "sixteenths",
+          "rows": { "kick": "x... .... ..x. ....", "snare": ".... x... .... x..o", "hat-closed": "x.x. x.x. x.x. x.x." },
+          "when": "fill is 2",
+          "endWith": {
+            "beat": "sixteenths",
+            "rows": {
+              "kick": "x... .... .... ....",
+              "tom-high": "x.x. x... .... ....",
+              "tom-low": ".... ..x. x.x. ....",
+              "snare": ".... .... .... xXxX"
+            }
+          }
+        },
+        {
+          "track": "drums",
+          "name": "beat, roll fill",
+          "beat": "sixteenths",
+          "rows": { "kick": "x... .... ..x. ....", "snare": ".... x... .... x..o", "hat-closed": "x.x. x.x. x.x. x.x." },
+          "when": "fill is 3",
+          "endWith": { "beat": "sixteenths", "rows": { "kick": "x... .... x... ....", "snare": "ooxo oxox xxXx XXXX" } }
+        },
+        { "track": "drums", "name": "busy hats", "beat": "sixteenths", "rows": { "hat-closed": ".o.o .o.o .o.o .oxo" }, "when": "intensity > 0.55" },
+        { "track": "sub", "line": "quarters", "notes": "1 - - -", "overChords": true },
+        { "track": "bass", "line": "eighths", "notes": "1 . 1 1 . 1 8 1", "overChords": true, "when": "intensity > 0.45" },
+        { "track": "pad", "strum": "quarters", "notes": "D...", "voicing": "close" },
+        { "track": "stab", "strum": "sixteenths", "notes": "D..D ..D. ..D. D...", "voicing": "triad", "when": "intensity > 0.6" },
+        { "track": "arp", "line": "sixteenths", "notes": "1 3 5 8 5 3 5 8 1 3 5 8 9 8 5 3", "overChords": true, "level": "intensity" },
+        {
+          "track": "bells",
+          "name": "calm motif",
+          "line": "quarters",
+          "notes": "5 - 3 - | 1 - - - | 3 - 5 - | 2 - - -",
+          "when": "mood is Calm",
+          "onPhrase": true
+        },
+        {
+          "track": "bells",
+          "name": "bright motif",
+          "line": "eighths",
+          "notes": "8 7 8 5 3 5 8 - | 6 5 6 3 1 3 6 - | 5 4 5 3 1 3 5 - | 7 6 7 5 2 5 7 -",
+          "when": "mood is Bright",
+          "onPhrase": true
+        }
+      ],
+      "exits": [{ "when": "intensity > 0.7", "then": "rise" }, { "when": "intensity < 0.25", "then": "dawn" }, { "then": "pulse" }]
+    },
+    {
+      "name": "rise",
+      "about": "The build: the riser and the airy supersaw swept up across the section, over a snare roll that climbs a step at a time to the drop",
+      "bars": 4,
+      "chords": "iv | VI | VII | VM",
+      "parts": [
+        {
+          "track": "drums",
+          "name": "roll",
+          "beat": "sixteenths",
+          "rows": {
+            "snare": "o.o. o.o. o.o. o.o. | x.x. x.x. x.x. x.x. | xxxx xxxx xxxx xxxx | 5566 7788 99XX XXXX",
+            "kick": "x... x... x... x... | x... x... x... x... | x.x. x.x. x.x. x.x. | xxxx xxxx xxxx ...."
+          }
+        },
+        { "track": "air", "strum": "quarters", "notes": "D...", "voicing": "triad" },
+        { "track": "riser", "line": "quarters", "notes": "1 - - - | - - - - | - - - - | - - - ." },
+        { "track": "sub", "line": "quarters", "notes": "1 - - -", "overChords": true },
+        { "track": "bass", "line": "eighths", "notes": "1 1 1 1 1 1 1 1", "overChords": true },
+        { "track": "arp", "line": "sixteenths", "notes": "1 3 5 8 5 3 5 8 1 3 5 8 9 8 5 3", "overChords": true }
+      ],
+      "sweeps": [
+        { "track": "air", "macro": "sweep", "from": 0, "to": 1 },
+        { "track": "riser", "macro": "sweep", "from": 0, "to": 1 }
+      ],
+      "exits": [{ "then": "lift" }]
+    },
+    {
+      "name": "lift",
+      "about": "The drop: the supersaw's chords, the lead's tune (a Phrygian line instead when the mood is Dark), bells answering it when Bright. Twice round, then on while the intensity holds above 0.75",
+      "bars": 8,
+      "chords": "i | VI | III | VII | i | VI | iv | VM",
+      "parts": [
+        {
+          "track": "drums",
+          "name": "drop, snare fill",
+          "beat": "sixteenths",
+          "rows": { "kick": "x... ..x. x.x. ....", "snare": ".... x... .... x...", "hat-closed": "xoxo xoxo xoxo xoxo" },
+          "when": "fill is 1",
+          "endWith": { "beat": "sixteenths", "rows": { "kick": "x... .... x... ....", "snare": ".... x..x .xx. xxXX" } }
+        },
+        {
+          "track": "drums",
+          "name": "drop, tom fill",
+          "beat": "sixteenths",
+          "rows": { "kick": "x... ..x. x.x. ....", "snare": ".... x... .... x...", "hat-closed": "xoxo xoxo xoxo xoxo" },
+          "when": "fill is 2",
+          "endWith": {
+            "beat": "sixteenths",
+            "rows": {
+              "kick": "x... .... .... ....",
+              "tom-high": "x.x. x... .... ....",
+              "tom-low": ".... ..x. x.x. ....",
+              "snare": ".... .... .... xXxX"
+            }
+          }
+        },
+        {
+          "track": "drums",
+          "name": "drop, roll fill",
+          "beat": "sixteenths",
+          "rows": { "kick": "x... ..x. x.x. ....", "snare": ".... x... .... x...", "hat-closed": "xoxo xoxo xoxo xoxo" },
+          "when": "fill is 3",
+          "endWith": { "beat": "sixteenths", "rows": { "kick": "x... .... x... ....", "snare": "ooxo oxox xxXx XXXX" } }
+        },
+        {
+          "track": "drums",
+          "name": "crashes",
+          "beat": "eighths",
+          "rows": { "crash": "x... .... | .... .... | .... .... | .... .... | x... .... | .... .... | .... .... | .... ...." }
+        },
+        { "track": "sub", "line": "quarters", "notes": "1 - - -", "overChords": true },
+        { "track": "bass", "line": "eighths", "notes": "1 . 1 1 . 1 8 1", "overChords": true },
+        { "track": "chords", "strum": "quarters", "notes": "D...", "voicing": "close" },
+        { "track": "stab", "strum": "sixteenths", "notes": "D..D ..D. ..D. D...", "voicing": "triad", "when": "intensity > 0.6" },
+        {
+          "track": "lead",
+          "name": "the tune",
+          "line": "eighths",
+          "notes": "8 - 8 7 8 - 5 - | 6 - 6 5 6 - 3 - | 5 - 5 4 5 - 8 - | 7 - 9~ - 7 6 5 - | 8 - 8 7 8 - 5 - | 6 - 6 5 6 - 8 - | 8 - 6 - 4 - 6 - | 5 - #7 - 9 - - -",
+          "when": "not mood is Dark",
+          "onPhrase": true
+        },
+        {
+          "track": "lead",
+          "name": "dark line",
+          "line": "eighths",
+          "notes": "1 - b2 1 7, - 5, - | 6, - 7, 1 b2 - 1 - | 1 - b2 1 7, - 5, - | 4, - 5, 6, 7, - - -",
+          "when": "mood is Dark",
+          "onPhrase": true
+        },
+        {
+          "track": "bells",
+          "name": "answer",
+          "line": "quarters",
+          "notes": ". . 8 5 | . . 6 3 | . . 5 8 | . . 7 5",
+          "when": "mood is Bright"
+        },
+        { "track": "arp", "line": "sixteenths", "notes": "1 3 5 8 5 3 5 8 1 3 5 8 9 8 5 3", "overChords": true, "level": "intensity" }
+      ],
+      "exits": [
+        { "when": "pass < 2", "then": "lift" },
+        { "when": "intensity > 0.75", "then": "lift" },
+        { "when": "intensity > 0.35", "then": "pulse" },
+        { "then": "dawn" }
+      ]
+    }
+  ]
+}

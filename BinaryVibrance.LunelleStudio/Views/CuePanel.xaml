@@ -11,7 +11,17 @@
                 IsTabStop="False">
     <ScrollViewer>
         <StackPanel Margin="12,8,16,12">
-            <TextBlock Text="CUES" FontSize="10" Foreground="{x:Static views:Theme.Faint}" Margin="0,0,0,8" />
+            <Grid Margin="0,0,0,8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Text="CUES" FontSize="10" Foreground="{x:Static views:Theme.Faint}" VerticalAlignment="Center" />
+                <Button x:Name="NewCue" Grid.Column="1" Visibility="{x:Bind ViewModel.HasProjectCues, Mode=OneWay}" Padding="7,1,7,2"
+                        ToolTipService.ToolTip="New cue: a level or a choice, imported into this song">
+                    <TextBlock Text="+ cue" FontSize="11" />
+                </Button>
+            </Grid>
             <ItemsControl ItemsSource="{x:Bind ViewModel.Cues, Mode=OneWay}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate x:DataType="wb:CueViewModel">
@@ -24,7 +34,13 @@
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
                                     </Grid.ColumnDefinitions>
-                                    <TextBlock Grid.Column="0" Text="{x:Bind Name}" FontSize="14" Foreground="{x:Static views:Theme.Ink}" />
+                                    <StackPanel Grid.Column="0" Orientation="Horizontal">
+                                        <TextBlock Text="{x:Bind Name}" FontSize="14" Foreground="{x:Static views:Theme.Ink}" VerticalAlignment="Center" />
+                                        <Button Command="{x:Bind StartHereCommand}" Padding="5,0,5,1" Margin="8,0,0,0" VerticalAlignment="Center"
+                                                ToolTipService.ToolTip="Start the song with this cue where it is now (the value it previews at)">
+                                            <TextBlock Text="start here" FontSize="10" />
+                                        </Button>
+                                    </StackPanel>
                                     <!-- In the theme's readout window, its text where it would be with none -->
                                     <Border Grid.Column="1" Visibility="{x:Bind IsLevel}" Background="{x:Static views:Theme.Window}" CornerRadius="3"
                                             Padding="6,1,6,1" Margin="0,-1,-6,-1">

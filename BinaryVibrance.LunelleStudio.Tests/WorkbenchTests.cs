@@ -202,9 +202,10 @@ public class WorkbenchTests
 	}
 
 	[Test]
-	public void A_choice_of_part_gives_the_keyboard_its_track_and_is_kept_with_the_mode_and_pin()
+	public void A_choice_of_part_gives_the_keyboard_its_track_and_the_mode_and_layout_are_kept()
 	{
 		WorkbenchState saved;
+		WorkbenchPreferences preferences;
 		using (var rig = new Rig())
 		{
 			var model = rig.Workbench.ViewModel;
@@ -213,16 +214,20 @@ public class WorkbenchTests
 			pad.IsSelected.ShouldBeTrue();
 			model.DockLabel.ShouldStartWith("pad · ");
 			model.LibraryPinned = true;
+			model.Octave = 5;
 			saved = rig.Workbench.CaptureState();
+			preferences = rig.Workbench.CapturePreferences();
 		}
-		saved.SelectedPart.ShouldBe("verse/pad");
 		saved.Mode.ShouldBe("Arrange");
+		saved.Song.ShouldBe("first");
+		preferences.LibraryPinned.ShouldBeTrue();
+		preferences.Octave.ShouldBe(5);
 
 		using var again = new Rig(saved);
-		again.Workbench.ViewModel.Tracks[1].Placements[0].IsSelected.ShouldBeTrue();
+		again.Workbench.RestorePreferences(preferences);
 		again.Workbench.ViewModel.LibraryPinned.ShouldBeTrue();
+		again.Workbench.ViewModel.Octave.ShouldBe(5);
 		again.Workbench.ViewModel.Mode.ShouldBe(WorkbenchMode.Arrange);
-		again.Workbench.ViewModel.DockLabel.ShouldStartWith("pad · ");
 	}
 
 	[Test]
@@ -539,29 +544,28 @@ public class WorkbenchTests
 	}
 
 	[Test]
-	public void Its_state_comes_back_in_a_new_workbench()
+	public void A_new_workbench_opens_at_the_saved_song_stopped_and_as_the_song_has_it()
 	{
 		WorkbenchState saved;
 		using (var rig = new Rig())
 		{
 			var model = rig.Workbench.ViewModel;
+			model.SelectedSong = 1;
 			rig.Workbench.Play();
 			model.LoopSection = true;
-			model.Cues[0].Value = 0.75f;
-			model.Tracks[1].Muted = true;
-			model.Tracks[0].Placements[1].State = PlacementState.Off;
+			rig.Workbench.Player.Set(Energy, 0.75f);
+			model.Tracks[0].Muted = true;
 			saved = rig.Workbench.CaptureState();
 		}
+		saved.Song.ShouldBe("second");
 
 		using var again = new Rig(saved);
 		var restored = again.Workbench.ViewModel;
-		restored.SelectedSong.ShouldBe(0);
-		restored.IsPlaying.ShouldBeTrue();
-		restored.LoopSection.ShouldBeTrue();
-		restored.Cues[0].Value.ShouldBe(0.75f);
-		restored.Tracks[1].Muted.ShouldBeTrue();
-		restored.Tracks[0].Placements[1].State.ShouldBe(PlacementState.Off);
-		again.Workbench.Player.Get(Energy).ShouldBe(0.75f);
+		restored.SelectedSong.ShouldBe(1);
+		restored.IsPlaying.ShouldBeFalse();
+		restored.LoopSection.ShouldBeFalse();
+		restored.Tracks[0].Muted.ShouldBeFalse();
+		again.Workbench.Player.Get(Energy).ShouldNotBe(0.75f);
 	}
 
 	[Test]

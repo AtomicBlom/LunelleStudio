@@ -34,10 +34,11 @@ public sealed class MusicProject : IDisposable
 	private bool _reloadArguments;
 	private CancellationTokenSource? _debounce;
 
-	private MusicProject(string projectPath, IReadOnlyDictionary<string, string> properties)
+	private MusicProject(string projectPath, IReadOnlyDictionary<string, string> properties, IMusicFiles? files)
 	{
 		ProjectPath = projectPath;
 		_properties = properties;
+		_files = files;
 		Directory = Path.GetDirectoryName(projectPath)!;
 		_watcher = new FileSystemWatcher(Directory)
 		{
@@ -49,6 +50,10 @@ public sealed class MusicProject : IDisposable
 		_watcher.Deleted += (_, e) => OnFileChanged(e.FullPath, added: true);
 		_watcher.Renamed += (_, e) => OnFileChanged(e.FullPath, added: true);
 	}
+
+	// The files the project is read from, when not the disk: the studio's document (docs/spec/transactions.md §7)
+	private readonly IMusicFiles? _files;
+	private IDisposable? _watch;
 
 	/// <summary>The project's .csproj, in full.</summary>
 	public string ProjectPath { get; }
@@ -68,14 +73,29 @@ public sealed class MusicProject : IDisposable
 	/// so the project's references are the builds the host runs.
 	/// </summary>
 	/// <exception cref="InvalidOperationException">Its design-time build failed (it may need building once first).</exception>
-	public static async Task<MusicProject> OpenAsync(string projectPath, IReadOnlyDictionary<string, string>? properties = null, CancellationToken cancellation = default)
+	public static Task<MusicProject> OpenAsync(string projectPath, IReadOnlyDictionary<string, string>? properties = null, CancellationToken cancellation = default) =>
+		OpenAsync(projectPath, properties, files: null, cancellation);
+
+	/// <summary>
+	/// Opens <paramref name="projectPath"/> as <see cref="OpenAsync(string, IReadOnlyDictionary{string, string}?, CancellationToken)"/>
+	/// does, its sources and music read through <paramref name="files"/>: the studio's document, so every edit, undo and
+	/// redo compiles before it is saved. The .csproj and what it imports are read from disk, as MSBuild reads them.
+	/// </summary>
+	public static async Task<MusicProject> OpenAsync(string projectPath, IReadOnlyDictionary<string, string>? properties, IMusicFiles? files, CancellationToken cancellation = default)
 	{
-		var project = new MusicProject(Path.GetFullPath(projectPath), properties ?? new Dictionary<string, string>());
+		var project = new MusicProject(Path.GetFullPath(projectPath), properties ?? new Dictionary<string, string>(), files);
 		await project.LoadArgumentsAsync(cancellation);
 		project.Publish(await project.CompileAsync(cancellation));
-		project._watcher.EnableRaisingEvents = true;
+		if (files is null)
+			project._watcher.EnableRaisingEvents = true;
+		else
+			project._watch = files.Watch(project.Directory, path => project.OnFileChanged(path, added: !project.Knows(path) || !files.Exists(path)));
 		return project;
 	}
+
+	// Whether the project's command line names the file
+	private bool Knows(string path) =>
+		_sourceFiles.Contains(path, StringComparer.OrdinalIgnoreCase) || _musicFiles.Contains(path, StringComparer.OrdinalIgnoreCase);
 
 	/// <summary>
 	/// The newest build not yet taken, or null: the host's frame takes it, hands its catalog to the workbench, and releases
@@ -136,10 +156,33 @@ public sealed class MusicProject : IDisposable
 		_resources = [.. parsed.ManifestResources];
 		var id = ProjectId.CreateNewId(Name);
 		DocumentInfo Document(string path) => DocumentInfo.Create(DocumentId.CreateNewId(id), Path.GetFileName(path),
-			loader: new FileTextLoader(path, Encoding.UTF8), filePath: path);
+			loader: _files is { } files
+				? TextLoader.From(TextAndVersion.Create(SourceText.From(files.ReadText(Path.GetFullPath(path, Directory)), Encoding.UTF8), VersionStamp.Create(), path))
+				: new FileTextLoader(path, Encoding.UTF8),
+			filePath: path);
 		var references = parsed.MetadataReferences.Select(r => MetadataReference.CreateFromFile(r.Reference, r.Properties)).ToArray();
 		_sourceFiles = [.. parsed.SourceFiles.Select(f => Path.GetFullPath(f.Path, Directory))];
 		_musicFiles = [.. parsed.AdditionalFiles.Select(f => Path.GetFullPath(f.Path, Directory))];
+		var sourcePaths = parsed.SourceFiles.Select(f => f.Path).ToList();
+		var musicPaths = parsed.AdditionalFiles.Select(f => f.Path).ToList();
+		if (_files is { } edited)
+		{
+			// The document's files, which MSBuild didn't see: music and C# made since the save in, deleted ones out
+			bool Gone(string path) => !edited.Exists(Path.GetFullPath(path, Directory));
+			sourcePaths.RemoveAll(Gone);
+			musicPaths.RemoveAll(Gone);
+			foreach (var file in edited.List(Directory))
+			{
+				var full = Path.GetFullPath(Path.Combine(Directory, file));
+				if (file.EndsWith(".cs", StringComparison.OrdinalIgnoreCase) && !file.StartsWith("obj/", StringComparison.Ordinal) && !file.StartsWith("bin/", StringComparison.Ordinal)
+					&& !sourcePaths.Any(p => string.Equals(Path.GetFullPath(p, Directory), full, StringComparison.OrdinalIgnoreCase)))
+					sourcePaths.Add(full);
+				else if (Music(file) && !musicPaths.Any(p => string.Equals(Path.GetFullPath(p, Directory), full, StringComparison.OrdinalIgnoreCase)))
+					musicPaths.Add(full);
+			}
+			_sourceFiles = [.. sourcePaths.Select(p => Path.GetFullPath(p, Directory))];
+			_musicFiles = [.. musicPaths.Select(p => Path.GetFullPath(p, Directory))];
+		}
 		_references = parsed.MetadataReferences
 			.GroupBy(r => Path.GetFileNameWithoutExtension(r.Reference), StringComparer.OrdinalIgnoreCase)
 			.ToDictionary(g => g.Key, g => g.First().Reference, StringComparer.OrdinalIgnoreCase);
@@ -147,15 +190,23 @@ public sealed class MusicProject : IDisposable
 				filePath: ProjectPath,
 				compilationOptions: parsed.CompilationOptions,
 				parseOptions: parsed.ParseOptions,
-				documents: parsed.SourceFiles.Select(f => Document(f.Path)),
+				documents: sourcePaths.Select(Document),
 				metadataReferences: references,
 				analyzerReferences: parsed.AnalyzerReferences.Select(a => (AnalyzerReference)new AnalyzerFileReference(Path.GetFullPath(a.FilePath, Directory), AnalyzerLoader.Instance)),
-				additionalDocuments: parsed.AdditionalFiles.Select(f => Document(f.Path)))
+				additionalDocuments: musicPaths.Select(Document))
 			.WithAnalyzerConfigDocuments(parsed.AnalyzerConfigPaths.Select(Document));
 		using var workspace = new AdhocWorkspace();
 		_solution = workspace.AddProject(info).Solution;
 		_project = id;
 	}
+
+	// A format 2 music file, as Lunelle's props hand the generator them
+	private static bool Music(string file) =>
+		file == "lunelle.meta.json"
+		|| (file.EndsWith(".json", StringComparison.OrdinalIgnoreCase)
+			&& (file.StartsWith("Songs/", StringComparison.Ordinal) || file.StartsWith("Patches/", StringComparison.Ordinal)
+				|| file.StartsWith("Kits/", StringComparison.Ordinal) || file.StartsWith("Patterns/", StringComparison.Ordinal)
+				|| file.StartsWith("Cues/", StringComparison.Ordinal) || file.StartsWith("Libraries/", StringComparison.Ordinal)));
 
 	// A design-time build names the references a build would make without making them: one not built yet is said, with
 	// the configuration it was asked for, rather than left for the compiler to fail to open
@@ -186,8 +237,10 @@ public sealed class MusicProject : IDisposable
 	}
 
 	// An editor may still hold the file as it saves: a few tries before giving up
-	private static async Task<SourceText> ReadAsync(string path, CancellationToken cancellation)
+	private async Task<SourceText> ReadAsync(string path, CancellationToken cancellation)
 	{
+		if (_files is { } files)
+			return SourceText.From(files.ReadText(path), Encoding.UTF8);
 		for (var attempt = 0; ; attempt++)
 		{
 			try
@@ -232,7 +285,7 @@ public sealed class MusicProject : IDisposable
 		try
 		{
 			var assembly = context.LoadFromStream(pe, pdb);
-			var (catalog, problem) = CatalogReader.Read(assembly, _musicFiles);
+			var (catalog, problem) = CatalogReader.Read(assembly, _musicFiles, _files);
 			if (catalog is null)
 			{
 				context.Unload();
@@ -284,6 +337,7 @@ public sealed class MusicProject : IDisposable
 	public void Dispose()
 	{
 		_watcher.Dispose();
+		_watch?.Dispose();
 		_debounce?.Cancel();
 		TakeBuild()?.Release();
 	}

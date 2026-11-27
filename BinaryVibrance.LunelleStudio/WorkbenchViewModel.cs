@@ -161,6 +161,41 @@ public sealed class WorkbenchViewModel : ViewModel
 
 	internal void AddKit(string name) => Kits.Add(new ChoiceViewModel(Kits.Count, name, index => _workbench.ChooseKit(index)));
 
+	/// <summary>The presets the host ships (<see cref="Workbench.Presets"/>), for a project of files alone; none for one with code.</summary>
+	public System.Collections.ObjectModel.ObservableCollection<PresetViewModel> Presets { get; } = [];
+
+	/// <summary>Whether there are presets to offer, for the library to show their list.</summary>
+	public bool HasPresets
+	{
+		get;
+		internal set
+		{
+			if (Set(ref field, value))
+				Changed(nameof(SoundsShown));
+		}
+	}
+
+	/// <summary>Where in <see cref="Presets"/> the one on the keyboard is, or -1.</summary>
+	public int TryingPreset
+	{
+		get;
+		private set => Set(ref field, value);
+	} = -1;
+
+	/// <summary>What the preset on the keyboard says of itself, under the presets' heading; empty when none is.</summary>
+	public string PresetAbout
+	{
+		get;
+		private set => Set(ref field, value);
+	} = "";
+
+	internal void ShowTrying(Preset? preset)
+	{
+		var at = preset is null ? -1 : Presets.Select(p => p.Preset).ToList().IndexOf(preset);
+		TryingPreset = at;
+		PresetAbout = at < 0 ? "" : $"{preset!.Name} on the keys{(preset.IsKit ? " and pads" : "")}. {preset.About}".TrimEnd();
+	}
+
 	/// <summary>The patch the bench plays, by index, or −1. Setting it acts.</summary>
 	public int SelectedPatch
 	{
@@ -413,12 +448,94 @@ public sealed class WorkbenchViewModel : ViewModel
 		}
 	} = "";
 
+	/// <summary>
+	/// Shows the library's rows as the filter and the tree have them: a row whose id has every word typed, its folder open
+	/// (or the words finding it inside a folded one), the first of a folder's rows heading it.
+	/// </summary>
 	internal void FilterLibrary()
 	{
 		var words = LibraryQuery.Split(' ', StringSplitOptions.RemoveEmptyEntries);
-		foreach (var list in new[] { Songs, Patches, Kits })
-			foreach (var choice in list)
-				choice.IsVisible = words.All(w => choice.Name.Contains(w, StringComparison.OrdinalIgnoreCase));
+		Group("song", Songs, words);
+		Group("patch", Patches, words);
+		Group("kit", Kits, words);
+		Group("pattern", LibraryPatterns, words);
+		Group("cue", ProjectCues, words);
+		// A preset by its name or its kind: "bass", "sampled"
+		foreach (var preset in Presets)
+			preset.IsVisible = words.All(w => preset.Name.Contains(w, StringComparison.OrdinalIgnoreCase)
+				|| preset.Category.Contains(w, StringComparison.OrdinalIgnoreCase));
+	}
+
+	// The folders folded away, by kind and folder: "patch:bass"
+	private readonly HashSet<string> _folded = [];
+
+	// One kind's rows as a tree: each folder's header on the first of its rows the words keep, its rows hidden while folded
+	private void Group<T>(string kind, IEnumerable<T> rows, string[] words) where T : LibraryRowViewModel
+	{
+		string? heading = null;
+		foreach (var row in rows)
+		{
+			row.FoldsBy(folder => Fold(kind, folder));
+			var found = words.All(w => row.Id.Contains(w, StringComparison.OrdinalIgnoreCase));
+			var folded = words.Length == 0 && _folded.Contains(kind + ":" + row.Folder);
+			row.IsFolded = folded;
+			row.ShowsFolder = found && row.Folder.Length > 0 && row.Folder != heading;
+			row.IsVisible = found && !folded;
+			if (found)
+				heading = row.Folder;
+		}
+	}
+
+	/// <summary>Folds a kind's folder away (<c>"patch"</c>, <c>"bass"</c>), or opens it again.</summary>
+	internal void Fold(string kind, string folder)
+	{
+		if (!_folded.Remove(kind + ":" + folder))
+			_folded.Add(kind + ":" + folder);
+		FilterLibrary();
+	}
+
+	/// <summary>Whether the library shows songs only (with any other kinds ticked); none ticked shows every kind.</summary>
+	public bool FilterSongs { get; set { if (Set(ref field, value)) KindsChanged(); } }
+
+	/// <summary>Whether the library shows patches, among the kinds ticked.</summary>
+	public bool FilterPatches { get; set { if (Set(ref field, value)) KindsChanged(); } }
+
+	/// <summary>Whether the library shows kits, among the kinds ticked.</summary>
+	public bool FilterKits { get; set { if (Set(ref field, value)) KindsChanged(); } }
+
+	/// <summary>Whether the library shows patterns, among the kinds ticked.</summary>
+	public bool FilterPatterns { get; set { if (Set(ref field, value)) KindsChanged(); } }
+
+	/// <summary>Whether the library shows cues, among the kinds ticked.</summary>
+	public bool FilterCues { get; set { if (Set(ref field, value)) KindsChanged(); } }
+
+	/// <summary>Whether the library shows Lunelle's sounds, among the kinds ticked.</summary>
+	public bool FilterSounds { get; set { if (Set(ref field, value)) KindsChanged(); } }
+
+	private bool Shows(bool ticked) => ticked || !(FilterSongs || FilterPatches || FilterKits || FilterPatterns || FilterCues || FilterSounds);
+
+	/// <summary>Whether the library's songs show: no kind ticked, or songs.</summary>
+	public bool SongsShown => Shows(FilterSongs);
+
+	/// <summary>Whether the library's patches show.</summary>
+	public bool PatchesShown => Shows(FilterPatches);
+
+	/// <summary>Whether the library's kits show.</summary>
+	public bool KitsShown => Shows(FilterKits);
+
+	/// <summary>Whether the library's patterns show: the project has some, and the kinds let them.</summary>
+	public bool PatternsShown => HasPatterns && Shows(FilterPatterns);
+
+	/// <summary>Whether the library's cues show: the project has cue files, and the kinds let them.</summary>
+	public bool CuesShown => HasProjectCues && Shows(FilterCues);
+
+	/// <summary>Whether Lunelle's sounds show: there are some to offer, and the kinds let them.</summary>
+	public bool SoundsShown => HasPresets && Shows(FilterSounds);
+
+	private void KindsChanged()
+	{
+		foreach (var name in new[] { nameof(SongsShown), nameof(PatchesShown), nameof(KitsShown), nameof(PatternsShown), nameof(CuesShown), nameof(SoundsShown) })
+			Changed(name);
 	}
 
 	// The library's songs, patches or kits for a new catalog: left as they are when the names haven't changed
@@ -582,4 +699,42 @@ public sealed class WorkbenchViewModel : ViewModel
 
 	/// <summary>Something the host needs seen, beside the build pill until it goes: "StudioExtras changed: restart to take it up".</summary>
 	public string Notice { get; set => Set(ref field, value); } = "";
+
+	/// <summary>The project's patterns, for the library: each put into the part chosen by its use.</summary>
+	public System.Collections.ObjectModel.ObservableCollection<PatternEntryViewModel> LibraryPatterns { get; } = [];
+
+	/// <summary>Whether the project has patterns to list.</summary>
+	public bool HasPatterns { get; set { if (Set(ref field, value)) Changed(nameof(PatternsShown)); } }
+
+	/// <summary>The project's cues, for the cues panel: each with whether the open song imports it.</summary>
+	public System.Collections.ObjectModel.ObservableCollection<CueEntryViewModel> ProjectCues { get; } = [];
+
+	/// <summary>A cue's menu asked for (its "…"): the view shows it.</summary>
+	public event Action<CueEntryViewModel>? CueMenuRequested;
+
+	internal void RequestCueMenu(CueEntryViewModel cue) => CueMenuRequested?.Invoke(cue);
+
+	/// <summary>Whether the project has cue files to list (a project of format 2).</summary>
+	public bool HasProjectCues { get; set { if (Set(ref field, value)) Changed(nameof(CuesShown)); } }
+
+	/// <summary>The export Arrange's automation lane shows, or null for none.</summary>
+	public string? LaneExport { get; set => Set(ref field, value); }
+
+	/// <summary>The open song's exports, for the lane to choose among.</summary>
+	public IReadOnlyList<string> LaneExports { get; set => Set(ref field, value); } = [];
+
+	/// <summary>The marks of the export the lane shows, each an event of it.</summary>
+	public IReadOnlyList<AutomationMark> LaneMarks { get; set => Set(ref field, value); } = [];
+
+	/// <summary>Whether the lane's bars are placed as the export last played live (else along the sections in order).</summary>
+	public bool LanePlaced { get; set => Set(ref field, value); }
+
+	/// <summary>The export playing live (its events applied as the song plays), or null.</summary>
+	public string? LiveExport { get; set => Set(ref field, value); }
+
+	/// <summary>Whether an export is being recorded from the cues moved as the song plays.</summary>
+	public bool IsRecording { get; set => Set(ref field, value); }
+
+	/// <summary>Whether the project has edits not yet saved (the document's, docs/spec/transactions.md).</summary>
+	public bool IsDirty { get; set => Set(ref field, value); }
 }

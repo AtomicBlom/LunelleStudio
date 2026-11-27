@@ -73,6 +73,13 @@
                                 <Button ToolTipService.ToolTip="{x:Bind views:Display.ItemTip(Label)}" Visibility="{x:Bind IsAction}" Command="{x:Bind Command}" HorizontalAlignment="Left" Margin="0,2,0,2" Padding="8,3,8,4">
                                     <TextBlock Text="{x:Bind Label}" FontSize="12" />
                                 </Button>
+                                <StackPanel Orientation="Horizontal" Visibility="{x:Bind IsOverridden, Mode=OneWay}" Margin="0,0,0,3">
+                                    <TextBlock Text="● changed from the base" FontSize="10" Foreground="{x:Static views:Theme.Accent}" VerticalAlignment="Center" />
+                                    <Button Command="{x:Bind RevertCommand}" Padding="6,0,6,1" Margin="8,0,0,0" VerticalAlignment="Center"
+                                            ToolTipService.ToolTip="Take this change out of the patch's file, so its base shows through">
+                                        <TextBlock Text="revert" FontSize="10" />
+                                    </Button>
+                                </StackPanel>
                             </StackPanel>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>

@@ -1,6 +1,6 @@
 {
-  "format": "lunelle-song/2",
-  "name": "demo",
+  "format": "lunelle-song/3",
+  "cues": { "intensity": 0.6, "mood": "Calm" },
   "about": "The demo song: two sections over the same groove, a bass over the chords, a lead that comes in with the intensity, and a motif per mood that comes in only where its phrase starts.",
   "tempo": 112,
   "scale": "A minor",

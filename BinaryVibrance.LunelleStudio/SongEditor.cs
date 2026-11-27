@@ -70,8 +70,17 @@ public sealed class SongEditor
 		}
 	}
 
-	/// <summary>The song, built from the file as edited, its names bound by <paramref name="bindings"/>.</summary>
-	public Song Build(SongBindings bindings) => SongFile.Load(Text, bindings);
+	/// <summary>
+	/// The song, built from the file as edited, its names bound by <paramref name="bindings"/>; named
+	/// <paramref name="name"/> (its id) where the file names it nothing, as a format 2 song file doesn't.
+	/// </summary>
+	public Song Build(SongBindings bindings, string? name = null)
+	{
+		if (name is null || System.Text.Json.Nodes.JsonNode.Parse(Text) is not System.Text.Json.Nodes.JsonObject root || root["name"] is not null)
+			return SongFile.Load(Text, bindings);
+		root["name"] = name;
+		return SongFile.Load(root.ToJsonString(), bindings);
+	}
 
 	/// <summary>
 	/// The part a placement plays, as the file has it (<c>sections[section].parts[index]</c>), or null when the file has

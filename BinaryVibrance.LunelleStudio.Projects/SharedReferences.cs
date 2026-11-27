@@ -22,7 +22,8 @@ internal static class SharedReferences
 			if (!assembly.IsDynamic && assembly.Location.Length > 0 && assembly.GetName().Name is { } name
 				&& !assembly.Location.StartsWith(runtime, StringComparison.OrdinalIgnoreCase))
 				loaded.TryAdd(name, assembly);
-		var problems = new List<string>();
+		var versions = new List<string>();
+		var rebuilt = new List<string>();
 		foreach (var (name, reference) in references)
 		{
 			if (!loaded.TryGetValue(name, out var assembly))
@@ -30,16 +31,45 @@ internal static class SharedReferences
 			var built = ProjectLoadContext.Implementation(reference);
 			// A library built for several frameworks (Vysara) gives a project on another framework a build of its own, whose
 			// id differs by design: only builds for the same framework are compared
-			if (ModuleId(built) is { } mine && mine.Id != assembly.ManifestModule.ModuleVersionId
-				&& (mine.Framework is null || mine.Framework == assembly.GetCustomAttribute<System.Runtime.Versioning.TargetFrameworkAttribute>()?.FrameworkName))
-				problems.Add($"{name}: the project's is {built}, the workbench runs {assembly.Location}");
+			if (ModuleId(built) is not { } mine || mine.Id == assembly.ManifestModule.ModuleVersionId
+				|| (mine.Framework is not null && mine.Framework != assembly.GetCustomAttribute<System.Runtime.Versioning.TargetFrameworkAttribute>()?.FrameworkName))
+				continue;
+			var theirs = Version(built);
+			var ours = Version(assembly);
+			if (theirs is not null && ours is not null && theirs != ours)
+				versions.Add($"This project uses {name} {theirs}; this studio is {ours}.");
+			else
+				rebuilt.Add($"{name}: the project's is {built}, the studio runs {assembly.Location}");
 		}
-		return problems.Count == 0
+		if (versions.Count > 0)
+			return string.Join('\n', versions) + "\nA project with code must be built against the very Kaldra and Lunelle the studio runs, "
+				+ "which it shares with the project rather than loading again. Open the project in the studio of its version, "
+				+ "or update its references to this studio's.";
+		return rebuilt.Count == 0
 			? null
-			: "The project builds against assemblies other than the ones this workbench runs, which it shares with the project "
-				+ "rather than loading again. A project built against another Kaldra can't be opened by this one; a reference "
-				+ "rebuilt since the workbench started needs it restarted.\n" + string.Join("\n", problems);
+			: "The project builds against assemblies other than the ones this studio runs, which it shares with the project "
+				+ "rather than loading again. A reference rebuilt since the studio started needs the studio restarted.\n"
+				+ string.Join('\n', rebuilt);
 	}
+
+	/// <summary>An assembly's informational version (as its package was versioned), without a source revision after a <c>+</c>.</summary>
+	internal static string? Version(string path)
+	{
+		try
+		{
+			return Trim(System.Diagnostics.FileVersionInfo.GetVersionInfo(path).ProductVersion);
+		}
+		catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+		{
+			return null;
+		}
+	}
+
+	private static string? Version(Assembly assembly) =>
+		Trim(assembly.GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion);
+
+	private static string? Trim(string? version) =>
+		string.IsNullOrEmpty(version) ? null : version.IndexOf('+') is var plus and > 0 ? version[..plus] : version;
 
 	// The module's version id and the framework it was built for, or null for a reference assembly (which has no code to
 	// compare) or one that can't be read

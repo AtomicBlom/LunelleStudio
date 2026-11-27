@@ -1,28 +1,16 @@
 namespace BinaryVibrance.LunelleStudio.App.Web;
 
 /// <summary>
-/// The one music project the browser studio keeps, in <see cref="Folder"/> of its files: <c>samples/HelloSynth</c>'s
-/// music the first time (embedded, as <c>new --data</c> writes it), and whatever is imported in its place after.
+/// The one music project the browser studio keeps, in <see cref="Folder"/> of its files: <c>samples/Showcase</c> the
+/// first time (embedded), and whatever is imported in its place after.
 /// </summary>
 internal static class BrowserProject
 {
 	/// <summary>Where the project is, in the browser's files.</summary>
 	public const string Folder = "/music";
 
-	/// <summary>Writes the sample's music when there is no project yet.</summary>
-	public static void StartIfEmpty(BrowserFiles files)
-	{
-		if (files.List(Folder).Any())
-			return;
-		var assembly = typeof(BrowserProject).Assembly;
-		foreach (var resource in assembly.GetManifestResourceNames().Where(r => r.StartsWith("template/", StringComparison.Ordinal)))
-		{
-			using var stream = assembly.GetManifestResourceStream(resource)!;
-			using var bytes = new MemoryStream();
-			stream.CopyTo(bytes);
-			files.WriteBytes(Path.Combine(Folder, resource["template/".Length..]), bytes.ToArray());
-		}
-	}
+	/// <summary>Writes the showcase's music when there is no project yet (<see cref="StarterProject"/>).</summary>
+	public static void StartIfEmpty(BrowserFiles files) => StarterProject.SeedIfEmpty(files, Folder);
 
 	/// <summary>
 	/// The project replaced by a <c>.lunelle</c> file's (<see cref="MusicArchive"/>), what the workbench was doing with

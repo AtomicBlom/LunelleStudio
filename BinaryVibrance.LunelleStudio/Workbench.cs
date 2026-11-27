@@ -65,7 +65,15 @@ public sealed partial class Workbench : IDisposable
 	/// Where the project's songs and patches are read and written: the disk unless the host keeps them elsewhere (a
 	/// browser's storage). Set before the first song is opened.
 	/// </summary>
-	public IMusicFiles Files { get; init; } = DiskFiles.Instance;
+	public IMusicFiles Files
+	{
+		get;
+		init
+		{
+			field = value;
+			WatchDocument();
+		}
+	} = DiskFiles.Instance;
 
 	internal int ReadScope(Span<float> into) => _tap.Read(into);
 
@@ -161,6 +169,7 @@ public sealed partial class Workbench : IDisposable
 		ViewModel.Designer.Built += OnDesignerBuilt;
 		ViewModel.Designer.CopyRequested += OnCopyRequested;
 		ViewModel.Designer.EjectRequested += EjectPatch;
+		ViewModel.Designer.RevertRequested += path => ViewModel.Notice = RevertSetting(path) ?? "";
 		ViewModel.Files.CopyRequested += OnCopyRequested;
 		ViewModel.Designer.BringBackRequested += BringBackPatch;
 		ViewModel.Sketch.Edited += OnSketchEdited;
@@ -171,6 +180,7 @@ public sealed partial class Workbench : IDisposable
 			ViewModel.AddPatch(name);
 		foreach (var (name, _) in catalog.Kits)
 			ViewModel.AddKit(name);
+		ViewModel.FilterLibrary();
 		foreach (var cue in catalog.Cues)
 			ViewModel.Cues.Add(new CueViewModel(this, cue, Player.Get(cue)));
 		if (catalog.Songs.Count > 0)
@@ -220,25 +230,35 @@ public sealed partial class Workbench : IDisposable
 		WorkbenchViewModel.ReplaceChoices(ViewModel.Songs, [.. catalog.Songs.Select(s => s.Name)], ViewModel.AddSong);
 		WorkbenchViewModel.ReplaceChoices(ViewModel.Patches, [.. catalog.Patches.Select(s => s.Name)], ViewModel.AddPatch);
 		WorkbenchViewModel.ReplaceChoices(ViewModel.Kits, [.. catalog.Kits.Select(s => s.Name)], ViewModel.AddKit);
-		ViewModel.FilterLibrary();
+		ShowPresets();
+		// The cues keep their values; the strip shows the song's (ShowCues), the panel the project's
 		ViewModel.Cues.Clear();
 		foreach (var cue in catalog.Cues)
+			Player.Set(cue, cues.TryGetValue(cue.Name, out var was) ? was : Player.Get(cue));
+		ReadProjectCues();
+		if (!ViewModel.LibraryPatterns.Select(p => p.Id).SequenceEqual(catalog.Patterns))
 		{
-			var value = cues.TryGetValue(cue.Name, out var was) ? was : Player.Get(cue);
-			Player.Set(cue, value);
-			ViewModel.Cues.Add(new CueViewModel(this, cue, value));
+			ViewModel.LibraryPatterns.Clear();
+			foreach (var pattern in catalog.Patterns)
+				ViewModel.LibraryPatterns.Add(new PatternEntryViewModel(this, pattern));
 		}
+		ViewModel.HasPatterns = catalog.Patterns.Count > 0;
+		ViewModel.FilterLibrary();
 
 		_songIndex = Index(catalog.Songs, song);
 		_benchPatch = Index(catalog.Patches, patch);
 		_benchKitIndex = Index(catalog.Kits, kit);
 		_patchChoice = Index(catalog.Patches, patchChoice);
 		_kitChoice = Index(catalog.Kits, kitChoice);
+		var opening = _songIndex < 0 || song != Name(catalog.Songs, _songIndex);
 		if (_songIndex < 0 && catalog.Songs.Count > 0)
 			_songIndex = 0;
 		ViewModel.ShowSelectedSong(_songIndex);
 		ViewModel.ShowBench(_benchPatch, _benchKitIndex);
 		Rebuild();
+		// A song opened afresh (not the same song read again) starts at its previews
+		if (opening)
+			PreviewCues();
 		RebuildBench();
 		if (ViewModel.Mode == WorkbenchMode.Files)
 			RefreshFiles();
@@ -277,6 +297,7 @@ public sealed partial class Workbench : IDisposable
 	/// <summary>Chooses a song and builds it; if one was playing, it plays.</summary>
 	public void SelectSong(int index)
 	{
+		Seal();
 		if ((uint)index >= (uint)_catalog.Songs.Count)
 			throw new ArgumentOutOfRangeException(nameof(index), index, "No such song in the catalog.");
 		var playing = Player.IsPlaying;
@@ -296,6 +317,7 @@ public sealed partial class Workbench : IDisposable
 		ViewModel.ShowSelectedSong(index);
 
 		Rebuild(swap: false);
+		PreviewCues();
 		if (playing && _song is not null)
 			Play();
 	}
@@ -323,6 +345,9 @@ public sealed partial class Workbench : IDisposable
 					Player.Force(placement, state);
 		if (_loop)
 			Player.LoopSection(true);
+		foreach (var ((track, macro), value) in _heldMacros)
+			if (song.Tracks.FirstOrDefault(t => t.Name == track) is { } held)
+				Player.HoldMacro(held, new Macro(macro), value);
 		ViewModel.ShowPlaying(true);
 	}
 
@@ -351,7 +376,7 @@ public sealed partial class Workbench : IDisposable
 			OpenEditor();
 			_songPatches.Clear();
 			song = _editor is { } editor && _source is { } source
-				? editor.Build(Bindings(source.Bindings))
+				? source.Build is { } resolve ? resolve(editor.Text, Bindings) : editor.Build(Bindings(source.Bindings), name)
 				: build() ?? throw new InvalidOperationException("Its factory returned no song.");
 		}
 		catch (Exception ex)
@@ -413,9 +438,8 @@ public sealed partial class Workbench : IDisposable
 			ViewModel.Tracks.Add(row);
 		}
 		ViewModel.HasTracks = ViewModel.Tracks.Count > 0;
-		foreach (var cue in song.Cues)
-			if (!ViewModel.Cues.Any(c => c.Cue == cue))
-				ViewModel.Cues.Add(new CueViewModel(this, cue, Player.Get(cue)));
+		ShowCues(song);
+		ShowLane();
 		var used = song.Cues;
 		foreach (var cue in ViewModel.Cues)
 		{
@@ -676,6 +700,8 @@ public sealed partial class Workbench : IDisposable
 			ViewModel.Error = ex.Message;
 			Console.WriteLine($"[workbench] {ex.Message}");
 		}
+		TrackBeat(deltaSeconds);
+		StepLiveExport(deltaSeconds);
 		if (_patchSince >= 0 && (_patchSince += deltaSeconds) >= SongEditor.SaveAfterSeconds)
 			SavePatch();
 		if (_heardSince >= 0 && (_heardSince += deltaSeconds) >= HeardAfterSeconds)
@@ -826,7 +852,11 @@ public sealed partial class Workbench : IDisposable
 					clip.State = state;
 	}
 
-	internal void SetCue(CueBase cue, float value) => Player.Set(cue, value);
+	internal void SetCue(CueBase cue, float value)
+	{
+		Player.Set(cue, value);
+		Record(cue, value);
+	}
 
 	internal void SetLoop(bool loop)
 	{
@@ -867,6 +897,7 @@ public sealed partial class Workbench : IDisposable
 			}
 		ShowPattern(row.Placement);
 		ShowRoll(row.Placement);
+		ShowPatternFits(row.Placement.Track.Name);
 		if (ViewModel.Mode == WorkbenchMode.Arrange)
 			DockTrack(row.Placement.Track);
 	}
@@ -896,6 +927,7 @@ public sealed partial class Workbench : IDisposable
 	/// <summary>Chooses a patch for the bench, which the keyboard plays.</summary>
 	public void SelectPatch(int index)
 	{
+		Seal();
 		if ((uint)index >= (uint)_catalog.Patches.Count)
 			throw new ArgumentOutOfRangeException(nameof(index), index, "No such patch in the catalog.");
 		var (name, build) = _catalog.Patches[index];
@@ -931,6 +963,7 @@ public sealed partial class Workbench : IDisposable
 	/// <summary>Chooses a kit for the bench, whose pads (and keys) play its pieces.</summary>
 	public void SelectKit(int index)
 	{
+		Seal();
 		if ((uint)index >= (uint)_catalog.Kits.Count)
 			throw new ArgumentOutOfRangeException(nameof(index), index, "No such kit in the catalog.");
 		var (name, build) = _catalog.Kits[index];
@@ -966,6 +999,7 @@ public sealed partial class Workbench : IDisposable
 		var chip = new SynthChip(new ChipOptions { Voices = 16 });
 		_audio.Play(chip, _bus);
 		_bench = chip;
+		ViewModel.ShowTrying(null);
 		return chip;
 	}
 
@@ -1202,6 +1236,8 @@ public sealed partial class Workbench : IDisposable
 		}
 		if (control && !ViewModel.IsTyping && input.Pressed(Key.Y))
 			RedoEdit();
+		if (control && input.Pressed(Key.S))
+			Save();
 		if (!control && !ViewModel.IsTyping && input.Pressed(Key.Delete))
 			ViewModel.Roll.DeleteCommand.Execute(null);
 		if (ViewModel.IsTyping || ViewModel.PaletteOpen || control)
@@ -1246,42 +1282,16 @@ public sealed partial class Workbench : IDisposable
 			}
 	}
 
-	/// <summary>What the workbench is doing, to save.</summary>
-	public WorkbenchState CaptureState()
+	/// <summary>What to open at next time: the song, the mode and the bench, never whether or where it played.</summary>
+	public WorkbenchState CaptureState() => new()
 	{
-		var state = new WorkbenchState
-		{
-			Song = _songIndex >= 0 ? _catalog.Songs[_songIndex].Name : null,
-			Playing = Player.IsPlaying,
-			LoopSection = _loop,
-			Section = Player.IsPlaying ? Player.Position.Section : null,
-			ScaleRoot = _scale?.Root.ToString(),
-			ScaleName = _scale?.Name,
-			Patch = _benchPatch >= 0 ? _catalog.Patches[_benchPatch].Name : null,
-			Kit = _benchKitIndex >= 0 ? _catalog.Kits[_benchKitIndex].Name : null,
-			Octave = ViewModel.Octave,
-			PartPanelHeight = ViewModel.PartPanelHeight,
-			Velocity = ViewModel.Velocity,
-			Mode = ViewModel.Mode.ToString(),
-			LibraryPinned = ViewModel.LibraryPinned,
-			SelectedPart = _selected is { } selected ? $"{selected.Section}/{selected.Placement}" : null,
-		};
-		foreach (var cue in ViewModel.Cues)
-			state.Cues[cue.Name] = Player.Get(cue.Cue);
-		foreach (var name in _muted.Keys.Concat(_soloed.Keys).Concat(_gainDb.Keys).Distinct())
-			state.Tracks[name] = new TrackSetting
-			{
-				Muted = _muted.GetValueOrDefault(name),
-				Solo = _soloed.GetValueOrDefault(name),
-				GainDb = _gainDb.GetValueOrDefault(name),
-			};
-		foreach (var ((section, placement), forced) in _forced)
-			if (forced != PlacementState.Auto)
-				state.Forced[$"{section}/{placement}"] = forced.ToString();
-		return state;
-	}
+		Song = _songIndex >= 0 ? _catalog.Songs[_songIndex].Name : null,
+		Patch = _benchPatch >= 0 ? _catalog.Patches[_benchPatch].Name : null,
+		Kit = _benchKitIndex >= 0 ? _catalog.Kits[_benchKitIndex].Name : null,
+		Mode = ViewModel.Mode.ToString(),
+	};
 
-	/// <summary>Takes up a saved state; anything named in it that is gone is ignored.</summary>
+	/// <summary>Takes up a saved state; anything named in it that is gone is ignored. It never starts playing.</summary>
 	public void RestoreState(WorkbenchState state)
 	{
 		ArgumentNullException.ThrowIfNull(state);
@@ -1291,52 +1301,33 @@ public sealed partial class Workbench : IDisposable
 				song = i;
 		if (song >= 0 && song != _songIndex)
 			SelectSong(song);
-		_scale = ScaleFrom(state.ScaleRoot, state.ScaleName);
-		foreach (var cue in ViewModel.Cues)
-			if (state.Cues.TryGetValue(cue.Name, out var value))
-			{
-				Player.Set(cue.Cue, value);
-				if (cue.IsChoice)
-					cue.SelectedOption = CueViewModel.OptionIndex(cue.Cue, value);
-				else
-					cue.Value = value;
-			}
-		foreach (var (name, setting) in state.Tracks)
-		{
-			_muted[name] = setting.Muted;
-			_soloed[name] = setting.Solo;
-			_gainDb[name] = setting.GainDb;
-		}
-		foreach (var (key, value) in state.Forced)
-		{
-			var cut = key.IndexOf('/');
-			if (cut > 0 && Enum.TryParse<PlacementState>(value, out var forced))
-				_forced[(key[..cut], key[(cut + 1)..])] = forced;
-		}
-		_loop = state.LoopSection;
-		ViewModel.ShowLoop(_loop);
-		ViewModel.Octave = state.Octave;
-		ViewModel.PartPanelHeight = state.PartPanelHeight;
-		ViewModel.Velocity = state.Velocity;
-		if (state.SelectedPart is { } part && part.IndexOf('/') is var slash && slash > 0)
-			_selected = (part[..slash], part[(slash + 1)..]);
-		if (_song is { } built)
-			Fill(built);
 		var patch = Index(_catalog.Patches, state.Patch);
 		var kit = Index(_catalog.Kits, state.Kit);
 		if (patch >= 0)
 			SelectPatch(patch);
 		else if (kit >= 0)
 			SelectKit(kit);
-		ViewModel.LibraryPinned = state.LibraryPinned;
 		if (Enum.TryParse<WorkbenchMode>(state.Mode, out var mode))
 			SetMode(mode);
-		if (state.Playing)
-		{
-			Play();
-			if (state.Section is { } section && _song?.Sections.FirstOrDefault(s => s.Name == section) is { } at && at.Index != 0)
-				Player.Jump(at);
-		}
+	}
+
+	/// <summary>How the workbench is laid out, which the app keeps for every project alike.</summary>
+	public WorkbenchPreferences CapturePreferences() => new()
+	{
+		LibraryPinned = ViewModel.LibraryPinned,
+		PartPanelHeight = ViewModel.PartPanelHeight,
+		Octave = ViewModel.Octave,
+		Velocity = ViewModel.Velocity,
+	};
+
+	/// <summary>Lays the workbench out as <paramref name="preferences"/> say.</summary>
+	public void RestorePreferences(WorkbenchPreferences preferences)
+	{
+		ArgumentNullException.ThrowIfNull(preferences);
+		ViewModel.LibraryPinned = preferences.LibraryPinned;
+		ViewModel.PartPanelHeight = preferences.PartPanelHeight;
+		ViewModel.Octave = preferences.Octave;
+		ViewModel.Velocity = preferences.Velocity;
 	}
 
 	private static int Index<T>(IReadOnlyList<(string Name, Func<T> Build)> list, string? name)
@@ -1345,26 +1336,6 @@ public sealed partial class Workbench : IDisposable
 			if (list[i].Name == name)
 				return i;
 		return -1;
-	}
-
-	private static Scale? ScaleFrom(string? root, string? name)
-	{
-		if (root is null || name is null || !Enum.TryParse<Note>(root, out var note))
-			return null;
-		return name switch
-		{
-			"major" => Scale.Major(note),
-			"minor" => Scale.Minor(note),
-			"dorian" => Scale.Dorian(note),
-			"phrygian" => Scale.Phrygian(note),
-			"lydian" => Scale.Lydian(note),
-			"mixolydian" => Scale.Mixolydian(note),
-			"harmonic minor" => Scale.HarmonicMinor(note),
-			"pentatonic major" => Scale.PentatonicMajor(note),
-			"pentatonic minor" => Scale.PentatonicMinor(note),
-			"blues" => Scale.Blues(note),
-			_ => null,
-		};
 	}
 
 	/// <summary>Stops the song and the bench.</summary>
@@ -1460,6 +1431,8 @@ public sealed partial class Workbench : IDisposable
 			roll.ShowCode(false, member is not null, where);
 			return;
 		}
+		if (!_rollFill && ShowPatternInRoll(whole, $"{placement.Name} · {placement.Section.Name}"))
+			return;
 		if (_rollFill && whole["endWith"] is not JsonObject)
 			_rollFill = false;
 		var part = _rollFill ? (JsonObject)whole["endWith"]! : whole;
@@ -1559,6 +1532,8 @@ public sealed partial class Workbench : IDisposable
 	/// <summary>Undoes the last edit of the song's file.</summary>
 	internal void UndoEdit()
 	{
+		if (DocumentStep(d => d.Undo()))
+			return;
 		if (_editor?.Undo() == true)
 			Rebuild(swap: true);
 	}
@@ -1566,6 +1541,8 @@ public sealed partial class Workbench : IDisposable
 	/// <summary>Does again the last edit undone.</summary>
 	internal void RedoEdit()
 	{
+		if (DocumentStep(d => d.Redo()))
+			return;
 		if (_editor?.Redo() == true)
 			Rebuild(swap: true);
 	}
@@ -1602,12 +1579,19 @@ public sealed partial class Workbench : IDisposable
 		_patchFile = _catalog.PatchFile(name);
 		_patchAbout = "";
 		_patchCode = null;
+		_patchBelow = null;
 		IReadOnlyList<string>? names = null;
 		if (_patchFile is not null)
 		{
 			try
 			{
 				var text = Files.ReadText(_patchFile);
+				// A derived patch is edited as what it resolves to, and saved as what it changes
+				if (_catalog.DerivedPatch(name) is { } derived)
+				{
+					text = derived.Whole;
+					_patchBelow = derived.Below;
+				}
 				_patchCode = System.Text.Json.Nodes.JsonNode.Parse(text)?["code"]?.GetValue<string>();
 				if (_patchCode is null)
 				{
@@ -1623,10 +1607,14 @@ public sealed partial class Workbench : IDisposable
 			}
 		}
 		ViewModel.Designer.ShowCode(_patchCode is not null, _patchFile is not null && _patchCode is null && Code is not null && _catalog.PatchesType is not null);
+		ShowOverrides(_patchBelow is not null && _patchFile is not null ? BinaryVibrance.Lunelle.Format.JReader.Parse(Files.ReadText(_patchFile)) as BinaryVibrance.Lunelle.Format.JObject : null);
 		return names;
 	}
 
 	// The designer's patch written to its file, once its edits have paused (or now, leaving it)
+	// The whole patch a derived patch's file changes, while one is open; null for a whole file
+	private BinaryVibrance.Lunelle.Format.JObject? _patchBelow;
+
 	private void SavePatch()
 	{
 		// A patch that is code is heard as edited, and its file left saying it is code
@@ -1638,6 +1626,13 @@ public sealed partial class Workbench : IDisposable
 		var text = PatchFile.Write(spec, ViewModel.Designer.Names);
 		try
 		{
+			if (_patchBelow is { } below && BinaryVibrance.Lunelle.Format.JReader.Parse(Files.ReadText(_patchFile)) is BinaryVibrance.Lunelle.Format.JObject layer
+				&& BinaryVibrance.Lunelle.Format.JReader.Parse(text) is BinaryVibrance.Lunelle.Format.JObject wanted)
+			{
+				var written = BinaryVibrance.Lunelle.Format.OverrideDiff.Layer(below, wanted, BinaryVibrance.Lunelle.Format.OverrideSchema.Patch, layer);
+				text = BinaryVibrance.Lunelle.Format.JWriter.Write(written) + "\n";
+				ShowOverrides(written);
+			}
 			if (!Files.Exists(_patchFile) || Files.ReadText(_patchFile) != text)
 			{
 				Files.WriteText(_patchFile, text);

@@ -100,6 +100,9 @@ internal static class Display
 	// Where the playhead crosses a column, as a left margin
 	public static BinaryVibrance.Vysara.Thickness Playhead(float x) => new(x, 0f, 0f, 0f);
 
+	/// <summary>A library row's place under its folder's header: in by a step when it is in a folder.</summary>
+	public static BinaryVibrance.Vysara.Thickness Indent(string? folder) => new(folder is { Length: > 0 } ? 14f : 0f, 0f, 0f, 0f);
+
 	public static string Pin(bool pinned) => pinned ? "Unpin" : "Pin";
 
 	public static string Percent(float value) => $"{value * 100f:0}%";

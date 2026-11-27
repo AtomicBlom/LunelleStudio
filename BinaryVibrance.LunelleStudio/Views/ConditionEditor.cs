@@ -26,16 +26,19 @@ internal sealed class ConditionEditor : ContentControl
 	private readonly ToggleButton _asText = new() { Content = Small("as text"), Padding = new Thickness(8f, 2f, 8f, 3f) };
 	private readonly TextBlock _problem = new() { FontSize = 11f, Foreground = Theme.Error, TextWrapping = TextWrapping.Wrap, Visibility = Visibility.Collapsed };
 	private readonly List<(string Subject, string Op, string Value)> _model = [];
+	private readonly CueMaker _maker;
 	private bool _anyOf;
 	private bool _showing;
 
 	/// <param name="cues">The cues a row can name.</param>
 	/// <param name="when">The condition as written, or null for always.</param>
 	/// <param name="apply">Takes the condition as written (null: always); gives why it can't be taken, or null.</param>
-	public ConditionEditor(IReadOnlyList<CueBase> cues, string? when, Func<string?, string?> apply)
+	/// <param name="workbench">What makes a cue the condition names that the project hasn't; none offers nothing.</param>
+	public ConditionEditor(IReadOnlyList<CueBase> cues, string? when, Func<string?, string?> apply, Workbench? workbench = null)
 	{
 		_cues = cues;
 		_apply = apply;
+		_maker = new CueMaker(workbench, condition => Send(condition));
 		IsTabStop = false;
 		_join.Children.Add(_all);
 		_join.Children.Add(_any);
@@ -65,6 +68,7 @@ internal sealed class ConditionEditor : ContentControl
 		column.Children.Add(_text);
 		column.Children.Add(tools);
 		column.Children.Add(_problem);
+		column.Children.Add(_maker);
 		Content = column;
 		Load(when);
 	}
@@ -249,6 +253,7 @@ internal sealed class ConditionEditor : ContentControl
 		var problem = _apply(when);
 		_problem.Text = problem ?? "";
 		_problem.Visibility = problem is null ? Visibility.Collapsed : Visibility.Visible;
+		_maker.Offer(problem is null ? null : when);
 		if (problem is null)
 		{
 			_showing = true;

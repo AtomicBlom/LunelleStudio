@@ -32,13 +32,14 @@
 	</ItemGroup>
 
 	<!-- The new project's template: samples/HelloSynth's C# and music files, its namespace renamed as they are written; the
-	     music files and lunelle-project.json alone for a project with no C# -->
+	     music files alone for a project with no C# -->
 	<ItemGroup>
 		<EmbeddedResource Include="..\samples\HelloSynth\*.cs" LogicalName="template/%(Filename)%(Extension)" />
 		<EmbeddedResource Include="..\samples\HelloSynth\Patches\*.patch.json" LogicalName="template/Patches/%(Filename)%(Extension)" />
 		<EmbeddedResource Include="..\samples\HelloSynth\Songs\*.song.json" LogicalName="template/Songs/%(Filename)%(Extension)" />
 		<EmbeddedResource Include="..\samples\HelloSynth\Kits\*.kit.json" LogicalName="template/Kits/%(Filename)%(Extension)" />
-		<EmbeddedResource Include="..\samples\HelloSynth\lunelle-project.json" LogicalName="template/%(Filename)%(Extension)" />
+		<EmbeddedResource Include="..\samples\HelloSynth\Cues\*.cues.json" LogicalName="template/Cues/%(Filename)%(Extension)" />
+		<EmbeddedResource Include="..\samples\HelloSynth\lunelle.meta.json" LogicalName="template/%(Filename)%(Extension)" />
 	</ItemGroup>
 
 </Project>

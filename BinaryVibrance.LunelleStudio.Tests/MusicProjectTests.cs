@@ -177,8 +177,12 @@ public class MusicProjectTests
 
 		// Another build of BinaryVibrance.Lunelle: any other assembly stands in for it, its module's id differing
 		var other = typeof(AudioTap).Assembly.Location;
-		SharedReferences.Mismatch(new Dictionary<string, string> { ["BinaryVibrance.Lunelle"] = other })
-			.ShouldNotBeNull().ShouldContain($"BinaryVibrance.Lunelle: the project's is {other}, the workbench runs {synth}");
+		var mismatch = SharedReferences.Mismatch(new Dictionary<string, string> { ["BinaryVibrance.Lunelle"] = other }).ShouldNotBeNull();
+		// Another version is named as one; the same version built again is a rebuild, which a restart mends
+		if (SharedReferences.Version(other) is { } theirs && SharedReferences.Version(synth) is { } ours && theirs != ours)
+			mismatch.ShouldStartWith($"This project uses BinaryVibrance.Lunelle {theirs}; this studio is {ours}.");
+		else
+			mismatch.ShouldContain($"BinaryVibrance.Lunelle: the project's is {other}, the studio runs {synth}");
 	}
 
 	[Test]
@@ -194,14 +198,22 @@ public class MusicProjectTests
 	[Test]
 	public async Task A_new_project_from_the_template_builds_and_offers_its_song()
 	{
-		var folder = Path.Combine(Path.GetTempPath(), "lunelle-studio-new-" + Guid.NewGuid().ToString("N")[..8], "My Tunes");
-		var path = ProjectTemplate.Create(folder, Path.GetDirectoryName(typeof(Song).Assembly.Location));
+		var root = Path.Combine(Path.GetTempPath(), "lunelle-studio-new-" + Guid.NewGuid().ToString("N")[..8]);
+		var folder = Path.Combine(root, "My Tunes");
+		var feed = Path.Combine(root, "feed");
+		var path = ProjectTemplate.Create(folder, Path.GetDirectoryName(typeof(Song).Assembly.Location), feed);
 		Path.GetFileName(path).ShouldBe("My Tunes.csproj");
+		// Lunelle as a package, at the studio's version, from the feed the studio's packages were copied into
+		var csproj = File.ReadAllText(path);
+		csproj.ShouldContain("<PackageReference Include=\"BinaryVibrance.Lunelle\" Version=\"");
+		csproj.ShouldNotContain("StudioDirectory");
+		File.ReadAllText(Path.Combine(folder, "nuget.config")).ShouldContain(feed);
+		Directory.GetFiles(feed, "BinaryVibrance.Lunelle.*.nupkg").ShouldHaveSingleItem();
 		Should.Throw<InvalidOperationException>(() => ProjectTemplate.Create(folder));
 		File.ReadAllText(Path.Combine(folder, "Catalog.cs")).ShouldContain("namespace My_Tunes;");
 		File.Exists(Path.Combine(folder, "Songs", "demo.song.json")).ShouldBeTrue();
 
-		// HelloSynth's music, built by the generator the template references from beside Kaldra
+		// HelloSynth's music, built by the generator Lunelle's package carries
 		using var project = await MusicProject.OpenAsync(path, MusicProjectTests.Configured);
 		var build = project.TakeBuild().ShouldNotBeNull();
 		build.Errors.ShouldBeEmpty();
@@ -213,14 +225,44 @@ public class MusicProjectTests
 		build.Catalog.Songs[0].Build().Sections.Select(s => s.Name).ShouldBe(["verse", "chorus"]);
 		build.Catalog.SongSource("demo").ShouldNotBeNull().Type.ShouldBe("My_Tunes.Songs.Demo");
 
-		// Its lunelle-project.json says the cues and macro its C# does, so it opens as music files alone too
+		// Its music is files throughout, so it opens as music files alone too
 		var folderMusic = MusicFolder.FromDirectory(folder);
-		folderMusic.Name.ShouldBe("My Tunes");
+		folderMusic.Name.ShouldBe("my-tunes");
+		folderMusic.Title.ShouldBe("My Tunes");
 		folderMusic.Problems.ShouldBeEmpty();
 		folderMusic.Cues.Select(c => (c.Name, c.GetType().Name)).ShouldBe([("intensity", "Cue"), ("mood", "ChoiceCue")]);
 		((Cue)folderMusic.Cues[0]).Initial.ShouldBe(((Cue)build.Catalog.Cues[0]).Initial);
 		((ChoiceCue)folderMusic.Cues[1]).OptionNames.ShouldBe(build.Catalog.Cues[1].OptionNames);
 		folderMusic.MacroName(0).ShouldBe("bright");
 		build.Release();
+	}
+
+	[Test]
+	public async Task A_project_s_unsaved_edits_compile_from_the_document()
+	{
+		var root = Path.Combine(Path.GetTempPath(), "lunelle-studio-document-" + Guid.NewGuid().ToString("N")[..8]);
+		var folder = Path.Combine(root, "Edited");
+		var path = ProjectTemplate.Create(folder, Path.GetDirectoryName(typeof(Song).Assembly.Location), Path.Combine(root, "feed"));
+		var document = ProjectDocument.Open(DiskFiles.Instance, folder);
+		using var project = await MusicProject.OpenAsync(path, MusicProjectTests.Configured, document);
+		var first = project.TakeBuild().ShouldNotBeNull();
+		first.Errors.ShouldBeEmpty();
+		first.Catalog!.Songs[0].Build().Tempo.ShouldBe(112f);
+		first.Release();
+
+		var song = Path.Combine(folder, "Songs", "demo.song.json");
+		var saved = File.ReadAllText(song);
+		document.WriteText(song, saved.Replace("\"tempo\": 112", "\"tempo\": 90", StringComparison.Ordinal));
+		var edited = await NextBuildAsync(project);
+		edited.Errors.ShouldBeEmpty();
+		edited.Catalog!.Songs[0].Build().Tempo.ShouldBe(90f);
+		File.ReadAllText(song).ShouldBe(saved);
+
+		// Undone, the next build is the file's again
+		document.Undo();
+		var undone = await NextBuildAsync(project);
+		undone.Catalog!.Songs[0].Build().Tempo.ShouldBe(112f);
+		edited.Release();
+		undone.Release();
 	}
 }

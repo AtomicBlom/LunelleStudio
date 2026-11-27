@@ -1,6 +1,7 @@
 using System.Reflection;
 
 using BinaryVibrance.Lunelle.Chip;
+using BinaryVibrance.Lunelle.Format;
 using BinaryVibrance.Lunelle.Music;
 
 namespace BinaryVibrance.LunelleStudio.Projects;
@@ -10,9 +11,11 @@ internal static class CatalogReader
 {
 	/// <summary>
 	/// The catalog <paramref name="assembly"/> names, or null and why when it names none; with the project's music files
-	/// (<paramref name="files"/>, its AdditionalFiles) as the songs' and patches' sources.
+	/// (<paramref name="files"/>, its AdditionalFiles: format 2, under its <c>lunelle.meta.json</c>) as the songs' and
+	/// patches' sources. A song edited in the workbench is resolved as its file is (MusicFolder.BuildSong), its sounds the
+	/// project's built ones where it has them, its cues the catalog's own, its code the song's class's members.
 	/// </summary>
-	public static (WorkbenchCatalog? Catalog, string? Problem) Read(Assembly assembly, IReadOnlyList<string> files)
+	public static (WorkbenchCatalog? Catalog, string? Problem) Read(Assembly assembly, IReadOnlyList<string> files, IMusicFiles? source = null)
 	{
 		if (assembly.GetCustomAttribute<MusicCatalogAttribute>() is not { } attribute)
 			return (null, $"{assembly.GetName().Name} names no catalog: add [assembly: MusicCatalog(typeof(...))] to it.");
@@ -26,25 +29,57 @@ internal static class CatalogReader
 		var kits = Get<IReadOnlyList<(string Name, Func<DrumKit> Build)>>("Kits") ?? [];
 		var cues = Get<IReadOnlyList<CueBase>>("Cues") ?? [];
 
-		var patchFiles = files.Where(f => f.EndsWith(".patch.json", StringComparison.OrdinalIgnoreCase))
-			.GroupBy(Stem, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
-		var songFiles = new Dictionary<string, SongSource>(StringComparer.Ordinal);
-		foreach (var file in files.Where(f => f.EndsWith(".song.json", StringComparison.OrdinalIgnoreCase)))
+		// The project's music, from its manifest's folder, resolved as its files are
+		var manifest = files.FirstOrDefault(f => Path.GetFileName(f).Equals(EntryIds.Manifest, StringComparison.OrdinalIgnoreCase));
+		var root = manifest is null ? null : Path.GetDirectoryName(Path.GetFullPath(manifest))!;
+		MusicFolder? music = null;
+		if (root is not null)
 		{
-			if (SongName(file) is not { } name)
-				continue;
-			var code = assembly.GetTypes().FirstOrDefault(t => t.Name == PatchCode.Pascal(Stem(file)) && t.GetMethod("Build", BindingFlags.Public | BindingFlags.Static)?.ReturnType == typeof(Song));
-			MethodInfo? Member(string member) => code?.GetMethod(member, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
-			songFiles.TryAdd(name, new SongSource(file, new SongBindings
+			try
 			{
-				Patch = n => patches.FirstOrDefault(p => p.Name == n).Build?.Invoke(),
-				Kit = n => kits.FirstOrDefault(k => k.Name == n).Build?.Invoke(),
-				Cue = n => cues.FirstOrDefault(c => c.Name == n),
-				Macro = n => MacroNamed(n, macroName),
+				// The studio's document where it has one, so an edit not yet saved is what the song is resolved against
+				music = source is null
+					? MusicFolder.FromDirectory(root)
+					: MusicFolder.Load(new MemorySource(source.List(root), path => source.ReadBytes(Path.Combine(root, path)), root));
+			}
+			catch (DirectoryNotFoundException)
+			{
+			}
+		}
+
+		// A sound the project built: a property of the generated (or the game's own) class, by its id's path
+		object? Built(string kind, string key)
+		{
+			var path = key.Split(':').SelectMany(p => p.Split('/')).Select(PatchCode.Pascal).ToArray();
+			var holder = assembly.GetTypes().FirstOrDefault(t => t.Name == kind && t.DeclaringType is null);
+			for (var i = 0; holder is not null && i < path.Length - 1; i++)
+				holder = holder.GetNestedType(path[i], BindingFlags.Public | BindingFlags.NonPublic);
+			return holder?.GetProperty(path[^1], BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)?.GetValue(null);
+		}
+
+		var songFiles = new Dictionary<string, SongSource>(StringComparer.Ordinal);
+		foreach (var (id, _) in music?.Songs ?? [])
+		{
+			var file = Path.Combine(root!, music!.SongPath(id)!.Replace('/', Path.DirectorySeparatorChar));
+			var stem = id[(id.LastIndexOf('/') + 1)..];
+			var code = assembly.GetTypes().FirstOrDefault(t => t.Name == PatchCode.Pascal(stem) && t.GetMethod("Build", BindingFlags.Public | BindingFlags.Static)?.ReturnType == typeof(Song));
+			MethodInfo? Member(string member) => code?.GetMethod(member, BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static);
+			SongBindings Code(SongBindings files) => new()
+			{
+				Patch = key => (key.StartsWith('~') ? null : Built("Patches", key) as Patch) ?? files.Patch(key),
+				Kit = key => (key.StartsWith('~') ? null : Built("Kits", key) as DrumKit) ?? files.Kit(key),
+				// The catalog's own cue, which the workbench's cue controls steer, by the name it is known by at run time
+				Cue = reference => files.Cue(reference) is { } cue ? cues.FirstOrDefault(c => c.Name == cue.Name) ?? cue : null,
+				Macro = files.Macro,
 				Part = n => Member(n)?.Invoke(null, null) as Part,
 				Placement = (n, section, track) => Member(n)?.Invoke(null, [section, track]) as Placement,
 				Hook = (n, song, sections) => Member(n)?.Invoke(null, [song, .. sections]),
-			}, code?.FullName));
+			};
+			var folder = music;
+			songFiles[id] = new SongSource(file, folder.Bindings, code?.FullName)
+			{
+				Build = (text, wrap) => folder.BuildSong(id, text, files => wrap(Code(files))),
+			};
 		}
 		return (new WorkbenchCatalog
 		{
@@ -54,43 +89,13 @@ internal static class CatalogReader
 			Cues = cues,
 			MacroName = macroName,
 			SongSource = name => songFiles.GetValueOrDefault(name),
-			PatchFile = name => patchFiles.GetValueOrDefault(name),
-			// The class a patch file's property is generated into: the one with a static Patch property named for the file
-			PatchesType = patchFiles.Keys.Select(stem => assembly.GetTypes().FirstOrDefault(t =>
-				t.GetProperty(PatchCode.Pascal(stem), BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)?.PropertyType == typeof(Patch)))
-				.FirstOrDefault(t => t is not null)?.FullName,
+			Root = root,
+			Patterns = music is null ? [] : [.. music.Project.Root.Entries(EntryKind.Pattern).Keys.Order(StringComparer.Ordinal)],
+			ResolveSong = music is null ? null : (name, text) => music.Resolve(name, text) is var (song, problem) ? (song.Json, problem?.Message) : default,
+			PatchFile = name => music?.PatchPath(name) is { } path ? Path.Combine(root!, path.Replace('/', Path.DirectorySeparatorChar)) : null,
+			// The class the generator writes the patches' properties into
+			PatchesType = assembly.GetTypes().FirstOrDefault(t => t.Name == "Patches" && t.DeclaringType is null
+				&& t.GetProperty("Files", BindingFlags.Public | BindingFlags.Static) is not null)?.FullName,
 		}, null);
-	}
-
-	// "open-road.song.json" is "open-road"
-	private static string Stem(string path)
-	{
-		var name = Path.GetFileName(path);
-		var at = name.IndexOf('.', StringComparison.Ordinal);
-		return at < 0 ? name : name[..at];
-	}
-
-	private static string? SongName(string path)
-	{
-		try
-		{
-			using var document = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
-			return document.RootElement.TryGetProperty("name", out var name) ? name.GetString() : null;
-		}
-		catch (Exception ex) when (ex is IOException or System.Text.Json.JsonException)
-		{
-			return null;
-		}
-	}
-
-	// A macro by the name a song file gives it ("bright"): the one the catalog names "Macros.Bright"
-	private static Macro? MacroNamed(string name, Func<int, string?>? macroName)
-	{
-		if (macroName is null)
-			return null;
-		for (var id = 0; id < Macro.Count; id++)
-			if (macroName(id) is { } code && string.Equals(code[(code.LastIndexOf('.') + 1)..], PatchCode.Pascal(name), StringComparison.Ordinal))
-				return new Macro(id);
-		return null;
 	}
 }

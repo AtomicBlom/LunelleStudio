@@ -309,7 +309,7 @@ internal sealed class Inspector : ContentControl
 					exits[at] = (when, exits[at].Then);
 					Send();
 					return null;
-				}));
+				}, Workbench));
 				panel.Children.Add(new Border
 				{
 					Background = Theme.Sunk,
@@ -432,6 +432,8 @@ internal sealed class Inspector : ContentControl
 			instrument.Add(copyProblem);
 		}
 		_column.Children.Add(Group("Instrument", true, [.. instrument]));
+		if (MacroGroup(track) is { } macros)
+			_column.Children.Add(macros);
 
 		_column.Children.Add(DeleteButton("Delete track", "Delete this track and all of its parts", () => Track?.Delete()));
 	}
@@ -577,6 +579,37 @@ internal sealed class Inspector : ContentControl
 		ToolTipService.SetToolTip(button, tip);
 		button.Click += (_, _) => act();
 		return button;
+	}
+
+	// A slider for each macro the track's patch has, holding it as the song plays (recorded while an export is): "let go"
+	// gives it back to what the song makes it follow; none for a kit's track
+	private Expander? MacroGroup(TrackViewModel track)
+	{
+		if (Workbench is not { } workbench || workbench.TrackMacros(track.Name) is not { Count: > 0 } macros)
+			return null;
+		var rows = new List<UIElement> { Note("Held as the song plays, over what the song makes each follow; recorded while an export records.") };
+		foreach (var (id, label, held) in macros)
+		{
+			var slider = new Slider { Minimum = 0, Maximum = 1, StepFrequency = 0.01, Value = held ?? 0, Width = 150f, Height = 26f };
+			var free = new Button { Content = new TextBlock { Text = "let go", FontSize = 11f }, Padding = new Thickness(6f, 1f, 6f, 2f), Margin = new Thickness(6f, 0f, 0f, 0f), VerticalAlignment = VerticalAlignment.Center };
+			ToolTipService.SetToolTip(free, $"Let {label} go, to what the song makes it follow");
+			free.Visibility = held is null ? Visibility.Collapsed : Visibility.Visible;
+			slider.ValueChanged += (_, _) =>
+			{
+				workbench.HoldTrackMacro(track.Name, id, (float)slider.Value);
+				free.Visibility = Visibility.Visible;
+			};
+			free.Click += (_, _) =>
+			{
+				workbench.HoldTrackMacro(track.Name, id, null);
+				free.Visibility = Visibility.Collapsed;
+			};
+			var row = new StackPanel { Orientation = Orientation.Horizontal };
+			row.Children.Add(slider);
+			row.Children.Add(free);
+			rows.Add(Field(label, row));
+		}
+		return Group("Macros", false, [.. rows]);
 	}
 
 	private static Expander Group(string header, bool open, params UIElement[] content)

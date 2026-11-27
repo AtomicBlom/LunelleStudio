@@ -22,11 +22,18 @@ public interface IMusicFiles
 	/// <exception cref="IOException">It can't be written.</exception>
 	void WriteText(string path, string text);
 
+	/// <summary>Writes the file's bytes (a kit's samples), making the folders it is in if need be.</summary>
+	/// <exception cref="IOException">It can't be written.</exception>
+	void WriteBytes(string path, byte[] bytes);
+
 	/// <summary>
 	/// Every file under <paramref name="folder"/>, in its folders too, as paths relative to it with <c>/</c> between
 	/// folders; none when there is no such folder.
 	/// </summary>
 	IEnumerable<string> List(string folder);
+
+	/// <summary>Removes the file at <paramref name="path"/>, if it is there.</summary>
+	void Delete(string path);
 
 	/// <summary>
 	/// Calls <paramref name="changed"/> with a file's full path whenever a file under <paramref name="folder"/> is written,
@@ -61,6 +68,21 @@ public sealed class DiskFiles : IMusicFiles
 		if (Path.GetDirectoryName(Path.GetFullPath(path)) is { Length: > 0 } folder)
 			Directory.CreateDirectory(folder);
 		File.WriteAllText(path, text);
+	}
+
+	/// <inheritdoc/>
+	public void WriteBytes(string path, byte[] bytes)
+	{
+		if (Path.GetDirectoryName(Path.GetFullPath(path)) is { Length: > 0 } folder)
+			Directory.CreateDirectory(folder);
+		File.WriteAllBytes(path, bytes);
+	}
+
+	/// <inheritdoc/>
+	public void Delete(string path)
+	{
+		if (File.Exists(path))
+			File.Delete(path);
 	}
 
 	/// <inheritdoc/>

@@ -64,14 +64,33 @@
   </ItemGroup>
 
   <!--
-    The music generator's assembly beside a project's output, where CopyMusicGenerator is true: a project
-    lunelle-studio new makes names it there as its analyzer (ProjectTemplate), as it names Sirrow's and Lunelle's.
-    From source, the project reference to the generator copies it; from the packages, it is taken out of the
-    BinaryVibrance.Lunelle package, which carries it as its analyzer.
+    Lunelle's and Sirrow's packages beside a project's output (packages\), where ShipLunellePackages is true: the studio
+    copies them into a feed of the user's own (ProjectTemplate), from which a project lunelle-studio new makes takes
+    BinaryVibrance.Lunelle as a package, carrying the music generator (its analyzer), the props that hand the project's
+    music to it, and Lunelle's own sounds. From source, each is packed from its checkout (built for no runtime in particular, as a package is); from the packages, the
+    restored package is copied. Published, they go with the app.
   -->
-  <ItemGroup Condition="'$(CopyMusicGenerator)' == 'true' and '$(LunelleFromSource)' != 'true'">
-    <None Include="$(NuGetPackageRoot)binaryvibrance.lunelle\$(LunellePackageVersion)\analyzers\dotnet\cs\BinaryVibrance.Lunelle.Music.Generator.dll"
-          CopyToOutputDirectory="PreserveNewest" Visible="false" />
-  </ItemGroup>
+  <Target Name="ShipLunellePackages" AfterTargets="Build" Condition="'$(ShipLunellePackages)' == 'true'">
+    <PropertyGroup>
+      <_LunellePackages>$([System.IO.Path]::GetFullPath('$(OutDir)packages\'))</_LunellePackages>
+    </PropertyGroup>
+    <MSBuild Condition="'$(SirrowFromSource)' == 'true'" Projects="$(SirrowSource)BinaryVibrance.Sirrow\BinaryVibrance.Sirrow.csproj"
+             Targets="Pack" Properties="Configuration=$(Configuration);PackageOutputPath=$(_LunellePackages);IncludeSymbols=false"
+             RemoveProperties="RuntimeIdentifier;SelfContained;PublishReadyToRun;PublishDir;_IsPublishing" />
+    <MSBuild Condition="'$(LunelleFromSource)' == 'true'" Projects="$(LunelleSource)BinaryVibrance.Lunelle\BinaryVibrance.Lunelle.csproj"
+             Targets="Pack" Properties="Configuration=$(Configuration);PackageOutputPath=$(_LunellePackages);IncludeSymbols=false"
+             RemoveProperties="RuntimeIdentifier;SelfContained;PublishReadyToRun;PublishDir;_IsPublishing" />
+    <Copy Condition="'$(SirrowFromSource)' != 'true'" SkipUnchangedFiles="true" DestinationFolder="$(_LunellePackages)"
+          SourceFiles="$(NuGetPackageRoot)binaryvibrance.sirrow\$(SirrowPackageVersion)\binaryvibrance.sirrow.$(SirrowPackageVersion).nupkg" />
+    <Copy Condition="'$(LunelleFromSource)' != 'true'" SkipUnchangedFiles="true" DestinationFolder="$(_LunellePackages)"
+          SourceFiles="$(NuGetPackageRoot)binaryvibrance.lunelle\$(LunellePackageVersion)\binaryvibrance.lunelle.$(LunellePackageVersion).nupkg" />
+  </Target>
+
+  <Target Name="PublishLunellePackages" AfterTargets="Publish" Condition="'$(ShipLunellePackages)' == 'true'">
+    <ItemGroup>
+      <_LunellePackage Include="$(OutDir)packages\*.nupkg" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_LunellePackage)" DestinationFolder="$(PublishDir)packages\" SkipUnchangedFiles="true" />
+  </Target>
 
 </Project>

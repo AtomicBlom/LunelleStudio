@@ -131,12 +131,14 @@ public sealed partial class Workbench
 	{
 		try
 		{
-			ConditionText.Parse(text, CueNamed);
+			ConditionText.Parse(text, name => CueNamed(name) ?? DefinedCue(name));
 			return null;
 		}
 		catch (FormatException ex)
 		{
-			return ex.Message;
+			return ex.Message.Contains("no cue", StringComparison.Ordinal) && _catalog.Root is not null
+				? ex.Message + (UnknownCuesIn(text).Count > 0 ? " Make it below, or with the + under Cues." : " Make it with the + under Cues in the library.")
+				: ex.Message;
 		}
 	}
 
@@ -148,6 +150,8 @@ public sealed partial class Workbench
 	{
 		if (when is not null && CheckCondition(when) is { } why)
 			return why;
+		if (when is not null)
+			ImportCuesIn(when);
 		EditPart(placement.Section.Index, IndexIn(placement), part =>
 		{
 			if (when is null)
@@ -546,16 +550,16 @@ public sealed partial class Workbench
 	/// Adds an empty part for <paramref name="track"/> in <paramref name="section"/>, a bar long: a line for a patch, a beat
 	/// for a kit, on its first piece. With <paramref name="slot"/> it goes there among the parts the track already plays in
 	/// the section (0 before the first, their count after the last); without, after every part. It is chosen, so the roll
-	/// opens on it.
+	/// opens on it. With <paramref name="content"/>, that is the part instead (a pattern dropped on the lane).
 	/// </summary>
-	internal void AddPart(int section, string track, NewPartKind kind = NewPartKind.Melody, int? slot = null)
+	internal void AddPart(int section, string track, NewPartKind kind = NewPartKind.Melody, int? slot = null, JsonObject? content = null)
 	{
 		if (_editor is null || _song?.Tracks.FirstOrDefault(t => t.Name == track) is not { } playing
 			|| (uint)section >= (uint)_song.Sections.Count)
 			return;
 		var beats = _song.Meter.Beats;
 		string Steps(string each) => string.Join(" ", Enumerable.Repeat(each, beats));
-		JsonObject part = playing.Kit is { } kit && kit.Pieces.Count > 0
+		JsonObject part = content ?? (playing.Kit is { } kit && kit.Pieces.Count > 0
 			// A beat is in eighths at the coarsest: two steps a beat
 			? new JsonObject { ["track"] = track, ["beat"] = "eighths", ["rows"] = new JsonObject { [kit.Pieces[0].Piece.Id] = new string('.', beats * 2) } }
 			: kind switch
@@ -573,7 +577,7 @@ public sealed partial class Workbench
 					["spread"] = 0,
 				},
 				_ => new JsonObject { ["track"] = track, ["line"] = "quarters", ["notes"] = Steps(".") },
-			};
+			});
 		// Where in the file's parts it goes: before the track's part at the slot, or just after its last
 		var own = _song.Sections[section].Placements.Where(p => p.Track.Name == track).ToList();
 		int? before = slot is not { } s || own.Count == 0 ? null
@@ -650,19 +654,20 @@ public sealed partial class Workbench
 		JsonObject file;
 		if (copyOf is not null && _catalog.PatchFile(copyOf) is { } source && Files.Exists(source))
 		{
+			// A patch's id is its file's path: the copy is the new file's
 			file = JsonNode.Parse(Files.ReadText(source))!.AsObject();
-			file["name"] = stem;
+			file.Remove("name");
+			file.Remove("title");
 		}
 		else
 			file = new JsonObject
 			{
-				["format"] = "lunelle-patch/1",
-				["name"] = stem,
+				["format"] = BinaryVibrance.Lunelle.Chip.PatchFile.Format,
 				["operators"] = new JsonArray(new JsonObject { ["name"] = "sine1", ["kind"] = "sine", ["envelope"] = "adsr 0.01 0.1 0.8 0.2", ["level"] = 0.5 }),
 				["out"] = new JsonArray(new JsonObject { ["op"] = "sine1" }),
 			};
 		Files.WriteText(path, BinaryVibrance.Lunelle.Music.SongFile.Write(file));
-		Awaiting(stem, song: false);
+		Awaiting(stem, Awaited.Patch);
 		return null;
 	}
 
@@ -771,24 +776,31 @@ public sealed partial class Workbench
 		var file = new JsonObject
 		{
 			["format"] = BinaryVibrance.Lunelle.Music.SongFile.Format,
-			["name"] = stem,
 			["tempo"] = 110,
 			["scale"] = "C major",
 			["tracks"] = patch is null ? new JsonArray() : new JsonArray(new JsonObject { ["name"] = "lead", ["patch"] = patch }),
 			["sections"] = new JsonArray(new JsonObject { ["name"] = "a", ["bars"] = 4, ["chords"] = "I | IV | V | I", ["parts"] = new JsonArray() }),
 		};
 		Files.WriteText(path, BinaryVibrance.Lunelle.Music.SongFile.Write(file));
-		Awaiting(stem, song: true);
+		Awaiting(stem, Awaited.Song);
 		return null;
 	}
 
-	// A song or patch just made, opened once the project has built again and its catalog lists it
-	private (string Name, bool Song)? _awaiting;
-
-	private void Awaiting(string name, bool song)
+	// What is waiting to be opened: a song, a patch or a kit
+	private enum Awaited
 	{
-		_awaiting = (name, song);
-		ViewModel.BuildText = $"Created {name}. It opens when the build finishes.";
+		Song,
+		Patch,
+		Kit,
+	}
+
+	// A song, patch or kit just made or added, opened once the project has built again and its catalog lists it
+	private (string Name, Awaited Kind)? _awaiting;
+
+	private void Awaiting(string name, Awaited kind, string? text = null)
+	{
+		_awaiting = (name, kind);
+		ViewModel.BuildText = text ?? $"Created {name}. It opens when the build finishes.";
 	}
 
 	// The catalog built again: what was just made, opened if it lists it now; a patch copied for a track, given to it first
@@ -796,12 +808,17 @@ public sealed partial class Workbench
 	{
 		if (_awaiting is not { } awaited)
 			return;
-		if (awaited.Song && Index(_catalog.Songs, awaited.Name) is >= 0 and var song)
+		if (awaited.Kind == Awaited.Song && Index(_catalog.Songs, awaited.Name) is >= 0 and var song)
 		{
 			_awaiting = null;
 			ChooseSong(song);
 		}
-		else if (!awaited.Song && Index(_catalog.Patches, awaited.Name) is >= 0 and var patch)
+		else if (awaited.Kind == Awaited.Kit && Index(_catalog.Kits, awaited.Name) is >= 0 and var kit)
+		{
+			_awaiting = null;
+			ChooseKit(kit);
+		}
+		else if (awaited.Kind == Awaited.Patch && Index(_catalog.Patches, awaited.Name) is >= 0 and var patch)
 		{
 			_awaiting = null;
 			if (_repoint is { } repoint && repoint.Patch == awaited.Name)

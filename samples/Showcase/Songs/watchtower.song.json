@@ -1,0 +1,86 @@
+{
+  "format": "lunelle-song/3",
+  "cues": { "intensity": null, "mood": null },
+  "about": "An orchestra over a rock kit: D minor at 132, with a harmonic minor's A major (VM) at the end of each phrase. Short strings drive a figure in sixteenths whose level follows the intensity; the timpani come in past 0.25 and the kit past 0.45; past 0.6 the alarm sounds, brass stabs and a long string line over the horn's tune, and each pass ends on a tom fill. The strings sit in a hall (a group with a reverb), and an electric guitar plays power chords through an amp and a four-by-twelve cabinet (a group with a distortion) when the mood is Dark or the intensity is flat out, its drive rising with the intensity. A Bright mood rings a tubular bell at the top of each bar.",
+  "tempo": 132,
+  "scale": "D minor",
+  "voices": 48,
+  "effects": { "space": [{ "fx": "reverb", "decaySeconds": 2.6 }] },
+  "groups": [
+    { "name": "hall", "effects": [{ "fx": "reverb", "decaySeconds": 3.2, "wet": 0.3, "dry": 1 }] },
+    { "name": "amp", "effects": [{ "fx": "distortion", "driveDb": 18, "toneHz": 3500, "cabinet": "fourByTwelve" }] }
+  ],
+  "tracks": [
+    { "name": "strings", "patch": "lunelle:orchestra/string-section", "group": "hall", "octave": 4, "level": -4 },
+    { "name": "staccato", "patch": "lunelle:orchestra/staccato-strings", "group": "hall", "octave": 4, "level": 1 },
+    { "name": "brass", "patch": "lunelle:orchestra/brass-section", "octave": 4, "level": -9 },
+    { "name": "horn", "patch": "lunelle:orchestra/horn", "octave": 4, "level": -5, "pan": -0.3 },
+    { "name": "timpani", "patch": "lunelle:orchestra/timpani", "octave": 2, "level": -2 },
+    { "name": "drums", "kit": "lunelle:rock", "level": 6, "humanise": { "ms": 5, "velocity": 0.1 } },
+    {
+      "name": "guitar",
+      "patch": "lunelle:guitars/electric-guitar",
+      "group": "amp",
+      "octave": 3,
+      "level": -13,
+      "pan": 0.25,
+      "macros": [
+        { "macro": "drive", "follow": "intensity", "from": 0.6, "to": 1 },
+        { "macro": "bright", "follow": "intensity", "from": 0.4, "to": 1 }
+      ]
+    },
+    { "name": "bell", "patch": "lunelle:mallets/tubular-bell", "octave": 5, "level": 4, "pan": 0.3 }
+  ],
+  "sections": [
+    {
+      "name": "watch",
+      "about": "The figure in the short strings, louder as the intensity rises, and the horn's tune over it",
+      "bars": 8,
+      "chords": "i | VI | VII | i | i | iv | VM | VM",
+      "parts": [
+        { "track": "staccato", "name": "figure", "line": "sixteenths", "notes": "1 1 5 1 1 5 1 5 1 1 5 1 8 5 3 5", "overChords": true, "level": "intensity" },
+        { "track": "horn", "name": "the tune", "line": "quarters", "notes": "5 - - 8 | 8 - 7 6 | 4 - 5 7 | 8 - - - | 5 - 8 9 | 6 - 4 6 | 5 - #7 - | 5 - - -", "onPhrase": true },
+        { "track": "timpani", "line": "quarters", "notes": "1 . . . | 1 . 5, .", "overChords": true, "when": "intensity > 0.25" },
+        { "track": "drums", "beat": "eighths", "rows": { "kick": "x... ..x.", "snare": "..x. ..x.", "hat-closed": "x.x. x.x." }, "when": "intensity > 0.45" },
+        { "track": "bell", "line": "quarters", "notes": "1 . . .", "overChords": true, "when": "mood is Bright" }
+      ],
+      "exits": [{ "when": "intensity > 0.6", "then": "alarm" }, { "then": "watch" }]
+    },
+    {
+      "name": "alarm",
+      "about": "Everything: brass stabs, the strings' long line, the horn's tune, the kit with a tom fill each pass and a crash at the top; the guitar when Dark or past 0.85",
+      "bars": 8,
+      "chords": "i | VI | III | VII | i | VI | VM | VM",
+      "parts": [
+        { "track": "staccato", "name": "figure", "line": "sixteenths", "notes": "1 1 5 1 1 5 1 5 1 1 5 1 8 5 3 5", "overChords": true },
+        { "track": "strings", "name": "the long line", "line": "quarters", "notes": "8 - - - | 8 - 6 - | 5 - - - | 4 - 5 - | 8 - - - | 8 - 6 - | #7 - - - | 5 - - -" },
+        { "track": "brass", "strum": "eighths", "notes": "D..D ..D.", "voicing": "close" },
+        { "track": "horn", "name": "the tune", "line": "quarters", "notes": "5 - - 8 | 8 - 7 6 | 4 - 5 7 | 8 - - - | 5 - 8 9 | 6 - 4 6 | 5 - #7 - | 5 - - -", "onPhrase": true },
+        { "track": "timpani", "line": "quarters", "notes": "1 . 1 1", "overChords": true },
+        {
+          "track": "drums",
+          "beat": "eighths",
+          "rows": { "kick": "x... x.x.", "snare": "..x. ..x.", "hat-open": "x.x. x.x." },
+          "endWith": {
+            "beat": "sixteenths",
+            "rows": {
+              "tom-high": "xxxx .... .... ....",
+              "tom-mid": ".... xxxx .... ....",
+              "tom-low": ".... .... xxxx ....",
+              "snare": ".... .... .... xxXX"
+            }
+          }
+        },
+        {
+          "track": "drums",
+          "name": "crash",
+          "beat": "eighths",
+          "rows": { "crash": "x... .... | .... .... | .... .... | .... .... | .... .... | .... .... | .... .... | .... ...." }
+        },
+        { "track": "guitar", "name": "power chords", "strum": "eighths", "notes": "D.D. DDD.", "voicing": "power", "when": "mood is Dark or intensity > 0.85" },
+        { "track": "bell", "line": "quarters", "notes": "1 . . .", "overChords": true, "when": "mood is Bright" }
+      ],
+      "exits": [{ "when": "pass < 2", "then": "alarm" }, { "when": "intensity > 0.8", "then": "alarm" }, { "then": "watch" }]
+    }
+  ]
+}

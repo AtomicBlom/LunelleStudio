@@ -1,6 +1,5 @@
 {
-  "format": "lunelle-patch/1",
-  "name": "open-hat",
+  "format": "lunelle-patch/2",
   "about": "The demo kit's open hat: noise above 6.5 kHz ringing for 0.4 s",
   "operators": [{ "name": "noise", "kind": "noise", "envelope": "decay 0.4", "level": 0.45 }],
   "out": [{ "op": "noise" }],

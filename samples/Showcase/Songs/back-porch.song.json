@@ -1,0 +1,109 @@
+{
+  "format": "lunelle-song/3",
+  "cues": { "intensity": null, "mood": null },
+  "about": "Strings, plucked and strummed: G major at 96, every track swung (0.62 of each pair of eighths) and the sampled jazz kit humanised. The guitar strums open chords, its strum chucked (x, a muted hit) once the intensity passes 0.6, and brightens with it; a banjo rolls past 0.5, or whenever the mood is Bright. The chorus borrows the minor four (IVm, C minor in G) on its way home. The flute's tune turns bluesy when the mood is Dark, and a harp picks the chords when it is Calm.",
+  "tempo": 96,
+  "scale": "G major",
+  "effects": { "space": [{ "fx": "reverb", "decaySeconds": 1.6 }] },
+  "tracks": [
+    { "name": "drums", "kit": "lunelle:general", "level": 6, "humanise": { "ms": 8, "velocity": 0.12 }, "swing": { "ratio": 0.62, "step": "eighths" } },
+    { "name": "bass", "patch": "lunelle:bass/upright-bass", "octave": 2, "level": 2, "swing": { "ratio": 0.62, "step": "eighths" } },
+    {
+      "name": "guitar",
+      "patch": "lunelle:guitars/acoustic-guitar",
+      "octave": 3,
+      "level": -7,
+      "pan": -0.25,
+      "swing": { "ratio": 0.62, "step": "eighths" },
+      "macros": [{ "macro": "bright", "follow": "intensity", "from": 0.2, "to": 0.8 }]
+    },
+    { "name": "banjo", "patch": "lunelle:guitars/banjo", "level": 9, "pan": 0.35, "swing": { "ratio": 0.62, "step": "sixteenths" } },
+    { "name": "flute", "patch": "lunelle:orchestra/flute", "octave": 5, "level": -6, "swing": { "ratio": 0.62, "step": "eighths" } },
+    { "name": "harp", "patch": "lunelle:orchestra/harp", "octave": 4, "level": -2, "pan": 0.2, "swing": { "ratio": 0.62, "step": "eighths" } },
+    { "name": "bells", "patch": "lunelle:mallets/glockenspiel", "octave": 6, "level": -4, "pan": -0.3 }
+  ],
+  "sections": [
+    {
+      "name": "sunrise",
+      "about": "The guitar's chords rolled slowly (a 30 ms spread between strings) under the harp, until the intensity passes 0.25",
+      "bars": 4,
+      "chords": "I | IV | I | V",
+      "parts": [
+        { "track": "guitar", "strum": "quarters", "notes": "D...", "voicing": "open", "spread": 30 },
+        { "track": "harp", "line": "eighths", "notes": "1 5 8 5 3 5 8 5", "overChords": true }
+      ],
+      "exits": [{ "when": "intensity > 0.25", "then": "porch" }, { "then": "sunrise" }]
+    },
+    {
+      "name": "porch",
+      "about": "The verse: the strum and the bass, the kit past 0.3 with a tom fill each pass, and the flute's tune",
+      "bars": 8,
+      "chords": "I | iii | IV | I | vi | ii | IV V | I",
+      "parts": [
+        { "track": "guitar", "name": "strum", "strum": "eighths", "notes": "D.DU .UDU", "voicing": "open", "when": "intensity < 0.6" },
+        { "track": "guitar", "name": "chucked", "strum": "eighths", "notes": "DxDU xUDU", "voicing": "open", "when": "intensity > 0.6" },
+        { "track": "bass", "line": "quarters", "notes": "1 . 5, . | 1 . 3 5", "overChords": true },
+        {
+          "track": "drums",
+          "beat": "eighths",
+          "rows": { "kick": "x... x...", "snare-rim": "..x. ..x.", "hat-closed": "xoxo xoxo" },
+          "when": "intensity > 0.3",
+          "endWith": { "beat": "eighths", "rows": { "kick": "x... ....", "tom-high": ".... xx..", "tom-low": ".... ..xx" } }
+        },
+        {
+          "track": "flute",
+          "name": "the tune",
+          "line": "eighths",
+          "notes": "3 - 5 - 8 - 7 8 | 7 - 5 - 3 - - - | 6 - 5 6 8 - 6 - | 5 - - - 3 - 2 - | 3 - 5 - 6 - 8 - | 9 - 8 - 6 - 4 - | 6 - 4 - 5 - 7 - | 8 - - - . . . .",
+          "when": "not mood is Dark",
+          "onPhrase": true
+        },
+        {
+          "track": "flute",
+          "name": "the blues",
+          "line": "eighths",
+          "notes": "b3 - 1 - 5, - b7, - | 1 - - - . . . .",
+          "when": "mood is Dark",
+          "onPhrase": true
+        },
+        { "track": "harp", "line": "eighths", "notes": "1 5 8 5 3 5 8 5", "overChords": true, "when": "mood is Calm" },
+        {
+          "track": "banjo",
+          "name": "roll",
+          "line": "sixteenths",
+          "notes": "1 5 8 3 5 8 1 5 8 3 5 8 1 5 8 5",
+          "overChords": true,
+          "when": "intensity > 0.5 or mood is Bright"
+        }
+      ],
+      "exits": [{ "when": "intensity > 0.65", "then": "hoedown" }, { "when": "intensity < 0.2", "then": "sunrise" }, { "then": "porch" }]
+    },
+    {
+      "name": "hoedown",
+      "about": "The chorus: from the four, through the borrowed minor four, home; the ride and a crash over it, the banjo throughout, and the flute's counter-melody",
+      "bars": 8,
+      "chords": "IV | IVm | I | vi | ii | V | I | V",
+      "parts": [
+        { "track": "guitar", "strum": "eighths", "notes": "DxDU xUDU", "voicing": "open" },
+        { "track": "bass", "line": "quarters", "notes": "1 5, 1 5,", "overChords": true },
+        { "track": "drums", "beat": "eighths", "rows": { "kick": "x.x. x.x.", "snare": "..x. ..xo", "ride": "xxxx xxxx" } },
+        {
+          "track": "drums",
+          "name": "crash",
+          "beat": "eighths",
+          "rows": { "crash": "x... .... | .... .... | .... .... | .... .... | .... .... | .... .... | .... .... | .... ...." }
+        },
+        { "track": "banjo", "line": "sixteenths", "notes": "1 5 8 3 5 8 1 5 8 3 5 8 1 5 8 5", "overChords": true },
+        {
+          "track": "flute",
+          "name": "counter-melody",
+          "line": "eighths",
+          "notes": "8 - 6 - 4 - 6 - | 8 - b6 - 4 - b6 - | 5 - 3 - 1 - 3 - | 6 - 5 - 3 - 5 - | 4 - 6 - 9 - 8 - | 7 - 5 - 2 - 7 - | 8 - - - - - 5 - | 7 - 6 - 5 - 2 -",
+          "onPhrase": true
+        },
+        { "track": "bells", "line": "quarters", "notes": "8 . . . | b6 . . . | 5 . . . | 6 . . .", "when": "mood is Bright" }
+      ],
+      "exits": [{ "when": "intensity > 0.65 and pass < 2", "then": "hoedown" }, { "then": "porch" }]
+    }
+  ]
+}

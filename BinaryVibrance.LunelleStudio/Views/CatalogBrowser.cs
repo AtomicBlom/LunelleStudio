@@ -13,7 +13,8 @@ namespace BinaryVibrance.LunelleStudio.Views;
 /// opens the row. The lists show what is open. While its filter has the keys, the workbench's own keys wait. The + on
 /// Songs and Patches makes a new file of that kind beside the project's others, which it lists once the project has built
 /// again. A patch or kit dragged out of it (<see cref="InstrumentDragged"/>) is for the page to drop on the board as a new
-/// track.
+/// track. Under them the presets (<see cref="Workbench.Presets"/>), offered to a project of files alone: a click on one
+/// plays it on the keys (<see cref="Workbench.TryPreset"/>), and its button adds it (<see cref="Workbench.AddPreset"/>).
 /// </summary>
 internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyChanged
 {
@@ -33,29 +34,35 @@ internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyCh
 	/// </summary>
 	internal event Action<string, bool, Func<UIElement, System.Numerics.Vector2>, bool>? InstrumentDragged;
 
+	/// <summary>
+	/// A pattern dragged out of the library, as <see cref="InstrumentDragged"/>: its id, where the pointer is, and whether
+	/// it was let go there. For the page to drop on a lane or a part (<see cref="Workbench.DropPattern"/>).
+	/// </summary>
+	internal event Action<string, Func<UIElement, System.Numerics.Vector2>, bool>? PatternDragged;
+
 	// How far the pointer moves with a row held before it is a drag rather than a click
 	private const float DragDistance = 6f;
 
-	// A row pressed: what it is, whether a kit, where, and on which pointer; and whether it has become a drag
-	private (ChoiceViewModel Choice, bool IsKit, System.Numerics.Vector2 At, uint Pointer)? _held;
+	// A row pressed: its id, whether a kit, whether a pattern, where, and on which pointer; and whether it has become a drag
+	private (string Name, bool IsKit, bool IsPattern, System.Numerics.Vector2 At, uint Pointer)? _held;
 	private bool _dragging;
 
-	// The patch or kit a row shows, from an element in it
-	private static ChoiceViewModel? ChoiceOf(object? source)
+	// The patch, kit or pattern a row shows, from an element in it
+	private static LibraryRowViewModel? RowOf(object? source)
 	{
 		for (var element = source as UIElement; element is not null; element = BinaryVibrance.Vysara.Media.VisualTreeHelper.GetParent(element))
-			if (element is FrameworkElement { Tag: ChoiceViewModel choice })
-				return choice;
+			if (element is FrameworkElement { Tag: LibraryRowViewModel row })
+				return row;
 		return null;
 	}
 
 	private void WireDrag()
 	{
-		foreach (var (list, isKit) in new[] { (PatchList, false), (KitList, true) })
+		foreach (var (list, isKit, isPattern) in new[] { (PatchList, false, false), (KitList, true, false), (PatternList, false, true) })
 			list.AddHandler(PreviewPointerPressedEvent, (_, e) =>
 			{
-				if (e is PointerRoutedEventArgs pointer && (pointer.Pointer.Buttons & PointerButtons.Left) != 0 && ChoiceOf(e.OriginalSource) is { } choice)
-					_held = (choice, isKit, pointer.GetCurrentPoint(null).Position, pointer.PointerId);
+				if (e is PointerRoutedEventArgs pointer && (pointer.Pointer.Buttons & PointerButtons.Left) != 0 && RowOf(e.OriginalSource) is { } row)
+					_held = (row.Id, isKit, isPattern, pointer.GetCurrentPoint(null).Position, pointer.PointerId);
 			}, handledEventsToo: true);
 	}
 
@@ -75,7 +82,11 @@ internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyCh
 				return;
 			if (!_dragging)
 				_dragging = CapturePointer(held.Pointer);
-			InstrumentDragged?.Invoke(held.Choice.Name, held.IsKit, element => pointer.GetCurrentPoint(element).Position, false);
+			Func<UIElement, System.Numerics.Vector2> at = element => pointer.GetCurrentPoint(element).Position;
+			if (held.IsPattern)
+				PatternDragged?.Invoke(held.Name, at, false);
+			else
+				InstrumentDragged?.Invoke(held.Name, held.IsKit, at, false);
 			e.Handled = true;
 		}, handledEventsToo: true);
 		AddHandler(PointerReleasedEvent, (_, e) =>
@@ -96,8 +107,11 @@ internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyCh
 		if (held is not { } h || !dragging)
 			return;
 		ReleasePointerCapture(h.Pointer);
-		InstrumentDragged?.Invoke(h.Choice.Name, h.IsKit,
-			at is null ? _ => new System.Numerics.Vector2(float.NaN) : element => at.GetCurrentPoint(element).Position, true);
+		Func<UIElement, System.Numerics.Vector2> where = at is null ? _ => new System.Numerics.Vector2(float.NaN) : element => at.GetCurrentPoint(element).Position;
+		if (h.IsPattern)
+			PatternDragged?.Invoke(h.Name, where, true);
+		else
+			InstrumentDragged?.Invoke(h.Name, h.IsKit, where, true);
 	}
 
 	public WorkbenchViewModel? ViewModel
@@ -106,10 +120,16 @@ internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyCh
 		set
 		{
 			if (field is not null)
+			{
 				field.PropertyChanged -= OnModelChanged;
+				field.CueMenuRequested -= ShowCueMenu;
+			}
 			field = value;
 			if (value is not null)
+			{
 				value.PropertyChanged += OnModelChanged;
+				value.CueMenuRequested += ShowCueMenu;
+			}
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(ViewModel)));
 			ShowChosen();
 		}
@@ -140,15 +160,34 @@ internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyCh
 				if (e.ClickedItem is ChoiceViewModel choice)
 					choice.IsSelected = true;
 			};
+		PresetList.ItemClick += (_, e) =>
+		{
+			if (e.ClickedItem is PresetViewModel preset)
+				preset.TryCommand.Execute(null);
+		};
 		WireDrag();
 		NewSong.Click += (_, _) => AskForName(NewSong, "New song", "open-road", copy: false);
 		NewPatch.Click += (_, _) => AskForName(NewPatch, "New patch", "warm-pad", copy: true);
+		NewCue.Click += (_, _) => AskForCue();
+	}
+
+	private void AskForCue()
+	{
+		if (ViewModel?.Workbench is { } workbench)
+			CueFlyouts.AskForCue(workbench, NewCue);
+	}
+
+	private void ShowCueMenu(CueEntryViewModel cue)
+	{
+		if (ViewModel?.Workbench is { } workbench)
+			CueFlyouts.ShowCueMenu(workbench, cue, CueList);
 	}
 
 	private void OnModelChanged(object? sender, PropertyChangedEventArgs e)
 	{
 		if (e.PropertyName is nameof(WorkbenchViewModel.SelectedSong) or nameof(WorkbenchViewModel.SelectedPatch) or nameof(WorkbenchViewModel.SelectedKit)
-			or nameof(WorkbenchViewModel.Songs) or nameof(WorkbenchViewModel.Patches) or nameof(WorkbenchViewModel.Kits))
+			or nameof(WorkbenchViewModel.Songs) or nameof(WorkbenchViewModel.Patches) or nameof(WorkbenchViewModel.Kits)
+			or nameof(WorkbenchViewModel.TryingPreset))
 			ShowChosen();
 	}
 
@@ -160,6 +199,7 @@ internal sealed partial class CatalogBrowser : ContentControl, INotifyPropertyCh
 		SongList.SelectedIndex = model.SelectedSong;
 		PatchList.SelectedIndex = model.SelectedPatch;
 		KitList.SelectedIndex = model.SelectedKit;
+		PresetList.SelectedIndex = model.TryingPreset;
 	}
 
 	// A flyout asking for the new file's name (and, for a patch, whether to start from the one open), Enter making it

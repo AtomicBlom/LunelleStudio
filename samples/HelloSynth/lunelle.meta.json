@@ -1,0 +1,8 @@
+{
+  "format": "lunelle/2",
+  "name": "hello-synth",
+  "title": "HelloSynth",
+  "macros": {
+    "bright": 0
+  }
+}

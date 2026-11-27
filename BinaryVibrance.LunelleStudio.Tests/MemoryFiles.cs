@@ -24,6 +24,16 @@ internal sealed class MemoryFiles : IMusicFiles
 				changed(full);
 	}
 
+	public void Delete(string path)
+	{
+		var full = Path.GetFullPath(path);
+		if (!_files.Remove(full))
+			return;
+		foreach (var (folder, changed) in _watches.ToList())
+			if (full.StartsWith(folder + Path.DirectorySeparatorChar, StringComparison.Ordinal))
+				changed(full);
+	}
+
 	public IEnumerable<string> List(string folder)
 	{
 		var root = Path.GetFullPath(folder) + Path.DirectorySeparatorChar;

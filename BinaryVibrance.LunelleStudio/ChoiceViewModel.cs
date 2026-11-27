@@ -4,7 +4,7 @@ namespace BinaryVibrance.LunelleStudio;
 /// One of a set where one is chosen (a song, a patch, a kit, a cue's option, a section), for a button lit while it is
 /// the one: setting <see cref="IsSelected"/> asks its owner to choose it, and the owner says which is chosen.
 /// </summary>
-public sealed class ChoiceViewModel : ViewModel
+public sealed class ChoiceViewModel : LibraryRowViewModel
 {
 	private readonly Action<int> _choose;
 	private bool _isSelected;
@@ -22,6 +22,9 @@ public sealed class ChoiceViewModel : ViewModel
 	/// <summary>Its name.</summary>
 	public string Name { get; }
 
+	/// <inheritdoc/>
+	public override string Id => Name;
+
 	/// <summary>It, for a view to find it from the element showing it (a drag out of the library).</summary>
 	public ChoiceViewModel Self => this;
 
@@ -38,13 +41,6 @@ public sealed class ChoiceViewModel : ViewModel
 				_choose(Index);
 		}
 	}
-
-	/// <summary>Whether the library's filter lets it show.</summary>
-	public bool IsVisible
-	{
-		get;
-		internal set => Set(ref field, value);
-	} = true;
 
 	internal void Show(bool selected) => Set(ref _isSelected, selected, nameof(IsSelected));
 }

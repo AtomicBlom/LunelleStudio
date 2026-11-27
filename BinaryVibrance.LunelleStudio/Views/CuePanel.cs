@@ -8,7 +8,20 @@ namespace BinaryVibrance.LunelleStudio.Views;
 internal sealed partial class CuePanel : ContentControl, INotifyPropertyChanged
 {
 	/// <summary>A panel with nothing to show until it is given a <see cref="ViewModel"/>.</summary>
-	public CuePanel() => InitializeComponent();
+	public CuePanel()
+	{
+		InitializeComponent();
+		Wire();
+	}
+
+	partial void OnComponentRebuilt() => Wire();
+
+	// The + cue makes a cue as the library's + does
+	private void Wire() => NewCue.Click += (_, _) =>
+	{
+		if (ViewModel?.Workbench is { } workbench)
+			CueFlyouts.AskForCue(workbench, NewCue);
+	};
 
 	/// <inheritdoc/>
 	public event PropertyChangedEventHandler? PropertyChanged;

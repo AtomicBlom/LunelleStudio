@@ -84,8 +84,8 @@
 	</ItemGroup>
 
 	<PropertyGroup Condition="'$(RuntimeIdentifier)' != 'browser-wasm'">
-		<!-- The generator beside the app, for a project it makes ("new") to name as its analyzer (build/Sources.targets) -->
-		<CopyMusicGenerator>true</CopyMusicGenerator>
+		<!-- Lunelle's packages beside the app, for a project it makes ("new") to take Lunelle from (build/Sources.targets) -->
+		<ShipLunellePackages>true</ShipLunellePackages>
 	</PropertyGroup>
 
 	<ItemGroup Condition="'$(RuntimeIdentifier)' != 'browser-wasm'">

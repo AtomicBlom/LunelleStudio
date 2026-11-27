@@ -198,14 +198,22 @@ public class MusicProjectTests
 	[Test]
 	public async Task A_new_project_from_the_template_builds_and_offers_its_song()
 	{
-		var folder = Path.Combine(Path.GetTempPath(), "lunelle-studio-new-" + Guid.NewGuid().ToString("N")[..8], "My Tunes");
-		var path = ProjectTemplate.Create(folder, Path.GetDirectoryName(typeof(Song).Assembly.Location));
+		var root = Path.Combine(Path.GetTempPath(), "lunelle-studio-new-" + Guid.NewGuid().ToString("N")[..8]);
+		var folder = Path.Combine(root, "My Tunes");
+		var feed = Path.Combine(root, "feed");
+		var path = ProjectTemplate.Create(folder, Path.GetDirectoryName(typeof(Song).Assembly.Location), feed);
 		Path.GetFileName(path).ShouldBe("My Tunes.csproj");
+		// Lunelle as a package, at the studio's version, from the feed the studio's packages were copied into
+		var csproj = File.ReadAllText(path);
+		csproj.ShouldContain("<PackageReference Include=\"BinaryVibrance.Lunelle\" Version=\"");
+		csproj.ShouldNotContain("StudioDirectory");
+		File.ReadAllText(Path.Combine(folder, "nuget.config")).ShouldContain(feed);
+		Directory.GetFiles(feed, "BinaryVibrance.Lunelle.*.nupkg").ShouldHaveSingleItem();
 		Should.Throw<InvalidOperationException>(() => ProjectTemplate.Create(folder));
 		File.ReadAllText(Path.Combine(folder, "Catalog.cs")).ShouldContain("namespace My_Tunes;");
 		File.Exists(Path.Combine(folder, "Songs", "demo.song.json")).ShouldBeTrue();
 
-		// HelloSynth's music, built by the generator the template references from beside Kaldra
+		// HelloSynth's music, built by the generator Lunelle's package carries
 		using var project = await MusicProject.OpenAsync(path, MusicProjectTests.Configured);
 		var build = project.TakeBuild().ShouldNotBeNull();
 		build.Errors.ShouldBeEmpty();
@@ -232,8 +240,9 @@ public class MusicProjectTests
 	[Test]
 	public async Task A_project_s_unsaved_edits_compile_from_the_document()
 	{
-		var folder = Path.Combine(Path.GetTempPath(), "lunelle-studio-document-" + Guid.NewGuid().ToString("N")[..8], "Edited");
-		var path = ProjectTemplate.Create(folder, Path.GetDirectoryName(typeof(Song).Assembly.Location));
+		var root = Path.Combine(Path.GetTempPath(), "lunelle-studio-document-" + Guid.NewGuid().ToString("N")[..8]);
+		var folder = Path.Combine(root, "Edited");
+		var path = ProjectTemplate.Create(folder, Path.GetDirectoryName(typeof(Song).Assembly.Location), Path.Combine(root, "feed"));
 		var document = ProjectDocument.Open(DiskFiles.Instance, folder);
 		using var project = await MusicProject.OpenAsync(path, MusicProjectTests.Configured, document);
 		var first = project.TakeBuild().ShouldNotBeNull();

@@ -10,7 +10,7 @@
     <!-- TUnit runs on Microsoft.Testing.Platform, whose source generator emits the executable entry point. -->
     <OutputType>Exe</OutputType>
     <!-- The generator beside the tests, where the projects MusicProjectTests makes name it (build/Sources.targets) -->
-    <CopyMusicGenerator>true</CopyMusicGenerator>
+    <ShipLunellePackages>true</ShipLunellePackages>
   </PropertyGroup>
 
   <ItemGroup>

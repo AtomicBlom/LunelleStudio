@@ -23,7 +23,11 @@ dotnet run --project BinaryVibrance.LunelleStudio.App -- <folder> --data
 Music is Lunelle's format 2 (its `docs/spec/`): a `lunelle.meta.json` and its songs, patches, kits, patterns and cue
 files, each named by its path. A folder with no `.csproj`, or any folder with `--data`, is music files alone, read with
 no C#, nothing compiled and no extension (Lunelle's `MusicFolder`); `new --data` starts one. A project with code hands
-the same files to Lunelle's generator, and the studio resolves them the same way.
+the same files to Lunelle's generator, and the studio resolves them the same way. `new` without `--data` makes one that
+takes Lunelle as a package (`BinaryVibrance.Lunelle`, carrying the generator and Lunelle's own sounds) at the studio's
+own version: the studio ships its packages beside it (`packages/`) and copies them into a feed of the user's own
+(`%LOCALAPPDATA%\Lunelle Studio\packages`), which the project's `nuget.config` names beside nuget.org, so an update to
+the studio's install folder breaks no project.
 
 **Editing.** Every edit goes to a document over the project's files (`ProjectDocument`, docs/spec/transactions.md):
 Ctrl+Z and Ctrl+Y undo and redo across every file, **save** (Ctrl+S) writes them, and a crash loses nothing, the edits
